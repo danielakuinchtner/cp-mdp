@@ -32,4 +32,4 @@ vi.run() #You can check the quadrant values using print vi.V
 #print_policy(vi.policy, shape, obstacles=obstacles, terminals=terminals)
 # display_policy(vi.policy, shape, obstacles=obstacles, terminals=terminals)
 
-print(P)
+#print(P)

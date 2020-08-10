@@ -1,11 +1,10 @@
 import numpy as _np
-# import tensorflow as tf
+import math
+import tensorflow as tf
 import scipy.sparse as _sp
 
-# ACTIONS = ['N','S','E','W']
-
-
 """
+ACTIONS = ['N','S','E','W']
 input:
 shape -> [Y,X] shape of the grid
 obstacles -> [[Y1,X1], [Y2,X2]] list with the position of obstacles
@@ -28,6 +27,10 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], r=1, rewards=[], actions=[], 
     obstacles = obstacles
     final_limits = final_limits  # 2x3
 
+    p_intended = 0.8                        # probabilidade da ação desejada ocorrer
+    p_right_angles = (1 - p_intended) / 2   # 0.1 # estocasticidade
+    p_opposite_angle = 0.0                  # probabilidade zero
+
     # print(final_limits)
     # print(terminals)
     # print(obstacles)
@@ -35,26 +38,31 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], r=1, rewards=[], actions=[], 
     # print(len(actions))
 
     # State Transition Probability Matrix
-    STPM = [[0.8, 0.1, 0.1, 0.0],  # N
-            [0.1, 0.8, 0.0, 0.1],  # E
-            [0.1, 0.0, 0.8, 0.1],  # W
-            [0.0, 0.1, 0.1, 0.8]]  # S
+            # N                E                 W                 S
+    STPM = [[p_intended,       p_right_angles,   p_right_angles,   p_opposite_angle],  # N
+            [p_right_angles,   p_intended,       p_opposite_angle, p_right_angles],    # E
+            [p_right_angles,   p_opposite_angle, p_intended,       p_right_angles],    # W
+            [p_opposite_angle, p_right_angles,   p_right_angles,   p_intended]]        # S
 
+    # print(STPM)
     # print(STPM[0])
     # print(STPM[1])
     # print(STPM[2])
     # print(STPM[3])
     # print(len(STPM))
 
-    for a in STPM:
-        for x in range(shape[0]):
-            for y in range(shape[1]):
+    Ca = ([],[],[])
+
+    for a in STPM:  # 4
+        for x in range(shape[0]):  # 3
+            for y in range(shape[1]):  # 4
                 if [x, y] in obstacles or [x, y] in terminals:  # remove obstáculos e terminais
                     continue
-                for aa in range(len(a)):
+                for aa in range(len(a)):  # 4
                     if a[aa] == 0:  # remove as probabilidades de transição 0.0
                         continue
 
+                    xy = [x, y]
                     state_from = sub2ind(shape, x, y)  # 0,1,2,3,...,11,0,1,2,3,...,11,0,1,2,3,...,11,0,1,2,3,...,11
                     # successor = succ(aa, x, y, final_limits)
                     # print("a:", a, "aa:", a[aa], "index aa:", aa, " x:", x, " y:", y, " succ:", successor)
@@ -64,9 +72,29 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], r=1, rewards=[], actions=[], 
                     if valid(successor_i, successor_j, obstacles):  # se o succ não for obstáculo
                         state_to = sub2ind(shape, successor_i, successor_j)
                         P[STPM.index(a), state_from, state_to] = P[STPM.index(a), state_from, state_to] + a[aa]
+                        successor = ind2sub(shape, state_to)
+
+                        Ca = Ca + (xy, successor, a[aa])
 
                     else:  # se o succ for obstáculo
                         P[STPM.index(a), state_from, state_from] = P[STPM.index(a), state_from, state_from] + a[aa]
+                        Ca = Ca + (xy, xy, a[aa])
+
+    print(Ca)
+
+    Ca_tensor = tf.convert_to_tensor(Ca, dtype=tf.float32)
+    print(Ca_tensor)
+
+    # P_tensor = tf.convert_to_tensor(P, dtype=tf.float32)
+    # print(P_tensor)
+
+
+    print("Type of every element:", Ca_tensor.dtype)
+    print("Number of dimensions:", Ca_tensor.ndim)
+    print("Shape of tensor:", Ca_tensor.shape)
+    print("Elements along axis 0 of tensor:", Ca_tensor.shape[0])
+    print("Elements along the last axis of tensor:", Ca_tensor.shape[-1])
+    print("Total number of elements (3*2*4*5): ", tf.size(Ca_tensor).numpy())
 
     R = _np.ones([states])
     R = _np.multiply(R, r)
