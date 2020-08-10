@@ -20,102 +20,55 @@ R = (A x S x S) the reward function
 """
 
 
-def mdp_grid(shape=[], obstacles=[], terminals=[], pm=0.8, r=1, rewards=[], actions=[], finalLimits=[]):
-    S = shape[0] * shape[1]  # 3x4
-    Actions = actions
-    P = _np.zeros([len(Actions), S, S])
-    ps = (1 - pm) / 2  # 0.1
-    Terminals = terminals
-    Obstacles = obstacles
-    FinalLimits = finalLimits  # 2x3
+def mdp_grid(shape=[], obstacles=[], terminals=[], r=1, rewards=[], actions=[], final_limits=[]):
+    states = shape[0] * shape[1]  # 3x4
+    actions = actions
+    P = _np.zeros([len(actions), states, states])
+    terminals = terminals
+    obstacles = obstacles
+    final_limits = final_limits  # 2x3
 
-    print(FinalLimits)
-    print(Terminals)
-    print(Obstacles)
-    print(S)
-    # validStates = S - len(Terminals) - len(Obstacles)
-    # print(validStates)
-    print(len(Actions))
+    # print(final_limits)
+    # print(terminals)
+    # print(obstacles)
+    # print(states)
+    # print(len(actions))
 
-    STPM =[[0.8, 0.1, 0.1, 0.0],  # N
-          [0.1, 0.8, 0.0, 0.1],    # E
-          [0.1, 0.0, 0.8, 0.1],  # W
-          [0.0, 0.1, 0.1, 0.8]]  # S
+    # State Transition Probability Matrix
+    STPM = [[0.8, 0.1, 0.1, 0.0],  # N
+            [0.1, 0.8, 0.0, 0.1],  # E
+            [0.1, 0.0, 0.8, 0.1],  # W
+            [0.0, 0.1, 0.1, 0.8]]  # S
 
-    print(STPM[0])
-    print(STPM[1])
-    print(STPM[2])
-    print(STPM[3])
-    print(len(STPM))
+    # print(STPM[0])
+    # print(STPM[1])
+    # print(STPM[2])
+    # print(STPM[3])
+    # print(len(STPM))
 
     for a in STPM:
         for x in range(shape[0]):
             for y in range(shape[1]):
-                if [x, y] in Obstacles or [x, y] in Terminals:
+                if [x, y] in obstacles or [x, y] in terminals:  # remove obstáculos e terminais
                     continue
-                for probActionDestiny in range(len(a)):
-                    if a[probActionDestiny] == 0:
+                for aa in range(len(a)):
+                    if a[aa] == 0:  # remove as probabilidades de transição 0.0
                         continue
 
-                    Sfrom = sub2ind(shape, x, y)  # 0,1,2,3,...,11,0,1,2,3,...,11,0,1,2,3,...,11,0,1,2,3,...,11
-                    successor = succ(probActionDestiny, x, y, FinalLimits)
-                    #print("a:", a, "aa:", a[probActionDestiny], "index aa:", probActionDestiny, " x:", x, " y:", y, " succ:", successor)
+                    state_from = sub2ind(shape, x, y)  # 0,1,2,3,...,11,0,1,2,3,...,11,0,1,2,3,...,11,0,1,2,3,...,11
+                    # successor = succ(aa, x, y, final_limits)
+                    # print("a:", a, "aa:", a[aa], "index aa:", aa, " x:", x, " y:", y, " succ:", successor)
 
-                    successori, successorj = succ(probActionDestiny, x, y, FinalLimits)
+                    successor_i, successor_j = succ(aa, x, y, final_limits)
 
-                    if valid(successori, successorj, Obstacles):    # se o succ não for obstáculo
-                        Sto = sub2ind(shape, successori, successorj)
-                        P[STPM.index(a), Sfrom, Sto] = P[STPM.index(a), Sfrom, Sto] + a[probActionDestiny]
+                    if valid(successor_i, successor_j, obstacles):  # se o succ não for obstáculo
+                        state_to = sub2ind(shape, successor_i, successor_j)
+                        P[STPM.index(a), state_from, state_to] = P[STPM.index(a), state_from, state_to] + a[aa]
 
-                    else:                                           # se o succ for obstáculo
-                        P[STPM.index(a), Sfrom, Sfrom] = P[STPM.index(a), Sfrom, Sfrom] + a[probActionDestiny]
+                    else:  # se o succ for obstáculo
+                        P[STPM.index(a), state_from, state_from] = P[STPM.index(a), state_from, state_from] + a[aa]
 
-                """
-                    if valid(successori, successorj, Obstacles):        #se o succ não for obstáculo
-                        Sto = sub2ind(shape, successori, successorj)
-                        if a == aa:                                     #se A é a intenção desejada recebe 0.8
-                            P[aa, Sfrom, Sto] = P[aa, Sfrom, Sto] + pm
-                        else:                                           #senão 0.1
-                            P[aa, Sfrom, Sto] = P[aa, Sfrom, Sto] + ps
-
-                    else:                                               #se o succ for obstáculo
-                        if a == aa:                                     #se A é a intenção desejada
-                            P[aa, Sfrom, Sfrom] = P[aa, Sfrom, Sfrom] + pm
-                        else:
-                            P[aa, Sfrom, Sfrom] = P[aa, Sfrom, Sfrom] + ps
-
-                    #Ca = tf.
-
-                    """
-
-                # ti, tj = front(A,I,J)
-
-                # If the destination of the move is out of the grid, add Pm to self transition
-                """
-                if valid(ti,tj,shape,obstacles):
-                    Sto = sub2ind(shape,ti,tj)
-                    #print ("Front Sfrom ", Sfrom, "Sto ", Sto)
-                    P[A,Sfrom,Sto] = pm;
-                else:
-                    P[A,Sfrom,Sfrom] = pm;
-                
-                #If any of the sides of the move are out of the grid, add Ps to self transition
-                ti, tj = left(A,I,J);
-                if valid(ti,tj,shape,obstacles):
-                    Sto = sub2ind(shape,ti,tj)
-                    P[A,Sfrom,Sto] = Ps
-                else:
-                    P[A,Sfrom,Sfrom] = P[A,Sfrom,Sfrom] + Ps
-                
-                ti, tj = right(A,I,J);
-                if valid(ti,tj,shape,obstacles):
-                    Sto = sub2ind(shape,ti,tj)
-                    P[A,Sfrom,Sto] = Ps
-                else:
-                    P[A,Sfrom,Sfrom] = P[A,Sfrom,Sfrom] + Ps
-                """
-
-    R = _np.ones([S]);
+    R = _np.ones([states])
     R = _np.multiply(R, r)
     for i in range(len(rewards)):
         Si = rewards[i][0]
@@ -125,19 +78,8 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], pm=0.8, r=1, rewards=[], acti
         R[SR] = Sv
 
     RSS = r_to_rs(P, R, terminals, obstacles, shape)
-    return (P, RSS, R)
+    return P, RSS, R
 
-
-# def r_to_rss(P, R, terminals, obstacles):
-#     RSS = _np.zeros([4,len(P[1]),len(P[1])])
-#     for A in range(4):
-#         for I in range(len(P[1])):
-#             for J in range(len(P[1])):
-#                 if([I,J] in terminals):
-#                     RSS[A,I,J] = R[J]
-#                 if([I,J] in obstacles): RSS[A,I,J] = 0
-#                 RSS[A,I,J] = (P[A,I,J] * R[J])
-#     return RSS
 
 def r_to_rs(P, R, terminals, obstacles, shape):
     RS = _np.zeros([len(P[1]), 4])
@@ -163,22 +105,21 @@ def ind2sub(shape, ind):
     return [rows, cols]
 
 
-def valid(x, y, Obstacles):
+def valid(x, y, obstacles):
     # valid = ((I >= 0) and (I < shape[0])) and ((J >= 0) and (J < shape[1]))
-    valid = not [x, y] in Obstacles
+    valid = not [x, y] in obstacles
     return valid
 
 
-def succ(a, x, y, FinalLimits):
+def succ(a, x, y, final_limits):
     if a == 0:  # North
-        # print(STPM)
         if x != 0:  # 1: limite inicial de X:0
             D = [x - 1, y]
         else:
             D = [x, y]
 
     if a == 1:  # East
-        if y != FinalLimits[1]:  # 4: limite final de Y:3
+        if y != final_limits[1]:  # 4: limite final de Y:3
             D = [x, y + 1]
         else:
             D = [x, y]
@@ -190,61 +131,12 @@ def succ(a, x, y, FinalLimits):
             D = [x, y]
 
     if a == 3:  # South
-        if x != FinalLimits[0]:  # 3 limite inicial de X: 2
+        if x != final_limits[0]:  # 3 limite inicial de X: 2
             D = [x + 1, y]
         else:
             D = [x, y]
 
     return D[0], D[1]
-
-
-"""
-#Returns the "left" position of the specified position given Action
-def left(A, I, J):
-    if A == 0:
-        D =[I,J-1]
-    elif A == 1: 
-        D = [I,J+1]
-    elif A == 2:
-        D = [I-1,J]
-    elif A == 3:
-        D = [I+1,J]
-    else:
-        print("Invalid action")
-        return 0,0
-    return D[0], D[1]
-
-#Returns the "right" position of the specified position given Action
-def right(A, I, J):
-    if A == 0:
-        D = [I,J+1]
-    elif A == 1:
-        D = [I,J-1]
-    elif A == 2:
-        D = [I+1,J]
-    elif A == 3:
-        D = [I-1,J]
-    else:
-        print("Invalid action")
-        return 0,0
-    return D[0], D[1]
-
-
-#Returns the "front" position of the specified position given Action
-def front(A, I, J):
-    if A == 0:
-        D = [I-1,J]
-    elif A == 1:
-        D = [I+1,J]
-    elif A == 2:
-        D = [I,J+1]
-    elif A == 3:
-        D = [I,J-1]
-    else:
-        print("Invalid action")
-        return 0,0
-    return D[0], D[1]
-"""
 
 
 def print_policy(policy, shape, obstacles=[], terminals=[], actions=[]):
