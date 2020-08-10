@@ -217,6 +217,7 @@ class MDP(object):
         self.P = self._computeTransition(transitions)
         self.R = self._computeReward(reward, transitions)
 
+
         # the verbosity is by default turned off
         self.verbose = False
         # Initially the time taken to perform the computations is set to None
@@ -259,9 +260,23 @@ class MDP(object):
         # P and V can be any object that supports indexing, so it is important
         # that you know they define a valid MDP before calling the
         # _bellmanOperator method. Otherwise the results will be meaningless.
+
+        #state transition probability matrix
+        #STPM = _np.empty((self.A, self.A))
+        #print(STPM)
+
+        #Ca = _np.empty((self.S, self.S))#self.STPM
+
+        #print(self.A)
+        #print(self.S)
+
+
         Q = _np.empty((self.A, self.S))
         for aa in range(self.A):
             Q[aa] = self.R[aa] + self.discount * self.P[aa].dot(V)
+
+
+
         # Get the policy and value, for now it is being returned but...
         # Which way is better?
         # 1. Return, (policy, value)
