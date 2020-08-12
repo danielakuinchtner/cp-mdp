@@ -1,8 +1,8 @@
 import numpy as _np
 import math
-import tensorflow as tf
+import tensorflow as tf  # .\venv\Scripts\activate
 import scipy.sparse as _sp
-
+from typing import Sequence, Tuple
 """
 ACTIONS = ['N','S','E','W']
 input:
@@ -27,74 +27,78 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], r=1, rewards=[], actions=[], 
     obstacles = obstacles
     final_limits = final_limits  # 2x3
 
-    p_intended = 0.8                        # probabilidade da ação desejada ocorrer
-    p_right_angles = (1 - p_intended) / 2   # 0.1 # estocasticidade
-    p_opposite_angle = 0.0                  # probabilidade zero
-
-    # print(final_limits)
-    # print(terminals)
-    # print(obstacles)
-    # print(states)
-    # print(len(actions))
+    p_intended = 0.8                        # probability of the desired action taking place
+    p_right_angles = (1 - p_intended) / 2   # 0.1 # stochasticity
+    p_opposite_angle = 0.0                  # zero probability
 
     # State Transition Probability Matrix
             # N                E                 W                 S
-    STPM = [[p_intended,       p_right_angles,   p_right_angles,   p_opposite_angle],  # N
-            [p_right_angles,   p_intended,       p_opposite_angle, p_right_angles],    # E
-            [p_right_angles,   p_opposite_angle, p_intended,       p_right_angles],    # W
-            [p_opposite_angle, p_right_angles,   p_right_angles,   p_intended]]        # S
+    STPM = [[p_intended,       p_right_angles,   p_right_angles,   p_opposite_angle],  # North
+            [p_right_angles,   p_intended,       p_opposite_angle, p_right_angles],    # East
+            [p_right_angles,   p_opposite_angle, p_intended,       p_right_angles],    # West
+            [p_opposite_angle, p_right_angles,   p_right_angles,   p_intended]]        # South
 
-    # print(STPM)
-    # print(STPM[0])
-    # print(STPM[1])
-    # print(STPM[2])
-    # print(STPM[3])
-    # print(len(STPM))
+    # STPM = [[0.8(N,N), 0.1(N,E), 0.1(N,W), 0.0(N,S)],
+    #         [0.1(E,N), 0.8(E,E), 0.0(E,W), 0.1(E,S)],
+    #         [0.1(W,N), 0.0(W,E), 0.8(W,W), 0.1(W,S)],
+    #         [0.0(S,N), 0.1(S,E), 0.1(S,W), 0.8(S,S)]]
 
-    Ca = ([],[],[])
+    # Ca = [[],[],[]]
+    output = []
 
     for a in STPM:  # 4
         for x in range(shape[0]):  # 3
             for y in range(shape[1]):  # 4
-                if [x, y] in obstacles or [x, y] in terminals:  # remove obstáculos e terminais
+                if [x, y] in obstacles or [x, y] in terminals:  # remove obstacles and terminals
                     continue
                 for aa in range(len(a)):  # 4
-                    if a[aa] == 0:  # remove as probabilidades de transição 0.0
+                    if a[aa] == 0:  # remove all zero probabilities
                         continue
 
-                    xy = [x, y]
                     state_from = sub2ind(shape, x, y)  # 0,1,2,3,...,11,0,1,2,3,...,11,0,1,2,3,...,11,0,1,2,3,...,11
+
+                    # xy = [x, y]
                     # successor = succ(aa, x, y, final_limits)
                     # print("a:", a, "aa:", a[aa], "index aa:", aa, " x:", x, " y:", y, " succ:", successor)
 
                     successor_i, successor_j = succ(aa, x, y, final_limits)
 
-                    if valid(successor_i, successor_j, obstacles):  # se o succ não for obstáculo
+                    if valid(successor_i, successor_j, obstacles):  # if succ isn't an obstacle
                         state_to = sub2ind(shape, successor_i, successor_j)
                         P[STPM.index(a), state_from, state_to] = P[STPM.index(a), state_from, state_to] + a[aa]
-                        successor = ind2sub(shape, state_to)
+                        # successor = ind2sub(shape, state_to)
+                        # Ca = Ca + [xy, successor, a[aa]]
 
-                        Ca = Ca + (xy, successor, a[aa])
+                        rank_3_tensor = tf.constant([
+                            state_from,
+                            state_to,
+                            a[aa]])
+                        output.append(rank_3_tensor)
 
-                    else:  # se o succ for obstáculo
+                    else:  # if succ is an obstacle
                         P[STPM.index(a), state_from, state_from] = P[STPM.index(a), state_from, state_from] + a[aa]
-                        Ca = Ca + (xy, xy, a[aa])
+                        # Ca = Ca + [xy, xy, a[aa]]
 
-    print(Ca)
+                        rank_3_tensor = tf.constant([
+                            state_from,
+                            state_from,
+                            a[aa]])
+                        output.append(rank_3_tensor)
 
-    Ca_tensor = tf.convert_to_tensor(Ca, dtype=tf.float32)
-    print(Ca_tensor)
+    # split the output into 4 arrays (because there are 4 actions)
+    split = tf.split(output, len(STPM), axis=0, num=None, name='split')
+    # print(split)
 
-    # P_tensor = tf.convert_to_tensor(P, dtype=tf.float32)
-    # print(P_tensor)
+    # convert all splits into a tensor
+    split_tensor = tf.convert_to_tensor(list(split), dtype=tf.float32)
+    print(split_tensor)
 
-
-    print("Type of every element:", Ca_tensor.dtype)
-    print("Number of dimensions:", Ca_tensor.ndim)
-    print("Shape of tensor:", Ca_tensor.shape)
-    print("Elements along axis 0 of tensor:", Ca_tensor.shape[0])
-    print("Elements along the last axis of tensor:", Ca_tensor.shape[-1])
-    print("Total number of elements (3*2*4*5): ", tf.size(Ca_tensor).numpy())
+    print("Type of every element:", split_tensor.dtype)  # float32
+    print("Number of dimensions:", split_tensor.ndim)  # 3
+    print("Shape of tensor:", split_tensor.shape)  # (4, 27, 3)
+    print("Elements along axis 0 of tensor:", split_tensor.shape[0])  # 4
+    print("Elements along the last axis of tensor:", split_tensor.shape[-1])  # 3
+    print("Total number of elements (3*2*4*5): ", tf.size(split_tensor).numpy())  # 324
 
     R = _np.ones([states])
     R = _np.multiply(R, r)
