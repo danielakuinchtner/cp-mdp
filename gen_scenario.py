@@ -2,7 +2,11 @@ import numpy as _np
 import math
 import tensorflow as tf  # .\venv\Scripts\activate
 import scipy.sparse as _sp
-from typing import Sequence, Tuple
+import sys
+
+sys.path.insert(1, 'pymdptoolbox/src')
+import mdptoolbox.example
+
 """
 ACTIONS = ['N','S','E','W']
 input:
@@ -27,16 +31,16 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], r=1, rewards=[], actions=[], 
     obstacles = obstacles
     final_limits = final_limits  # 2x3
 
-    p_intended = 0.8                        # probability of the desired action taking place
-    p_right_angles = (1 - p_intended) / 2   # 0.1 # stochasticity
-    p_opposite_angle = 0.0                  # zero probability
+    p_intended = 0.8  # probability of the desired action taking place
+    p_right_angles = (1 - p_intended) / 2  # 0.1 # stochasticity
+    p_opposite_angle = 0.0  # zero probability
 
     # State Transition Probability Matrix
-            # N                E                 W                 S
-    STPM = [[p_intended,       p_right_angles,   p_right_angles,   p_opposite_angle],  # North
-            [p_right_angles,   p_intended,       p_opposite_angle, p_right_angles],    # East
-            [p_right_angles,   p_opposite_angle, p_intended,       p_right_angles],    # West
-            [p_opposite_angle, p_right_angles,   p_right_angles,   p_intended]]        # South
+    # N                E                 W                 S
+    STPM = [[p_intended, p_right_angles, p_right_angles, p_opposite_angle],  # North
+            [p_right_angles, p_intended, p_opposite_angle, p_right_angles],  # East
+            [p_right_angles, p_opposite_angle, p_intended, p_right_angles],  # West
+            [p_opposite_angle, p_right_angles, p_right_angles, p_intended]]  # South
 
     # STPM = [[0.8(N,N), 0.1(N,E), 0.1(N,W), 0.0(N,S)],
     #         [0.1(E,N), 0.8(E,E), 0.0(E,W), 0.1(E,S)],
@@ -87,11 +91,13 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], r=1, rewards=[], actions=[], 
 
     # split the output into 4 arrays (because there are 4 actions)
     split = tf.split(output, len(STPM), axis=0, num=None, name='split')
-    # print(split)
+    print(split)
 
     # convert all splits into a tensor
     split_tensor = tf.convert_to_tensor(list(split), dtype=tf.float32)
-    print(split_tensor)
+
+    print(split_tensor[0])
+    # print(split_tensor[0][:, 2])
 
     print("Type of every element:", split_tensor.dtype)  # float32
     print("Number of dimensions:", split_tensor.ndim)  # 3
@@ -102,18 +108,62 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], r=1, rewards=[], actions=[], 
 
     R = _np.ones([states])
     R = _np.multiply(R, r)
+    # print("R", R)  # 12 states -3
+
+    # print("Lenght rewards: ", len(rewards))  # 2
+    SR_output = []
+
     for i in range(len(rewards)):
-        Si = rewards[i][0]
-        Sj = rewards[i][1]
-        Sv = rewards[i][2]
-        SR = sub2ind(shape, Si, Sj)
-        R[SR] = Sv
+        Si = rewards[i][0]  # 0 # 1
+        Sj = rewards[i][1]  # 3 # 3
+        Sv = rewards[i][2]  # 100 # -100
+        SR = sub2ind(shape, Si, Sj)  # index 3 and index 7
+        SR_output.append(SR)
+        R[SR] = Sv  # 100 # -100
 
-    RSS = r_to_rs(P, R, terminals, obstacles, shape)
-    return P, RSS, R
+    # RSS = r_to_rs(P, R, terminals, shape)
+    # print(RSS)
+
+    RW = reward_tensor(split_tensor, R, rewards, terminals, obstacles, shape)
+    print(RW)
+
+    return split_tensor, RW, R
 
 
-def r_to_rs(P, R, terminals, obstacles, shape):
+def reward_tensor(split_tensor, R, rewards, terminals, obstacles, shape):
+    RS_tensor = _np.zeros([shape[0], shape[1]])
+
+    for i in range(shape[0]):
+        for j in range(shape[1]):
+            if [i, j] in obstacles:
+                continue
+            for k in split_tensor[0]:
+                pair_xy = ind2sub(shape, k[0])
+
+                if [i, j] == pair_xy:
+                    RS_tensor[i, j] += k[2] * R[i]
+
+                if [i, j] in terminals:
+                    RS_tensor[i, j] = rewards[i][2]
+
+    return RS_tensor
+
+
+"""
+def r_to_rss(P, R, terminals, obstacles):
+     RSS = _np.zeros([4,len(P[1]),len(P[1])])
+     for A in range(4):
+         for I in range(len(P[1])):
+             for J in range(len(P[1])):
+                 if([I,J] in terminals):
+                     RSS[A,I,J] = R[J]
+                 if([I,J] in obstacles): RSS[A,I,J] = 0
+                 RSS[A,I,J] = (P[A,I,J] * R[J])
+     return RSS
+"""
+
+
+def r_to_rs(P, R, terminals, shape):
     RS = _np.zeros([len(P[1]), 4])
     for I in range(len(P[1])):
         for A in range(4):

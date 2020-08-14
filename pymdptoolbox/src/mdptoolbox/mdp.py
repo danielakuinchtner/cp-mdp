@@ -73,7 +73,8 @@ _MSG_STOP_UNCHANGING_POLICY = "Iterating stopped, unchanging policy found."
 
 
 def _computeDimensions(transition):
-    A = len(transition)
+    A = len(transition)  # 4
+
     try:
         if transition.ndim == 3:
             S = transition.shape[1]
@@ -214,8 +215,14 @@ class MDP(object):
             _util.check(transitions, reward)
 
         self.S, self.A = _computeDimensions(transitions)
+        # print(self.S)  # 27
+        # print(self.A)  # 4
         self.P = self._computeTransition(transitions)
+        print(transitions)
+        # print(self.P)  # 4 tensor
+        print(reward)
         self.R = self._computeReward(reward, transitions)
+        # print(self.R)
 
 
         # the verbosity is by default turned off
@@ -265,6 +272,8 @@ class MDP(object):
         for aa in range(self.A):
             Q[aa] = self.R[aa] + self.discount * self.P[aa].dot(V)
 
+
+
         # Get the policy and value, for now it is being returned but...
         # Which way is better?
         # 1. Return, (policy, value)
@@ -305,6 +314,7 @@ class MDP(object):
             raise NotImplementedError
         else:
             r = _np.array(reward).reshape(self.S)
+            print(self.S)
             return tuple(r for a in range(self.A))
 
     def _computeArrayReward(self, reward):
