@@ -254,7 +254,7 @@ class MDP(object):
         cols = int((ind % shape[1]))
         return [rows, cols]
 
-    def _bellmanOperator(self, reward, V=None):
+    def _bellmanOperator(self, reward, shape, V=None):
         # Apply the Bellman operator on the value function.
         #
         # Updates the value function and the Vprev-improving policy.
@@ -269,15 +269,14 @@ class MDP(object):
         else:
             # make sure the user supplied V is of the right shape
             try:
-                assert V.shape in ((states,), (1, states)), "V is not the right shape (Bellman operator)."
+                assert V.shape in ((shape,), (1, shape)), "V is not the right shape (Bellman operator)."
             except AttributeError:
                 raise TypeError("V must be a numpy array or matrix.")
         # Looping through each action the the Q-value matrix is calculated.
         # P and V can be any object that supports indexing, so it is important
         # that you know they define a valid MDP before calling the
         # _bellmanOperator method. Otherwise the results will be meaningless.
-        Q = _np.empty((self.A, states))
-        reward = reward.reshape(states)
+        Q = _np.empty((self.A, shape[0], shape[1]))
 
         for aa in range(self.A):
             Q[aa] = reward
@@ -1420,7 +1419,7 @@ class ValueIteration(MDP):
             # threshold of variation for V for an epsilon-optimal policy
             self.thresh = epsilon
 
-    def _boundIter(self, epsilon, dimensions, reward):
+    def _boundIter(self, epsilon, dimensions, reward, shape):
         # Compute a bound for the number of iterations.
         #
         # for the value iteration
@@ -1463,7 +1462,9 @@ class ValueIteration(MDP):
 
         k = 1 - h.sum()
         Vprev = self.V
-        null, value = self._bellmanOperator(reward)
+
+        null, value = self._bellmanOperator(reward, shape)
+
         # p 201, Proposition 6.6.5
         span = _util.getSpan(value - Vprev)
         max_iter = (_math.log((epsilon * (1 - self.discount) / self.discount) /
@@ -1573,7 +1574,7 @@ class ValueIterationGS(ValueIteration):
         self.v_list = []
         # initialization of optional arguments
         if initial_value == 0:
-            self.V = _np.zeros(states)
+            self.V = _np.zeros(shape)
         else:
             if len(initial_value) != states:
                 raise ValueError("The initial value must be a vector of "
@@ -1588,7 +1589,7 @@ class ValueIterationGS(ValueIteration):
         if self.discount < 1:
             # compute a bound for the number of iterations and update the
             # stored value of self.max_iter
-            self._boundIter(epsilon, dimensions, reward)
+            self._boundIter(epsilon, dimensions, reward, shape)
             # computation of threshold of variation for V for an epsilon-
             # optimal policy
             self.thresh = epsilon * (1 - self.discount) / self.discount
@@ -1605,23 +1606,45 @@ class ValueIterationGS(ValueIteration):
             self.iter += 1
 
             Vprev = self.V.copy()
-            V = self.V.reshape(12)
-            print(V)
+            #V = self.V.reshape(4)
+            print(self.V)
 
-            for a in range(self.A):
-                for s1 in range(3):
-                    for s2 in range(4):
-                        for k in self.P[a]:
-                            rows = int((k[0] / shape[1]))
-                            cols = int((k[0] % shape[1]))
-                            pair_xy = [rows, cols]
+            """
+            i = 0
+            for s1 in range(3):
+                for s2 in range(4):
+                    for k in self.P[i]:
+                        print("k", k[2])
+                        print(len(self.P[i]))
+                        rows = int((k[0] / shape[1]))
+                        cols = int((k[0] % shape[1]))
+                        pair_xy = [rows, cols]
 
-                            if [s1,s2] == pair_xy:
-                                Q = float(reward[s1][s2] + self.discount * _np.dot(k[2], self.V))
-                                     #for a in range(self.A)]
-                                print(Q)
+                        if [s1,s2] == pair_xy:
+                            print("s1,s2,pair" ,s1,s2,pair_xy)
+                            Q = [float(reward[s1][s2] + self.discount * _np.dot(k[2], self.V[s1][s2]))
+                                 for a in range(self.A)]
+                            print(Q)
 
-                                V[s1][s2] = max(Q)
+                            self.V[s1][s2] = max(Q)
+
+            i += 1
+            """
+            for aa in range(self.A):
+                for k in self.P[aa]:
+                    rows = int((k[0] / shape[1]))
+                    cols = int((k[0] % shape[1]))
+                    pair_xy = [rows, cols]
+                    print("pair xy", pair_xy)
+                    print("reward row col", reward[rows][cols])
+
+                    Q = [float(reward[rows][cols] + self.discount * _np.dot(k[2], self.V[rows][cols]))
+                         for a in range(self.A)]
+                    print("Q", Q)
+
+                    self.V[rows][cols] = max(Q)
+                    print("V[rows][cols]", self.V[rows][cols])
+
 
             
             variation = _util.getSpan(self.V - Vprev)
@@ -1640,13 +1663,35 @@ class ValueIterationGS(ValueIteration):
                 break
 
         self.policy = []
-        for s in range(states):
-            Q = _np.zeros(self.A)
-            for a in range(self.A):
-                Q[a] = (self.R[a][s] +
-                        self.discount * self.P[a][s, :].dot(self.V))
 
-            self.V[s] = Q.max()
+        for a in range(self.A):
+            for k in self.P[a]:
+                Q = _np.zeros(self.A)
+                rows = int((k[0] / shape[1]))
+                cols = int((k[0] % shape[1]))
+                pair_xy = [rows, cols]
+
+                Q[a] = (reward[rows][cols] +
+                        self.discount * _np.dot(k[2], self.V[rows][cols]))
+            print("Q[a]", Q[a])
+
+            """
+            Q[a]
+            77.28757232349163
+            78.83028408335811
+            81.56675430143832
+            100.0
+            72.99764367415246
+            -3.0
+            64.93299620685075
+            -100.0
+            68.3525183711481
+            66.91347190741581
+            62.789286281692725
+            40.875820857374826
+            """
+
+            self.V[rows][cols] = max(Q)
             self.policy.append(int(Q.argmax()))
 
         self._endRun()

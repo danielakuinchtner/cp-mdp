@@ -100,7 +100,7 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], r=1, rewards=[], actions=[], 
 
     dimensions = split_tensor.ndim
 
-    # print(split_tensor[0])
+    print(split_tensor)
     # print(split_tensor[0][:, 2])
 
     print("Type of every element:", split_tensor.dtype)  # float32
