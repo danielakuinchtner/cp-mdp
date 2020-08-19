@@ -54,7 +54,7 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], r=1, rewards=[], actions=[], 
     for a in STPM:  # 4
         for x in range(shape[0]):  # 3
             for y in range(shape[1]):  # 4
-                if [x, y] in obstacles or [x, y] in terminals:  # remove obstacles and terminals
+                if [x, y] in obstacles:  # or [x, y] in terminals:  # remove obstacles and terminals
                     continue
                 for aa in range(len(a)):  # 4
                     if a[aa] == 0:  # remove all zero probabilities

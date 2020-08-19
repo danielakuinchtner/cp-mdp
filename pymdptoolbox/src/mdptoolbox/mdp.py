@@ -60,18 +60,18 @@ import time as _time
 
 import numpy as _np
 import scipy.sparse as _sp
+import tensorflow as _tf
 
 import mdptoolbox.util as _util
 
 _MSG_STOP_MAX_ITER = "Iterating stopped due to maximum number of iterations " \
-    "condition."
+                     "condition."
 _MSG_STOP_EPSILON_OPTIMAL_POLICY = "Iterating stopped, epsilon-optimal " \
-    "policy found."
+                                   "policy found."
 _MSG_STOP_EPSILON_OPTIMAL_VALUE = "Iterating stopped, epsilon-optimal value " \
-    "function found."
+                                  "function found."
 _MSG_STOP_UNCHANGING_POLICY = "Iterating stopped, unchanging policy found."
 
-states = 12
 
 def _computeDimensions(transition):
     A = len(transition)  # 4
@@ -98,7 +98,6 @@ def _printVerbosity(iteration, variation):
 
 
 class MDP(object):
-
     """A Markov Decision Problem.
 
     Let ``S`` = the number of states, and ``A`` = the number of acions.
@@ -183,7 +182,7 @@ class MDP(object):
 
     """
 
-    def __init__(self, transitions, reward, dimensions, shape, discount, epsilon, max_iter,
+    def __init__(self, transitions, reward, dimensions, shape, terminals, obstacles, discount, epsilon, max_iter,
                  skip_check=False):
         # Initialise a MDP based on the input parameters.
 
@@ -218,16 +217,19 @@ class MDP(object):
             _util.check(transitions, reward)
 
         self.S, self.A = _computeDimensions(transitions)
+        self.shape = shape
+        self.obstacles = obstacles
+        self.terminals = terminals
         # print(self.S)  # 27
         # print(self.A)  # 4
         self.P = self._computeTransition(transitions)
         # print(transitions)
         # print(self.P)  # 4 tensor
         # print(reward)
-        self.R = self._computeReward(reward, transitions, dimensions, shape)
-        print("R: ", self.R)
-        print("reward:", reward)
-
+        self.reward = reward
+        self.R = self._computeReward(reward, transitions, dimensions)
+        # print("R: ", self.R)
+        # print("reward:", reward)
 
         # the verbosity is by default turned off
         self.verbose = False
@@ -247,12 +249,8 @@ class MDP(object):
             P_repr += repr(self.P[aa]) + "\n"
             R_repr += repr(self.R[aa]) + "\n"
             print(P_repr, R_repr)
-        return(P_repr + "\n" + R_repr)
+        return (P_repr + "\n" + R_repr)
 
-    def ind2sub(shape, ind):
-        rows = int((ind / shape[1]))
-        cols = int((ind % shape[1]))
-        return [rows, cols]
 
     def _bellmanOperator(self, reward, shape, V=None):
         # Apply the Bellman operator on the value function.
@@ -282,43 +280,18 @@ class MDP(object):
             Q[aa] = reward
             print("Q[aa]", Q[aa])
 
-        """
-        for aa in range(self.A):
-            for x in range(3):
-                for y in range(4):
-                    for k in self.P[0]:
-                        rows = int((k[0] / shape[1]))
-                        cols = int((k[0] % shape[1]))
-                        pair_xy = [rows, cols]
-                        # print(pair_xy)
-
-                        if [x, y] == pair_xy:
-                            print("R XY", reward[x][y])
-                            Q[aa] = reward[x][2] + self.discount * _np.dot(k[2], V)
-
-                        #print(x)
-                        #print("RAAA", self.R[aa])
-                        #print("R", self.R)
-                        # Q[aa] = self.R[aa] + self.discount * self.P[aa].dot(V)
-                        #Q[aa] = self.R[aa] + self.discount
-                            print("QAAA", Q[aa])
-                        #Q[aa] = self.R[aa] + self.discount * _np.dot(self.P[aa], V)
-        """
-
-
         # Get the policy and value, for now it is being returned but...
         # Which way is better?
         # 1. Return, (policy, value)
-        return (Q.argmax(axis=0), Q.max(axis=0))
+        return Q.argmax(axis=0), Q.max(axis=0)
         # 2. update self.policy and self.V directly
         # self.V = Q.max(axis=1)
         # self.policy = Q.argmax(axis=1)
 
-
     def _computeTransition(self, transition):
         return tuple(transition[a] for a in range(self.A))
 
-    def _computeReward(self, reward, transition, dimensions, shape):
+    def _computeReward(self, reward, transition, dimensions):
         # Compute the reward for the system in one state chosing an action.
         # Arguments
         # Let S = number of states, A = number of actions
@@ -329,15 +302,15 @@ class MDP(object):
         # array(SxA) possibly sparse
         try:
             if reward.ndim == 1:
-                return self._computeVectorReward(reward, dimensions, shape)
+                return self._computeVectorReward(reward)
             elif reward.ndim == 2:
-                return self._computeArrayReward(reward, dimensions, shape)
+                return self._computeArrayReward(reward)
             else:
-                r = tuple(map(self._computeMatrixReward, reward, transition, dimensions, shape))
+                r = tuple(map(self._computeMatrixReward, reward, transition, dimensions))
                 return r
         except (AttributeError, ValueError):
             if len(reward) == self.A:
-                r = tuple(map(self._computeMatrixReward, reward, transition, dimensions, shape))
+                r = tuple(map(self._computeMatrixReward, reward, transition, dimensions))
                 return r
             else:
                 return self._computeVectorReward(reward)
@@ -350,7 +323,7 @@ class MDP(object):
             # print(self.S)
             return tuple(r for a in range(self.A))
 
-    def _computeArrayReward(self, reward, dimensions, shape):
+    def _computeArrayReward(self, reward):
         if _sp.issparse(reward):
             raise NotImplementedError
         else:
@@ -403,7 +376,6 @@ class MDP(object):
 
 
 class FiniteHorizon(MDP):
-
     """A MDP solved using the finite-horizon backwards induction algorithm.
 
     Parameters
@@ -471,10 +443,10 @@ class FiniteHorizon(MDP):
         # induction
         del self.iter
         # There are value vectors for each time step up to the horizon
-        self.V = _np.zeros((states, N + 1))
+        self.V = _np.zeros((self.shape, N + 1))
         # There are policy vectors for each time step before the horizon, when
         # we reach the horizon we don't need to make decisions anymore.
-        self.policy = _np.empty((states, N), dtype=int)
+        self.policy = _np.empty((self.shape, N), dtype=int)
         # Set the reward for the final transition to h, if specified.
         if h is not None:
             self.V[:, N] = h
@@ -501,7 +473,6 @@ class FiniteHorizon(MDP):
 
 
 class _LP(MDP):
-
     """A discounted MDP soloved using linear programming.
 
     This class requires the Python ``cvxopt`` module to be installed.
@@ -578,14 +549,14 @@ class _LP(MDP):
         # min V / (discount*P-I) * V <= - PR
         # To avoid loop on states, the matrix M is structured following actions
         # M(A*S,S)
-        f = self._cvxmat(_np.ones((states, 1)))
-        h = _np.array(self.R).reshape(states * self.A, 1, order="F")
+        f = self._cvxmat(_np.ones((self.shape, 1)))
+        h = _np.array(self.R).reshape(self.shape * self.A, 1, order="F")
         h = self._cvxmat(h, tc='d')
-        M = _np.zeros((self.A * states, states))
+        M = _np.zeros((self.A * self.shape, self.shape))
         for aa in range(self.A):
-            pos = (aa + 1) * states
-            M[(pos - states):pos, :] = (
-                self.discount * self.P[aa] - _sp.eye(states, states))
+            pos = (aa + 1) * self.shape
+            M[(pos - self.shape):pos, :] = (
+                    self.discount * self.P[aa] - _sp.eye(self.shape, self.shape))
         M = self._cvxmat(M)
         # Using the glpk option will make this behave more like Octave
         # (Octave uses glpk) and perhaps Matlab. If solver=None (ie using the
@@ -602,7 +573,6 @@ class _LP(MDP):
 
 
 class PolicyIteration(MDP):
-
     """A discounted MDP solved using the policy iteration algorithm.
 
     Arguments
@@ -674,7 +644,7 @@ class PolicyIteration(MDP):
         if policy0 is None:
             # Initialise the policy to the one which maximises the expected
             # immediate reward
-            null = _np.zeros(states)
+            null = _np.zeros(shape)
             self.policy, null = self._bellmanOperator(null, reward, shape)
             del null
         else:
@@ -682,7 +652,7 @@ class PolicyIteration(MDP):
             # Make sure it is a numpy array
             policy0 = _np.array(policy0)
             # Make sure the policy is the right size and shape
-            assert policy0.shape in ((states, ), (states, 1), (1, states)), \
+            assert policy0.shape in ((shape,), (shape, 1), (1, shape)), \
                 "'policy0' must a vector with length S."
             # reshape the policy to be a vector
             policy0 = policy0  # .reshape(states) # reshape(self.S)
@@ -690,10 +660,10 @@ class PolicyIteration(MDP):
             msg = "'policy0' must be a vector of integers between 0 and S-1."
             assert not _np.mod(policy0, 1).any(), msg
             assert (policy0 >= 0).all(), msg
-            assert (policy0 < states).all(), msg
+            assert (policy0 < shape).all(), msg
             self.policy = policy0
         # set the initial values to zero
-        self.V = _np.zeros(states)
+        self.V = _np.zeros(shape)
         # Do some setup depending on the evaluation type
         if eval_type in (0, "matrix"):
             self.eval_type = "matrix"
@@ -704,7 +674,7 @@ class PolicyIteration(MDP):
                              "or '1' for iterative evaluation. The strings "
                              "'matrix' and 'iterative' can also be used.")
 
-    def _computePpolicyPRpolicy(self):
+    def _computePpolicyPRpolicy(self, shape):
         # Compute the transition matrix and the reward matrix for a policy.
         #
         # Arguments
@@ -724,8 +694,8 @@ class PolicyIteration(MDP):
         # Ppolicy(SxS)  = transition matrix for policy
         # PRpolicy(S)   = reward matrix for policy
         #
-        Ppolicy = _np.empty((states, states))
-        Rpolicy = _np.zeros(states)
+        Ppolicy = _np.empty((shape, shape))
+        Rpolicy = _np.zeros(shape)
         for aa in range(self.A):  # avoid looping over S
             # the rows that use action a.
             ind = (self.policy == aa).nonzero()[0]
@@ -749,7 +719,7 @@ class PolicyIteration(MDP):
         # self.Rpolicy = Rpolicy
         return (Ppolicy, Rpolicy)
 
-    def _evalPolicyIterative(self, V0=0, epsilon=0.0001, max_iter=10000):
+    def _evalPolicyIterative(self, shape, V0=0, epsilon=0.0001, max_iter=10000):
         # Evaluate a policy using iteration.
         #
         # Arguments
@@ -781,12 +751,12 @@ class PolicyIteration(MDP):
         # number of iterations reached.
         #
         try:
-            assert V0.shape in ((states, ), (states, 1), (1, states)), \
+            assert V0.shape in ((shape,), (shape, 1), (1, shape)), \
                 "'V0' must be a vector of length S."
             policy_V = _np.array(V0)  # .reshape(states)  # reshape(self.S)
         except AttributeError:
             if V0 == 0:
-                policy_V = _np.zeros(states)
+                policy_V = _np.zeros(shape)
             else:
                 policy_V = _np.array(V0)  # .reshape(states)  # reshape(self.S)
 
@@ -819,7 +789,7 @@ class PolicyIteration(MDP):
 
         self.V = policy_V
 
-    def _evalPolicyMatrix(self):
+    def _evalPolicyMatrix(self, shape):
         # Evaluate the value function of the policy using linear equations.
         #
         # Arguments
@@ -842,7 +812,7 @@ class PolicyIteration(MDP):
         Ppolicy, Rpolicy = self._computePpolicyPRpolicy()
         # V = PR + gPV  => (I-gP)V = PR  => V = inv(I-gP)* PR
         self.V = _np.linalg.solve(
-            (_sp.eye(states, states) - self.discount * Ppolicy), Rpolicy)
+            (_sp.eye(shape, shape) - self.discount * Ppolicy), Rpolicy)
 
     def run(self):
         # Run the policy iteration algorithm.
@@ -883,7 +853,6 @@ class PolicyIteration(MDP):
 
 
 class PolicyIterationModified(PolicyIteration):
-
     """A discounted MDP  solved using a modifified policy iteration algorithm.
 
     Arguments
@@ -958,10 +927,10 @@ class PolicyIterationModified(PolicyIteration):
             self.thresh = self.epsilon
 
         if self.discount == 1:
-            self.V = _np.zeros(states)
+            self.V = _np.zeros(self.shape)
         else:
             Rmin = min(R.min() for R in self.R)
-            self.V = 1 / (1 - self.discount) * Rmin * _np.ones((states,))
+            self.V = 1 / (1 - self.discount) * Rmin * _np.ones((self.shape,))
 
     def run(self):
         # Run the modified policy iteration algorithm.
@@ -996,7 +965,6 @@ class PolicyIterationModified(PolicyIteration):
 
 
 class QLearning(MDP):
-
     """A discounted MDP solved using the Q learning algorithm.
 
     Parameters
@@ -1068,7 +1036,7 @@ class QLearning(MDP):
 
     """
 
-    def __init__(self, transitions, reward, discount, n_iter=10000,
+    def __init__(self, transitions, reward, discount, shape, n_iter=10000,
                  skip_check=False):
         # Initialise a Q-learning MDP.
 
@@ -1091,23 +1059,23 @@ class QLearning(MDP):
         self.discount = discount
 
         # Initialisations
-        self.Q = _np.zeros((states, self.A))
+        self.Q = _np.zeros((shape, self.A))
         self.mean_discrepancy = []
 
-    def run(self):
+    def run(self, shape):
         # Run the Q-learning algoritm.
         discrepancy = []
 
         self.time = _time.time()
 
         # initial state choice
-        s = _np.random.randint(0, states)
+        s = _np.random.randint(0, shape)
 
         for n in range(1, self.max_iter + 1):
 
             # Reinitialisation of trajectories every 100 transitions
             if (n % 100) == 0:
-                s = _np.random.randint(0, states)
+                s = _np.random.randint(0, shape)
 
             # Action choice : greedy with increasing probability
             # probability 1-(1/log(n+2)) can be changed
@@ -1122,7 +1090,7 @@ class QLearning(MDP):
             p_s_new = _np.random.random()
             p = 0
             s_new = -1
-            while (p < p_s_new) and (s_new < (states - 1)):
+            while (p < p_s_new) and (s_new < (shape - 1)):
                 s_new = s_new + 1
                 p = p + self.P[a][s, s_new]
 
@@ -1159,7 +1127,6 @@ class QLearning(MDP):
 
 
 class RelativeValueIteration(MDP):
-
     """A MDP solved using the relative value iteration algorithm.
 
     Arguments
@@ -1231,13 +1198,13 @@ class RelativeValueIteration(MDP):
                  skip_check=False):
         # Initialise a relative value iteration MDP.
 
-        MDP.__init__(self,  transitions, reward, dimensions, shape, None, epsilon, max_iter,
+        MDP.__init__(self, transitions, reward, dimensions, shape, None, epsilon, max_iter,
                      skip_check=skip_check)
 
         self.epsilon = epsilon
         self.discount = 1
 
-        self.V = _np.zeros(states)
+        self.V = _np.zeros(shape)
         self.gain = 0  # self.U[self.S]
 
         self.average_reward = None
@@ -1271,13 +1238,12 @@ class RelativeValueIteration(MDP):
                 break
 
             self.V = Vnext
-            self.gain = float(self.V[states - 1])
+            self.gain = float(self.V[self.shape - 1])
 
         self._endRun()
 
 
 class ValueIteration(MDP):
-
     """A discounted MDP solved using the value iteration algorithm.
 
     Description
@@ -1403,10 +1369,10 @@ class ValueIteration(MDP):
         self.v_list = []
         # initialization of optional arguments
         if initial_value == 0:
-            self.V = _np.zeros(states)
+            self.V = _np.zeros(self.shape)
         else:
-            assert len(initial_value) == states, "The initial value must be " \
-                "a vector of length S."
+            assert len(initial_value) == self.shape, "The initial value must be " \
+                                                     "a vector of length S."
             self.V = _np.array(initial_value)  # .reshape(states)  # reshape(self.S)
         if self.discount < 1:
             # compute a bound for the number of iterations and update the
@@ -1442,7 +1408,7 @@ class ValueIteration(MDP):
         # k =    max     [1 - S min[ P(j|s,a), p(j|s',a')] ]
         #     s,a,s',a'       j
         k = 0
-        h = _np.zeros(states)
+        h = _np.zeros(self.shape)
 
         for ss in range(self.S):
             # print(self.S)  # 27
@@ -1450,12 +1416,12 @@ class ValueIteration(MDP):
             # print(dimensions)
             for aa in range(self.A):
                 # print(self.P[aa])
-                #try:
-                    # PP[aa] = self.P[aa][:, 2]
+                # try:
+                # PP[aa] = self.P[aa][:, 2]
                 PP[aa] = self.P[aa]
-                #except ValueError:
-                    # PP[aa] = self.P[aa][:, 2].todense().A1
-                    # PP[aa] = self.P[aa].todense().A1
+                # except ValueError:
+                # PP[aa] = self.P[aa][:, 2].todense().A1
+                # PP[aa] = self.P[aa].todense().A1
 
             # minimum of the entire array.
             # h[ss] = PP.min()
@@ -1464,11 +1430,14 @@ class ValueIteration(MDP):
         Vprev = self.V
 
         null, value = self._bellmanOperator(reward, shape)
+        print("value:", value)
+        print("vprev:", Vprev)
 
         # p 201, Proposition 6.6.5
         span = _util.getSpan(value - Vprev)
+        #span = _util.getSpan(value)
         max_iter = (_math.log((epsilon * (1 - self.discount) / self.discount) /
-                    span) / _math.log(self.discount * k))
+                              span) / _math.log(self.discount * k))
         # self.V = Vprev
 
         self.max_iter = int(_math.ceil(max_iter))
@@ -1507,7 +1476,6 @@ class ValueIteration(MDP):
 
 
 class ValueIterationGS(ValueIteration):
-
     """
     A discounted MDP solved using the value iteration Gauss-Seidel algorithm.
 
@@ -1564,19 +1532,19 @@ class ValueIterationGS(ValueIteration):
 
     """
 
-    def __init__(self, transitions, reward, dimensions, shape, discount, epsilon=0.01,
+    def __init__(self, transitions, reward, dimensions, shape, terminals, obstacles, discount, epsilon=0.01,
                  max_iter=10, initial_value=0, skip_check=False):
         # Initialise a value iteration Gauss-Seidel MDP.
 
-        MDP.__init__(self, transitions, reward, dimensions, shape, discount, epsilon, max_iter,
+        MDP.__init__(self, transitions, reward, dimensions, shape, terminals, obstacles, discount, epsilon, max_iter,
                      skip_check=skip_check)
         self.iterations_list = []
         self.v_list = []
         # initialization of optional arguments
         if initial_value == 0:
-            self.V = _np.zeros(shape)
+            self.V = _np.zeros(self.shape)
         else:
-            if len(initial_value) != states:
+            if len(initial_value) != self.shape:
                 raise ValueError("The initial value must be a vector of "
                                  "length S.")
             else:
@@ -1597,7 +1565,7 @@ class ValueIterationGS(ValueIteration):
             # threshold of variation for V for an epsilon-optimal policy
             self.thresh = epsilon
 
-    def run(self, shape, reward):
+    def run(self):
         # Run the value iteration Gauss-Seidel algorithm.
 
         self._startRun()
@@ -1606,11 +1574,9 @@ class ValueIterationGS(ValueIteration):
             self.iter += 1
 
             Vprev = self.V.copy()
-            #V = self.V.reshape(4)
-            print(self.V)
+            print("self.v", self.V)
 
             """
-            i = 0
             for s1 in range(3):
                 for s2 in range(4):
                     for k in self.P[i]:
@@ -1627,26 +1593,92 @@ class ValueIterationGS(ValueIteration):
                             print(Q)
 
                             self.V[s1][s2] = max(Q)
-
-            i += 1
             """
-            for aa in range(self.A):
-                for k in self.P[aa]:
-                    rows = int((k[0] / shape[1]))
-                    cols = int((k[0] % shape[1]))
-                    pair_xy = [rows, cols]
-                    print("pair xy", pair_xy)
-                    print("reward row col", reward[rows][cols])
 
-                    Q = [float(reward[rows][cols] + self.discount * _np.dot(k[2], self.V[rows][cols]))
-                         for a in range(self.A)]
-                    print("Q", Q)
+            #subToInd = []
+            #for t in self.terminals:
+            #    subToInd.append(t[0] * self.shape[1] + t[1])
+            #print(subToInd)
 
-                    self.V[rows][cols] = max(Q)
-                    print("V[rows][cols]", self.V[rows][cols])
+            #pair_xy = []
+            #for k in range(len(self.P[0])+len(self.terminals)):
 
+            """
+            for k in range(len(self.P[0])):
+                # print("k", k)  # 28
+                # print("k0", self.P[aa][k][0])
+                # print("v", self.V[k])
+                rows = int((self.P[0][k][0] / self.shape[1]))
+                cols = int((self.P[0][k][0] % self.shape[1]))
+                pair_xy = ([rows, cols])
+                #print(pair_xy)
+                # print("V xy", self.V[pair_xy[0]][pair_xy[1]])
+                # print("reward row col", reward[rows][cols])
+                # print(_np.dot(k[2], self.V[pair_xy[0]][pair_xy[1]]))
 
-            
+                Q = [float(self.reward[pair_xy[0]][pair_xy[1]] + self.discount * _np.dot(self.P[a][k][2], self.V[k]))
+                     for a in range(self.A)]
+
+                #print("reward xy", reward[pair_xy[0]][pair_xy[1]])
+                #print("discount", self.discount)
+                #print("P0k2", self.P[0][k][2])
+                #print("Vk", self.V)
+
+                # Q = [float(reward[pair_xy[0]][pair_xy[1]] + self.discount * self.P[a][k][2].dot(self.V[k]))
+                #    for a in range(self.A)]
+                # print("Q", Q)
+
+                self.V[k] = max(Q)
+                # print("self.V", self.V[k])
+                """
+            """
+            split = []
+            for a in range(self.A):  # 4
+                split.append(_tf.split(self.P[a], 11, axis=0, num=None, name='split'))
+
+            for a in range(self.A):  # 4
+                # split.append(_tf.split(self.P[a], 11, axis=0, num=None, name='split'))
+                # print(split[0][0][:, 0])
+                # print(split[0][0][:, 1])
+                # print(split[0][0][:, 2][0])
+                for x in range(self.shape[0]):  # 3
+                    for y in range(self.shape[1]):  # 4
+                        for s1 in range(len(split[a])):  # 11
+                            for s2 in range(len(split[a][s1])):  # 3
+                                # print(split[a][s1][:, 1][s2])
+                                rows = int((split[a][s1][:, 1][s2] / self.shape[1]))
+                                cols = int((split[a][s1][:, 1][s2] % self.shape[1]))
+                                pair_xy = ([rows, cols])
+                                # print(pair_xy)
+                                if [x, y] != pair_xy:
+                                    continue
+                                else:
+                                    # print("components match", x, y, pair_xy)
+                                    # print(self.reward[x][y])
+                                    Q = [float(
+                                        self.reward[x][y] + self.discount * (split[a][s1][:, 2][s2] * self.V[x][y]))
+                                         for a in range(self.A)]
+                                    print(Q)
+
+                                    self.V[x][y] = max(Q)
+                                    """
+            split = []
+            for a in range(self.A):  # 4
+                split.append(_tf.split(self.P[a], 11, axis=0, num=None, name='split'))
+
+            for s1 in range(len(split[0])):  # 11
+                for s2 in range(len(split[0][s1])):  # 3
+                    rows = int((split[a][s1][:, 1][s2] / self.shape[1]))
+                    cols = int((split[a][s1][:, 1][s2] % self.shape[1]))
+                    pair_xy = ([rows, cols])
+
+                    Q = [float(
+                        self.reward[pair_xy[0]][pair_xy[1]] + self.discount * _np.dot(split[a][s1][:, 2][s2], self.V[pair_xy[0]][pair_xy[1]]))
+                        for a in range(self.A)]
+                    print(Q)
+
+                    self.V[pair_xy[0]][pair_xy[1]] = max(Q)
+
             variation = _util.getSpan(self.V - Vprev)
             self.iterations_list.append(variation)
             self.v_list.append(self.V.copy())
@@ -1664,34 +1696,57 @@ class ValueIterationGS(ValueIteration):
 
         self.policy = []
 
-        for a in range(self.A):
-            for k in self.P[a]:
-                Q = _np.zeros(self.A)
-                rows = int((k[0] / shape[1]))
-                cols = int((k[0] % shape[1]))
-                pair_xy = [rows, cols]
+        for s1 in range(len(split[0])):  # 11
+            for s2 in range(len(split[0][s1])):  # 3
+                for a in range(self.A):
+                    rows = int((split[a][s1][:, 1][s2] / self.shape[1]))
+                    cols = int((split[a][s1][:, 1][s2] % self.shape[1]))
+                    pair_xy = ([rows, cols])
 
-                Q[a] = (reward[rows][cols] +
-                        self.discount * _np.dot(k[2], self.V[rows][cols]))
-            print("Q[a]", Q[a])
+                    Q = (self.reward[pair_xy[0]][pair_xy[1]] + self.discount * _np.dot(
+                                    split[a][s1][:, 2][s2], self.V[pair_xy[0]][pair_xy[1]]))
+                    print(Q)
 
-            """
-            Q[a]
-            77.28757232349163
-            78.83028408335811
-            81.56675430143832
-            100.0
-            72.99764367415246
-            -3.0
-            64.93299620685075
-            -100.0
-            68.3525183711481
-            66.91347190741581
-            62.789286281692725
-            40.875820857374826
-            """
-
-            self.V[rows][cols] = max(Q)
-            self.policy.append(int(Q.argmax()))
+                self.V[pair_xy[0]][pair_xy[1]] = max(Q)
+                self.policy.append(int(Q.argmax()))
 
         self._endRun()
+
+        """
+        for a in range(self.A):
+            for k in range(len(self.P[a])):
+                Q = _np.zeros(self.A)
+                rows = int((self.P[a][k][0] / self.shape[1]))
+                cols = int((self.P[a][k][0] % self.shape[1]))
+                pair_xy = [rows, cols]
+
+                Q[a] = (self.reward[pair_xy[0]][pair_xy[1]] +
+                        self.discount * _np.dot(self.P[a][k][2], self.V[k]))
+            print("Q[a]", Q[a])
+
+            self.V[k] = max(Q)
+            
+            
+
+        for a in range(self.A):  # 4
+            # split.append(_tf.split(self.P[a], 11, axis=0, num=None, name='split'))
+            # print(split[0][0][:, 0])
+            # print(split[0][0][:, 1])
+            # print(split[0][0][:, 2][0])
+            for x in range(self.shape[0]):  # 3
+                for y in range(self.shape[1]):  # 4
+                    for s1 in range(len(split[a])):  # 11
+                        for s2 in range(len(split[a][s1])):  # 3
+                            # print(split[a][s1][:, 1][s2])
+                            rows = int((split[a][s1][:, 1][s2] / self.shape[1]))
+                            cols = int((split[a][s1][:, 1][s2] % self.shape[1]))
+                            pair_xy = ([rows, cols])
+                            # print(pair_xy)
+                            if [x, y] != pair_xy:
+                                continue
+                            else:
+                                Q = self.reward[x][y] + self.discount * (split[a][s1][:, 2][s2] * self.V[x][y])
+
+                    self.V[x][y] = max(Q)
+        """
+
