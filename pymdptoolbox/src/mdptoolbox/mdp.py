@@ -278,7 +278,7 @@ class MDP(object):
 
         for aa in range(self.A):
             Q[aa] = reward
-            print("Q[aa]", Q[aa])
+            # print("Q[aa]", Q[aa])
 
         # Get the policy and value, for now it is being returned but...
         # Which way is better?
@@ -1419,6 +1419,7 @@ class ValueIteration(MDP):
                 # try:
                 # PP[aa] = self.P[aa][:, 2]
                 PP[aa] = self.P[aa]
+                # print("PP[aa]", PP[aa])
                 # except ValueError:
                 # PP[aa] = self.P[aa][:, 2].todense().A1
                 # PP[aa] = self.P[aa].todense().A1
@@ -1430,8 +1431,6 @@ class ValueIteration(MDP):
         Vprev = self.V
 
         null, value = self._bellmanOperator(reward, shape)
-        print("value:", value)
-        print("vprev:", Vprev)
 
         # p 201, Proposition 6.6.5
         span = _util.getSpan(value - Vprev)
@@ -1574,7 +1573,6 @@ class ValueIterationGS(ValueIteration):
             self.iter += 1
 
             Vprev = self.V.copy()
-            print("self.v", self.V)
 
             """
             for s1 in range(3):
@@ -1663,21 +1661,25 @@ class ValueIterationGS(ValueIteration):
                                     self.V[x][y] = max(Q)
                                     """
             split = []
-            for a in range(self.A):  # 4
-                split.append(_tf.split(self.P[a], 11, axis=0, num=None, name='split'))
+            for aa in range(self.A):  # 4
+                split.append(_tf.split(self.P[aa], 11, axis=0, num=None, name='split'))
+            print(split)
+            print(self.reward)
 
-            for s1 in range(len(split[0])):  # 11
-                for s2 in range(len(split[0][s1])):  # 3
-                    rows = int((split[a][s1][:, 1][s2] / self.shape[1]))
-                    cols = int((split[a][s1][:, 1][s2] % self.shape[1]))
-                    pair_xy = ([rows, cols])
+            for a in range(self.A):
+                for s1 in range(len(split[0])):  # 11
+                    for s2 in range(len(split[0][s1])):  # 3
+                        rows = int((split[a][s1][:, 1][s2] / self.shape[1]))
+                        cols = int((split[a][s1][:, 1][s2] % self.shape[1]))
+                        pair_xy = ([rows, cols])
 
-                    Q = [float(
-                        self.reward[pair_xy[0]][pair_xy[1]] + self.discount * _np.dot(split[a][s1][:, 2][s2], self.V[pair_xy[0]][pair_xy[1]]))
-                        for a in range(self.A)]
-                    print(Q)
+                        Q = [float(
+                            self.reward[pair_xy[0]][pair_xy[1]] + self.discount * _np.dot(split[a][s1][:, 2][s2], self.V[pair_xy[0]][pair_xy[1]]))
+                            for a in range(self.A)]
 
-                    self.V[pair_xy[0]][pair_xy[1]] = max(Q)
+                        #print(Q)
+
+                        self.V[pair_xy[0]][pair_xy[1]] = max(Q)
 
             variation = _util.getSpan(self.V - Vprev)
             self.iterations_list.append(variation)
@@ -1705,7 +1707,7 @@ class ValueIterationGS(ValueIteration):
 
                     Q = (self.reward[pair_xy[0]][pair_xy[1]] + self.discount * _np.dot(
                                     split[a][s1][:, 2][s2], self.V[pair_xy[0]][pair_xy[1]]))
-                    print(Q)
+                    #print(Q)
 
                 self.V[pair_xy[0]][pair_xy[1]] = max(Q)
                 self.policy.append(int(Q.argmax()))
