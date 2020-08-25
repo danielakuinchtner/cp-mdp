@@ -50,6 +50,9 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], r=1, rewards=[], actions=[], 
 
     # Ca = [[],[],[]]
     output = []
+    successors = []
+    origins = []
+    probabilities = []
 
     for a in STPM:  # 4
         for x in range(shape[0]):  # 3
@@ -69,10 +72,10 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], r=1, rewards=[], actions=[], 
                     successor_i, successor_j = succ(aa, x, y, final_limits)
 
                     # if valid(successor_i, successor_j, obstacles):
-                    if [x, y] not in obstacles:
+                    if [successor_i, successor_j] not in obstacles:
                         state_to = sub2ind(shape, successor_i, successor_j)
                         # P[STPM.index(a), state_from, state_to] = P[STPM.index(a), state_from, state_to] + a[aa]
-                        # successor = ind2sub(shape, state_to)
+                        #successor = ind2sub(shape, state_to)
                         # Ca = Ca + [xy, successor, a[aa]]
 
                         rank_3_tensor = tf.constant([
@@ -80,28 +83,42 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], r=1, rewards=[], actions=[], 
                             state_to,
                             a[aa]])
                         output.append(rank_3_tensor)
+                        successors.append(state_to)
+                        origins.append(state_from)
+                        probabilities.append(a[aa])
 
                     else:
                         # P[STPM.index(a), state_from, state_from] = P[STPM.index(a), state_from, state_from] + a[aa]
                         # Ca = Ca + [xy, xy, a[aa]]
+                        #successor = ind2sub(shape, state_from)
 
                         rank_3_tensor = tf.constant([
                             state_from,
                             state_from,
                             a[aa]])
                         output.append(rank_3_tensor)
+                        successors.append(state_from)
+                        origins.append(state_from)
+                        probabilities.append(a[aa])
 
     # split the output into 4 arrays (because there are 4 actions)
     split = tf.split(output, len(STPM), axis=0, num=None, name='split')
-    # print(split)
+    #print(split)
+
+    succ_xy = tf.split(successors, len(STPM), axis=0, num=None, name='split')
+    #print(succ_xy)
+    origin_xy = tf.split(origins, len(STPM), axis=0, num=None, name='split')
+    #print(origin_xy)
+    probability_xy = tf.split(probabilities, len(STPM), axis=0, num=None, name='split')
+    #print(probability_xy)
 
     # convert all splits into a tensor
     split_tensor = tf.convert_to_tensor(list(split), dtype=tf.float32)
 
     dimensions = split_tensor.ndim
 
-    print(split_tensor)
-    # print(split_tensor[0][:, 2])
+    #print(split_tensor)
+    #print(succ_xy)
 
     print("Type of every element:", split_tensor.dtype)  # float32
     print("Number of dimensions:", split_tensor.ndim)  # 3
@@ -110,7 +127,6 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], r=1, rewards=[], actions=[], 
     print("Elements along the last axis of tensor:", split_tensor.shape[-1])  # 3
     print("Total number of elements (3*2*4*5): ", tf.size(split_tensor).numpy())  # 324
 
-    """
     R = _np.ones([states])
     R = _np.multiply(R, r)
 
@@ -125,12 +141,11 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], r=1, rewards=[], actions=[], 
 
     # RSS = r_to_rs(P, R, terminals, shape)
     # print(RSS)
-    """
 
     RW = reward_tensor(split_tensor, r, rewards, terminals, obstacles, shape)
-    print(RW)
+    # print(RW)
 
-    return split_tensor, RW, dimensions
+    return split_tensor, RW, dimensions, succ_xy, R
 
 
 def reward_tensor(split_tensor, r, rewards, terminals, obstacles, shape):
