@@ -183,7 +183,7 @@ class MDP(object):
 
     """
 
-    def __init__(self, transitions, reward, dimensions, shape, terminals, obstacles, succ_xy, origin_xy, probability_xy, R, states, discount,
+    def __init__(self, transitions, reward, shape, terminals, obstacles, succ_xy, origin_xy, probability_xy, R, states, discount,
                  epsilon, max_iter,
                  skip_check=False):
         # Initialise a MDP based on the input parameters.
@@ -229,7 +229,7 @@ class MDP(object):
         self.reward = reward
         self.states = states
         self.Rreward = R
-        self.R = self._computeReward(reward, transitions, dimensions)
+        self.R = self._computeReward(reward, transitions)
         # print("R: ", self.R)
         # print("reward:", reward)
 
@@ -292,7 +292,7 @@ class MDP(object):
     def _computeTransition(self, transition):
         return tuple(transition[a] for a in range(self.A))
 
-    def _computeReward(self, reward, transition, dimensions):
+    def _computeReward(self, reward, transition):
         # Compute the reward for the system in one state chosing an action.
         # Arguments
         # Let S = number of states, A = number of actions
@@ -307,11 +307,11 @@ class MDP(object):
             elif reward.ndim == 2:
                 return self._computeArrayReward(reward)
             else:
-                r = tuple(map(self._computeMatrixReward, reward, transition, dimensions))
+                r = tuple(map(self._computeMatrixReward, reward, transition))
                 return r
         except (AttributeError, ValueError):
             if len(reward) == self.A:
-                r = tuple(map(self._computeMatrixReward, reward, transition, dimensions))
+                r = tuple(map(self._computeMatrixReward, reward, transition))
                 return r
             else:
                 return self._computeVectorReward(reward)
@@ -432,13 +432,13 @@ class FiniteHorizon(MDP):
 
     """
 
-    def __init__(self, transitions, reward, dimensions, shape, discount, N, h=None,
+    def __init__(self, transitions, reward, shape, discount, N, h=None,
                  skip_check=False):
         # Initialise a finite horizon MDP.
         self.N = int(N)
         assert self.N > 0, "N must be greater than 0."
         # Initialise the base class
-        MDP.__init__(self, transitions, reward, dimensions, shape, discount, None, None,
+        MDP.__init__(self, transitions, reward, shape, discount, None, None,
                      skip_check=skip_check)
         # remove the iteration counter, it is not meaningful for backwards
         # induction
@@ -521,7 +521,7 @@ class _LP(MDP):
 
     """
 
-    def __init__(self, transitions, reward, dimensions, shape, discount, skip_check=False):
+    def __init__(self, transitions, reward, shape, discount, skip_check=False):
         # Initialise a linear programming MDP.
         # import some functions from cvxopt and set them as object methods
         try:
@@ -532,7 +532,7 @@ class _LP(MDP):
             raise ImportError("The python module cvxopt is required to use "
                               "linear programming functionality.")
         # initialise the MDP. epsilon and max_iter are not needed
-        MDP.__init__(self, transitions, reward, dimensions, shape, discount, None, None,
+        MDP.__init__(self, transitions, reward, shape, discount, None, None,
                      skip_check=skip_check)
         # Set the cvxopt solver to be quiet by default, but ...
         # this doesn't do what I want it to do c.f. issue #3
@@ -634,12 +634,13 @@ class PolicyIteration(MDP):
     (0, 0, 0)
     """
 
-    def __init__(self, transitions, reward, dimensions, shape, succ_xy, states, discount, policy0=None,
+    def __init__(self, transitions, reward, shape, succ_xy, states, discount, policy0=None,
                  max_iter=1000, eval_type=0, skip_check=False):
         # Initialise a policy iteration MDP.
         #
         # Set up the MDP, but don't need to worry about epsilon values
-        MDP.__init__(self, transitions, reward, dimensions, shape, succ_xy, states, discount, None, max_iter,
+        MDP.__init__(self, transitions, reward
+                     , shape, succ_xy, states, discount, None, max_iter,
                      skip_check=skip_check)
         # Check if the user has supplied an initial policy. If not make one.
         if policy0 is None:
@@ -903,7 +904,7 @@ class PolicyIterationModified(PolicyIteration):
 
     """
 
-    def __init__(self, transitions, reward, dimensions, shape, succ_xy, discount, epsilon=0.01,
+    def __init__(self, transitions, reward, shape, succ_xy, discount, epsilon=0.01,
                  max_iter=10, skip_check=False):
         # Initialise a (modified) policy iteration MDP.
 
@@ -912,7 +913,7 @@ class PolicyIterationModified(PolicyIteration):
         # being calculated here which doesn't need to be. The only thing that
         # is needed from the PolicyIteration class is the _evalPolicyIterative
         # function. Perhaps there is a better way to do it?
-        PolicyIteration.__init__(self, transitions, reward, dimensions, shape, succ_xy, discount, None,
+        PolicyIteration.__init__(self, transitions, reward, shape, succ_xy, discount, None,
                                  max_iter, 1, skip_check=skip_check)
 
         # PolicyIteration doesn't pass epsilon to MDP.__init__() so we will
@@ -1195,11 +1196,11 @@ class RelativeValueIteration(MDP):
 
     """
 
-    def __init__(self, transitions, reward, dimensions, shape, succ_xy, epsilon=0.01, max_iter=1000,
+    def __init__(self, transitions, reward, shape, succ_xy, epsilon=0.01, max_iter=1000,
                  skip_check=False):
         # Initialise a relative value iteration MDP.
 
-        MDP.__init__(self, transitions, reward, dimensions, shape, succ_xy, None, epsilon, max_iter,
+        MDP.__init__(self, transitions, reward, shape, succ_xy, None, epsilon, max_iter,
                      skip_check=skip_check)
 
         self.epsilon = epsilon
@@ -1360,11 +1361,11 @@ class ValueIteration(MDP):
 
     """
 
-    def __init__(self, transitions, reward, dimensions, shape, succ_xy, discount, epsilon=0.01,
+    def __init__(self, transitions, reward, shape, succ_xy, discount, epsilon=0.01,
                  max_iter=1000, initial_value=0, skip_check=False):
         # Initialise a value iteration MDP.
 
-        MDP.__init__(self, transitions, reward, dimensions, shape, succ_xy, discount, epsilon, max_iter,
+        MDP.__init__(self, transitions, reward, shape, succ_xy, discount, epsilon, max_iter,
                      skip_check=skip_check)
         self.iterations_list = []
         self.v_list = []
@@ -1378,7 +1379,7 @@ class ValueIteration(MDP):
         if self.discount < 1:
             # compute a bound for the number of iterations and update the
             # stored value of self.max_iter
-            self._boundIter(epsilon, dimensions)
+            self._boundIter(epsilon)
             # computation of threshold of variation for V for an epsilon-
             # optimal policy
             self.thresh = epsilon * (1 - self.discount) / self.discount
@@ -1386,7 +1387,7 @@ class ValueIteration(MDP):
             # threshold of variation for V for an epsilon-optimal policy
             self.thresh = epsilon
 
-    def _boundIter(self, epsilon, dimensions):
+    def _boundIter(self, epsilon):
         # Compute a bound for the number of iterations.
         #
         # for the value iteration
@@ -1413,7 +1414,7 @@ class ValueIteration(MDP):
 
         for ss in range(self.S):
             # print(self.S)  # 27
-            PP = _np.zeros((self.A, self.S, dimensions))
+            PP = _np.zeros((self.A, self.S))
             # print(dimensions)
             for aa in range(self.A):
                 # print(self.P[aa])
@@ -1532,19 +1533,20 @@ class ValueIterationGS(ValueIteration):
 
     """
 
-    def __init__(self, transitions, reward, dimensions, shape, terminals, obstacles, succ_xy, origin_xy, probability_xy, R, states, discount,
+    def __init__(self, transitions, reward, shape, terminals, obstacles, succ_xy, origin_xy, probability_xy, R, states, discount,
                  epsilon=0.01,
                  max_iter=10, initial_value=0, skip_check=False):
         # Initialise a value iteration Gauss-Seidel MDP.
 
-        MDP.__init__(self, transitions, reward, dimensions, shape, terminals, obstacles, succ_xy, origin_xy, probability_xy, R, states, discount,
+        MDP.__init__(self, transitions, reward, shape, terminals, obstacles, succ_xy, origin_xy, probability_xy, R, states, discount,
                      epsilon, max_iter,
                      skip_check=skip_check)
         self.iterations_list = []
         self.v_list = []
         # initialization of optional arguments
         if initial_value == 0:
-            self.V = _np.zeros(self.states)
+            self.V = _np.empty(self.states)
+
         else:
             if len(initial_value) != self.states:
                 raise ValueError("The initial value must be a vector of "
@@ -1559,7 +1561,7 @@ class ValueIterationGS(ValueIteration):
         if self.discount < 1:
             # compute a bound for the number of iterations and update the
             # stored value of self.max_iter
-            self._boundIter(epsilon, dimensions)
+            self._boundIter(epsilon)
             # computation of threshold of variation for V for an epsilon-
             # optimal policy
             self.thresh = epsilon * (1 - self.discount) / self.discount
@@ -1581,7 +1583,9 @@ class ValueIterationGS(ValueIteration):
             split.append(_tf.split(self.P[aa], 12, axis=0, num=None, name='split'))
             split_succ_xy.append(_tf.split(self.succ_xy[aa], 12, axis=0, num=None, name='split'))
             split_origin_xy.append(_tf.split(self.origin_xy[aa], 12, axis=0, num=None, name='split'))
-            split_probability.append(_tf.split(self.probabilities_xy[aa], 12, axis=0, num=None, name='split'))
+            #split_probability.append(_tf.split(self.probabilities_xy[aa], 12, axis=0, num=None, name='split'))
+
+
 
         while True:
             self.iter += 1
@@ -1693,20 +1697,23 @@ class ValueIterationGS(ValueIteration):
 
                    """
 
-
             for s1 in range(len(split_succ_xy[0])):
+
                 for s2 in range(len(split_succ_xy[0][s1])):
 
-                    Q = [float(self.Rreward[s1] + self.discount * (
-                                split_probability[a][s1][s2] * self.V[split_succ_xy[a][s1][s2]]))
+                    Q = [float(self.Rreward[s1] + self.discount * _np.dot(
+                                split[a][s1][:, 2][s2], self.V[split_succ_xy[a][s1][s2]]))
                         for a in range(self.A)]
 
                     #print("Q", Q)
 
-                    self.V[s1] = max(Q)
+                    if self.V[s1] < max(Q):
+                        self.V[s1] = max(Q)
+                    else:
+                        continue
 
-                #print("V", self.V)
-                print("Q", Q)
+                print("V", self.V)
+
 
             variation = _util.getSpan(self.V - Vprev)
             self.iterations_list.append(variation)
@@ -1728,11 +1735,16 @@ class ValueIterationGS(ValueIteration):
             Q = _np.zeros(self.A)
             for s2 in range(len(split_succ_xy[0][s1])):
                 for a in range(self.A):
-                    Q = (self.Rreward[split_succ_xy[a][s1][s2]] + self.discount *
-                         (split[a][s1][:, 2][s2] * self.V[split_succ_xy[a][s1][s2]]))
-                self.V[split_succ_xy[a][s1][s2]] = Q.max()
+                    Q = self.Rreward[s1] + self.discount * _np.dot(
+                        split[a][s1][:, 2][s2], self.V[split_succ_xy[a][s1][s2]])
+
+                if self.V[s1] < Q.max():
+                    self.V[s1] = Q.max()
+                else:
+                    continue
                 self.policy.append(int(Q.argmax()))
-            #print("V", self.V[split_succ_xy[a][s1][s2]])
+
+            print(self.V[s1])
         self._endRun()
 
         """

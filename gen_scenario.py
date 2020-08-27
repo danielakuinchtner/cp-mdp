@@ -78,14 +78,33 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], r=1, rewards=[], actions=[], 
                         # successor = ind2sub(shape, state_to)
                         # Ca = Ca + [xy, successor, a[aa]]
 
-                        rank_3_tensor = tf.constant([
-                            state_from,
-                            state_to,
-                            a[aa]])
-                        output.append(rank_3_tensor)
-                        successors.append(state_to)
-                        origins.append(state_from)
-                        probabilities.append(a[aa])
+                        if [x, y] in terminals:
+                            rank_3_tensor = tf.constant([
+                                state_from,
+                                state_from,
+                                0.0])
+                            output.append(rank_3_tensor)
+                            successors.append(state_to)
+                            origins.append(state_from)
+
+                        elif [x, y] in obstacles:
+                            rank_3_tensor = tf.constant([
+                                state_from,
+                                state_from,
+                                0.0])
+                            output.append(rank_3_tensor)
+                            successors.append(state_to)
+                            origins.append(state_from)
+
+                        else:
+                            rank_3_tensor = tf.constant([
+                                state_from,
+                                state_to,
+                                a[aa]])
+                            output.append(rank_3_tensor)
+                            successors.append(state_to)
+                            origins.append(state_from)
+                            probabilities.append(a[aa])
 
                     else:
                         # P[STPM.index(a), state_from, state_from] = P[STPM.index(a), state_from, state_from] + a[aa]
@@ -117,7 +136,7 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], r=1, rewards=[], actions=[], 
     split_tensor_origin_xy = tf.convert_to_tensor(list(origin_xy), dtype=tf.int32)
     split_tensor_succ_xy = tf.convert_to_tensor(list(succ_xy), dtype=tf.int32)
 
-    dimensions = split_tensor.ndim
+    #dimensions = split_tensor.ndim
 
     #print(split_tensor)
     #print(succ_xy)
@@ -147,7 +166,7 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], r=1, rewards=[], actions=[], 
     RW = reward_tensor(split_tensor, r, rewards, terminals, obstacles, shape)
     # print(RW)
 
-    return split_tensor, RW, dimensions, succ_xy, origin_xy, probability_xy, R
+    return split_tensor, RW, succ_xy, origin_xy, probability_xy, R
 
 
 def reward_tensor(split_tensor, r, rewards, terminals, obstacles, shape):
@@ -247,12 +266,8 @@ def succ(a, x, y, final_limits):
 
 def print_policy(policy, shape, obstacles=[], terminals=[], actions=[]):
     p_policy = _np.empty(shape, dtype=object)
-
     for i in range(len(policy)):
-        #print(len(policy))
-        #print(policy[i])
         sub = ind2sub(shape, i)
-        #print("subbbb", sub)
         if sub in obstacles:
             p_policy[sub[0]][sub[1]] = 'O'
         elif sub in terminals:
