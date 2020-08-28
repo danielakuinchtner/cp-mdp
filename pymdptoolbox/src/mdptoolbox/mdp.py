@@ -183,7 +183,7 @@ class MDP(object):
 
     """
 
-    def __init__(self, transitions, reward, shape, terminals, obstacles, succ_xy, origin_xy, probability_xy, R, states, discount,
+    def __init__(self, transitions, reward, shape, terminals, obstacles, succ_xy, origin_xy, probability_xy, R, dimensions, states, discount,
                  epsilon, max_iter,
                  skip_check=False):
         # Initialise a MDP based on the input parameters.
@@ -228,6 +228,7 @@ class MDP(object):
         self.P = self._computeTransition(transitions)
         self.reward = reward
         self.states = states
+        self.dimensions = dimensions
         self.Rreward = R
         self.R = self._computeReward(reward, transitions)
         # print("R: ", self.R)
@@ -1414,20 +1415,20 @@ class ValueIteration(MDP):
 
         for ss in range(self.S):
             # print(self.S)  # 27
-            PP = _np.zeros((self.A, self.S))
+            PP = _np.zeros((self.A, self.S, self.dimensions))
             # print(dimensions)
             for aa in range(self.A):
                 # print(self.P[aa])
-                # try:
-                # PP[aa] = self.P[aa][:, 2]
+                #try:
                 PP[aa] = self.P[aa]
-                # print("PP[aa]", PP[aa])
-                # except ValueError:
+                #except ValueError:
+                    #PP[aa] = self.P[aa].todense().A1
+
                 # PP[aa] = self.P[aa][:, 2].todense().A1
                 # PP[aa] = self.P[aa].todense().A1
 
             # minimum of the entire array.
-            # h[ss] = PP.min()
+            #h[ss] = PP.min()
 
         k = 1 - h.sum()
         Vprev = self.V
@@ -1436,7 +1437,6 @@ class ValueIteration(MDP):
 
         # p 201, Proposition 6.6.5
         span = _util.getSpan(value - Vprev)
-        # span = _util.getSpan(value)
         max_iter = (_math.log((epsilon * (1 - self.discount) / self.discount) /
                               span) / _math.log(self.discount * k))
         # self.V = Vprev
@@ -1533,19 +1533,19 @@ class ValueIterationGS(ValueIteration):
 
     """
 
-    def __init__(self, transitions, reward, shape, terminals, obstacles, succ_xy, origin_xy, probability_xy, R, states, discount,
+    def __init__(self, transitions, reward, shape, terminals, obstacles, succ_xy, origin_xy, probability_xy, R, dimensions, states, discount,
                  epsilon=0.01,
                  max_iter=10, initial_value=0, skip_check=False):
         # Initialise a value iteration Gauss-Seidel MDP.
 
-        MDP.__init__(self, transitions, reward, shape, terminals, obstacles, succ_xy, origin_xy, probability_xy, R, states, discount,
+        MDP.__init__(self, transitions, reward, shape, terminals, obstacles, succ_xy, origin_xy, probability_xy, R, dimensions, states, discount,
                      epsilon, max_iter,
                      skip_check=skip_check)
         self.iterations_list = []
         self.v_list = []
         # initialization of optional arguments
         if initial_value == 0:
-            self.V = _np.empty(self.states)
+            self.V = _np.zeros(self.states)
 
         else:
             if len(initial_value) != self.states:
@@ -1584,8 +1584,6 @@ class ValueIterationGS(ValueIteration):
             split_succ_xy.append(_tf.split(self.succ_xy[aa], 12, axis=0, num=None, name='split'))
             split_origin_xy.append(_tf.split(self.origin_xy[aa], 12, axis=0, num=None, name='split'))
             #split_probability.append(_tf.split(self.probabilities_xy[aa], 12, axis=0, num=None, name='split'))
-
-
 
         while True:
             self.iter += 1
@@ -1698,22 +1696,20 @@ class ValueIterationGS(ValueIteration):
                    """
 
             for s1 in range(len(split_succ_xy[0])):
-
                 for s2 in range(len(split_succ_xy[0][s1])):
 
-                    Q = [float(self.Rreward[s1] + self.discount * _np.dot(
+                    Q = [float(self.Rreward[split_origin_xy[a][s1][s2]] + self.discount * _np.dot(
                                 split[a][s1][:, 2][s2], self.V[split_succ_xy[a][s1][s2]]))
                         for a in range(self.A)]
 
                     #print("Q", Q)
 
-                    if self.V[s1] < max(Q):
+                    if max(Q) >= self.V[s1] or self.V[s1] == 0:
                         self.V[s1] = max(Q)
                     else:
                         continue
 
-                print("V", self.V)
-
+                #print("V", self.V)
 
             variation = _util.getSpan(self.V - Vprev)
             self.iterations_list.append(variation)
@@ -1735,14 +1731,15 @@ class ValueIterationGS(ValueIteration):
             Q = _np.zeros(self.A)
             for s2 in range(len(split_succ_xy[0][s1])):
                 for a in range(self.A):
-                    Q = self.Rreward[s1] + self.discount * _np.dot(
+                    Q = self.Rreward[split_origin_xy[a][s1][s2]] + self.discount * _np.dot(
                         split[a][s1][:, 2][s2], self.V[split_succ_xy[a][s1][s2]])
 
-                if self.V[s1] < Q.max():
+                if self.V[s1] <= Q.max() or self.V[s1] is 0:
                     self.V[s1] = Q.max()
                 else:
                     continue
-                self.policy.append(int(Q.argmax()))
+
+            self.policy.append(int(Q.argmax()))
 
             print(self.V[s1])
         self._endRun()
