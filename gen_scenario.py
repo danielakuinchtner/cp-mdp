@@ -141,12 +141,12 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], r=1, rewards=[], actions=[], 
     #print(split_tensor)
     #print(succ_xy)
 
-    print("Type of every element:", split_tensor.dtype)  # float32
-    print("Number of dimensions:", split_tensor.ndim)  # 3
-    print("Shape of tensor:", split_tensor.shape)  # (4, 27, 3)
-    print("Elements along axis 0 of tensor:", split_tensor.shape[0])  # 4
-    print("Elements along the last axis of tensor:", split_tensor.shape[-1])  # 3
-    print("Total number of elements (3*2*4*5): ", tf.size(split_tensor).numpy())  # 324
+    #print("Type of every element:", split_tensor.dtype)  # float32
+    #print("Number of dimensions:", split_tensor.ndim)  # 3
+    #print("Shape of tensor:", split_tensor.shape)  # (4, 27, 3)
+    #print("Elements along axis 0 of tensor:", split_tensor.shape[0])  # 4
+    #print("Elements along the last axis of tensor:", split_tensor.shape[-1])  # 3
+    #print("Total number of elements (3*2*4*5): ", tf.size(split_tensor).numpy())  # 324
 
     R = _np.ones([states])
     R = _np.multiply(R, r)

@@ -1741,7 +1741,7 @@ class ValueIterationGS(ValueIteration):
 
             self.policy.append(int(Q.argmax()))
 
-            print(self.V[s1])
+            #print(self.V[s1])
         self._endRun()
 
         """

@@ -4,6 +4,7 @@
 import sys
 sys.path.insert(1,'pymdptoolbox/src')
 import mdptoolbox.example
+import time
 from gen_scenario import *
 
 """
@@ -24,14 +25,24 @@ terminals = [[0, 3], [1, 3]]
 actions = ['N', 'E', 'W', 'S']
 final_limits = [shape[0]-1, shape[1]-1]
 states = shape[0] * shape[1]
+
+start_time1 = time.time()
 output, RW, succ_xy, origin_xy, probability_xy, R, dimensions = mdp_grid(shape=shape, terminals=terminals, r=-3,
                                                                          rewards=rewards, obstacles=obstacles,
                                                                          actions=actions, final_limits=final_limits)
+print("--- %s seconds ---" % (time.time() - start_time1))
+
+start_time2 = time.time()
 vi = mdptoolbox.mdp.ValueIterationGS(output, RW, shape, terminals, obstacles, succ_xy, origin_xy, probability_xy, R,
                                      dimensions, states, discount=1, epsilon=0.001, max_iter=1000, skip_check=True)
+print("--- %s seconds ---" % (time.time() - start_time2))
+
+#--- 0.19688653945922852 seconds ---
+#--- 0.0009992122650146484 seconds ---
+
 
 vi.run()  # You can check the quadrant values using print vi.V
-print_policy(vi.policy, shape, obstacles=obstacles, terminals=terminals, actions=actions)
+# print_policy(vi.policy, shape, obstacles=obstacles, terminals=terminals, actions=actions)
 # display_policy(vi.policy, shape, obstacles=obstacles, terminals=terminals)
 
 # print(output)
