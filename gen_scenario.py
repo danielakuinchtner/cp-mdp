@@ -1,6 +1,6 @@
 import numpy as _np
 import math
-import tensorflow as tf  # .\venv\Scripts\activate
+#import tensorflow as tf  # .\venv\Scripts\activate
 import scipy.sparse as _sp
 import sys
 
@@ -48,11 +48,10 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], r=1, rewards=[], actions=[], 
     #         [0.1(W,N), 0.0(W,E), 0.8(W,W), 0.1(W,S)],
     #         [0.0(S,N), 0.1(S,E), 0.1(S,W), 0.8(S,S)]]
 
-    # Ca = [[],[],[]]
     output = []
-    successors = []
-    origins = []
-    probabilities = []
+    successors = _np.array([])
+    origins = _np.array([])
+    probabilities = _np.array([])
 
     for a in STPM:  # 4
         for x in range(shape[0]):  # 3
@@ -78,65 +77,62 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], r=1, rewards=[], actions=[], 
                         # successor = ind2sub(shape, state_to)
                         # Ca = Ca + [xy, successor, a[aa]]
 
-                        if [x, y] in terminals:
-                            rank_3_tensor = tf.constant([
-                                state_from,
-                                state_from,
-                                0.0])
-                            output.append(rank_3_tensor)
-                            successors.append(state_to)
-                            origins.append(state_from)
-
-                        elif [x, y] in obstacles:
-                            rank_3_tensor = tf.constant([
-                                state_from,
-                                state_from,
-                                0.0])
-                            output.append(rank_3_tensor)
-                            successors.append(state_to)
-                            origins.append(state_from)
+                        if [x, y] in terminals or [x, y] in obstacles:
+                            #rank_3_tensor = tf.constant([
+                                #state_from,
+                                #state_from,
+                                #0.0])
+                            #output.append(rank_3_tensor)
+                            successors = _np.append(successors, state_from)
+                            origins = _np.append(origins, state_from)
+                            probabilities = _np.append(probabilities, 0)
 
                         else:
-                            rank_3_tensor = tf.constant([
-                                state_from,
-                                state_to,
-                                a[aa]])
-                            output.append(rank_3_tensor)
-                            successors.append(state_to)
-                            origins.append(state_from)
-                            probabilities.append(a[aa])
+                            #rank_3_tensor = tf.constant([
+                                #state_from,
+                                #state_to,
+                                #a[aa]])
+                            #output.append(rank_3_tensor)
+                            successors = _np.append(successors, state_to)
+                            origins = _np.append(origins, state_from)
+                            probabilities = _np.append(probabilities, a[aa])
 
                     else:
                         # P[STPM.index(a), state_from, state_from] = P[STPM.index(a), state_from, state_from] + a[aa]
                         # Ca = Ca + [xy, xy, a[aa]]
                         # successor = ind2sub(shape, state_from)
 
-                        rank_3_tensor = tf.constant([
-                            state_from,
-                            state_from,
-                            a[aa]])
-                        output.append(rank_3_tensor)
-                        successors.append(state_from)
-                        origins.append(state_from)
-                        probabilities.append(a[aa])
+                        #rank_3_tensor = tf.constant([
+                            #state_from,
+                            #state_from,
+                            #a[aa]])
+                        #output.append(rank_3_tensor)
+                        successors = _np.append(successors, state_from)
+                        origins = _np.append(origins, state_from)
+                        probabilities = _np.append(probabilities, a[aa])
 
     # split the output into 4 arrays (because there are 4 actions)
-    split = tf.split(output, len(STPM), axis=0, num=None, name='split')
+    #split = tf.split(output, len(STPM), axis=0, num=None, name='split')
     #print(split)
 
-    succ_xy = tf.split(successors, len(STPM), axis=0, num=None, name='split')
-    #print(succ_xy)
-    origin_xy = tf.split(origins, len(STPM), axis=0, num=None, name='split')
-    #print(origin_xy)
-    probability_xy = tf.split(probabilities, len(STPM), axis=0, num=None, name='split')
-    #print(probability_xy)
+    successors = successors.astype(int)
+    succ_xy = _np.split(successors, len(STPM))
+    print("succ", succ_xy)
+
+    origins = origins.astype(int)
+    origin_xy = _np.split(origins, len(STPM))
+    print("origin", origin_xy)
+
+    probability_xy = _np.split(probabilities, len(STPM))
+    #print("prob", probability_xy)
 
     # convert all splits into a tensor
-    split_tensor = tf.convert_to_tensor(list(split), dtype=tf.float32)
-    split_tensor_origin_xy = tf.convert_to_tensor(list(origin_xy), dtype=tf.int32)
-    split_tensor_succ_xy = tf.convert_to_tensor(list(succ_xy), dtype=tf.int32)
+    #split_tensor = tf.convert_to_tensor(list(split), dtype=tf.float32)
+    #split_tensor_origin_xy = tf.convert_to_tensor(list(origin_xy), dtype=tf.int32)
+    #split_tensor_succ_xy = tf.convert_to_tensor(list(succ_xy), dtype=tf.int32)
 
-    dimensions = split_tensor.ndim
+    #dimensions = split_tensor.ndim
+    dimensions = 3
 
     #print(split_tensor)
     #print(succ_xy)
@@ -163,10 +159,10 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], r=1, rewards=[], actions=[], 
     # RSS = r_to_rs(P, R, terminals, shape)
     # print(RSS)
 
-    RW = reward_tensor(split_tensor, r, rewards, terminals, obstacles, shape)
+    #RW = reward_tensor(split_tensor, r, rewards, terminals, obstacles, shape)
     # print(RW)
 
-    return split_tensor, RW, succ_xy, origin_xy, probability_xy, R, dimensions
+    return succ_xy, origin_xy, probability_xy, R
 
 
 def reward_tensor(split_tensor, r, rewards, terminals, obstacles, shape):
