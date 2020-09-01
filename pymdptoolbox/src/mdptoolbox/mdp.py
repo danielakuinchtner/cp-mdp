@@ -60,7 +60,7 @@ import time as _time
 
 import numpy as _np
 import scipy.sparse as _sp
-import tensorflow as _tf
+#import tensorflow as _tf
 import tensorly as _tl
 
 import mdptoolbox.util as _util
@@ -84,8 +84,8 @@ def _computeDimensions(transition):
             S = transition[0].shape[0]
     except AttributeError:
         S = transition[0].shape[0]
-        print("SSSSSS", S)
-        print("AAAAAA", A)
+        #print("SSSSSS", S)
+        #print("AAAAAA", A)
     return S, A
 
 
@@ -228,7 +228,7 @@ class MDP(object):
         self.states = states
         self.R = self._computeReward(R, origin_xy)
         # print("R: ", self.R)
-        # print("reward:", reward)
+        #print("reward:", R)
 
         # the verbosity is by default turned off
         self.verbose = False
@@ -275,8 +275,9 @@ class MDP(object):
         Q = _np.empty((self.A, self.states))
 
         for aa in range(self.A):
-            Q[aa] = self.R
-        # print("Q[aa]", Q[aa])
+            Q[aa] = self.R[aa]  # + self.discount * _np.dot(self.probabilities_xy[aa], self.V[self.succ_xy[aa]])
+        #print("Q[aa]", Q[aa])
+        #print(V.shape)
 
         # Get the policy and value, for now it is being returned but...
         # Which way is better?
@@ -698,6 +699,7 @@ class PolicyIteration(MDP):
         for aa in range(self.A):  # avoid looping over S
             # the rows that use action a.
             ind = (self.policy == aa).nonzero()[0]
+
             # if no rows use action a, then no need to assign this
             if ind.size > 0:
                 try:
@@ -1411,7 +1413,7 @@ class ValueIteration(MDP):
 
         for ss in range(self.S):
             # print(self.S)  # 27
-            PP = _np.zeros((self.A, self.S, self.dimensions))
+            PP = _np.zeros((self.A, self.S))
             # print(dimensions)
             for aa in range(self.A):
                 # print(self.P[aa])
@@ -1577,9 +1579,9 @@ class ValueIterationGS(ValueIteration):
         split_probability = []
         for aa in range(self.A):  # 4
             #split.append(_tf.split(self.P[aa], 12, axis=0, num=None, name='split'))
-            split_succ_xy.append(_np.split(self.succ_xy[aa], 12))
-            split_origin_xy.append(_np.split(self.origin_xy[aa], 12))
-            split_probability.append(_np.split(self.probabilities_xy[aa], 12))
+            split_succ_xy.append(_np.split(self.succ_xy[aa], self.states))
+            split_origin_xy.append(_np.split(self.origin_xy[aa], self.states))
+            split_probability.append(_np.split(self.probabilities_xy[aa], self.states))
 
         #print(split_origin_xy[0][0][0])
         #print(split_succ_xy)
@@ -1589,111 +1591,7 @@ class ValueIterationGS(ValueIteration):
             self.iter += 1
 
             Vprev = self.V.copy()
-
-            """
-            for s1 in range(3):
-                for s2 in range(4):
-                    for k in self.P[i]:
-                        print("k", k[2])
-                        print(len(self.P[i]))
-                        rows = int((k[0] / shape[1]))
-                        cols = int((k[0] % shape[1]))
-                        pair_xy = [rows, cols]
-
-                        if [s1,s2] == pair_xy:
-                            print("s1,s2,pair" ,s1,s2,pair_xy)
-                            Q = [float(reward[s1][s2] + self.discount * _np.dot(k[2], self.V[s1][s2]))
-                                 for a in range(self.A)]
-                            print(Q)
-
-                            self.V[s1][s2] = max(Q)
-            """
-
-            # subToInd = []
-            # for t in self.terminals:
-            #    subToInd.append(t[0] * self.shape[1] + t[1])
-            # print(subToInd)
-
-            # pair_xy = []
-            # for k in range(len(self.P[0])+len(self.terminals)):
-
-            """
-            for k in range(len(self.P[0])):
-                # print("k", k)  # 28
-                # print("k0", self.P[aa][k][0])
-                # print("v", self.V[k])
-                rows = int((self.P[0][k][0] / self.shape[1]))
-                cols = int((self.P[0][k][0] % self.shape[1]))
-                pair_xy = ([rows, cols])
-                #print(pair_xy)
-                # print("V xy", self.V[pair_xy[0]][pair_xy[1]])
-                # print("reward row col", reward[rows][cols])
-                # print(_np.dot(k[2], self.V[pair_xy[0]][pair_xy[1]]))
-
-                Q = [float(self.reward[pair_xy[0]][pair_xy[1]] + self.discount * _np.dot(self.P[a][k][2], self.V[k]))
-                     for a in range(self.A)]
-
-                #print("reward xy", reward[pair_xy[0]][pair_xy[1]])
-                #print("discount", self.discount)
-                #print("P0k2", self.P[0][k][2])
-                #print("Vk", self.V)
-
-                # Q = [float(reward[pair_xy[0]][pair_xy[1]] + self.discount * self.P[a][k][2].dot(self.V[k]))
-                #    for a in range(self.A)]
-                # print("Q", Q)
-
-                self.V[k] = max(Q)
-                # print("self.V", self.V[k])
-                """
-            """
-            split = []
-            for a in range(self.A):  # 4
-                split.append(_tf.split(self.P[a], 11, axis=0, num=None, name='split'))
-
-            for a in range(self.A):  # 4
-                # split.append(_tf.split(self.P[a], 11, axis=0, num=None, name='split'))
-                # print(split[0][0][:, 0])
-                # print(split[0][0][:, 1])
-                # print(split[0][0][:, 2][0])
-                for x in range(self.shape[0]):  # 3
-                    for y in range(self.shape[1]):  # 4
-                        for s1 in range(len(split[a])):  # 11
-                            for s2 in range(len(split[a][s1])):  # 3split_origin_xy
-                                # print(split[a][s1][:, 1][s2])
-                                rows = int((split[a][s1][:, 1][s2] / self.shape[1]))
-                                cols = int((split[a][s1][:, 1][s2] % self.shape[1]))
-                                pair_xy = ([rows, cols])
-                                #rows = int((split[a][s1][:, 1][s2] / self.shape[1]))
-                                #cols = int((split[a][s1][:, 1][s2] % self.shape[1]))
-                                #pair_xy = ([rows, cols])
-                                # print(pair_xy)
-                                if [x, y] != pair_xy:
-                                    continue
-                                else:
-                                    # print("components match", x, y, pair_xy)
-                                    # print(self.reward[x][y])
-                                    Q = [float(
-                                        self.reward[x][y] + self.discount * (split[a][s1][:, 2][s2] * self.V[x][y]))
-                                         for a in range(self.A)]
-                                    print(Q)
-
-                                    self.V[x][y] = max(Q)
-                                    
-                                    
-                                    
-                                                for s1 in range(len(split_succ_xy[0])):
-                #for s2 in range(len(split_succ_xy[0][s1])):
-
-
-                Q = [int(self.Rreward[split_origin_xy[s1][a]] + self.discount * (
-                            self.probabilities_xy[s1][a] * self.V[self.succ_xy[s1][a]]))
-                    for a in range(3)]
-
-                #print("Q", Q)
-
-                self.V[s1] = max(Q)
-
-                   """
+            #print(Vprev)
 
             for s1 in range(len(split_succ_xy[0])):
                 for s2 in range(len(split_succ_xy[0][s1])):
@@ -1704,12 +1602,12 @@ class ValueIterationGS(ValueIteration):
 
                     #print("Q", Q)
 
-                    if max(Q) >= self.V[s1] or self.V[s1] == 0:
-                        self.V[s1] = max(Q)
-                    else:
-                        continue
+                    #if max(Q) >= self.V[s1]:
+                    self.V[s1] = max(Q)
+                    #else:
+                     #   continue
 
-                print("V", self.V)
+                #print("V", self.V[s1])
 
             variation = _util.getSpan(self.V - Vprev)
             self.iterations_list.append(variation)
@@ -1734,66 +1632,12 @@ class ValueIterationGS(ValueIteration):
                     Q = self.R[a][split_origin_xy[a][s1][s2]] + self.discount * _np.dot(
                         split_probability[a][s1], self.V[split_succ_xy[a][s1]])
 
-                if self.V[s1] <= Q.max() or self.V[s1] is 0:
-                    self.V[s1] = Q.max()
-                else:
-                    continue
+            self.V[s1] = Q.max()
+
+            #print(self.V[s1])
 
             self.policy.append(int(Q.argmax()))
+            #print(int(Q.argmax()))
+            #print(self.policy)
 
-            print(self.V[s1])
         self._endRun()
-
-        """
-        for s1 in range(len(split[0])):  # 11
-            for s2 in range(len(split[0][s1])):  # 3
-                for a in range(self.A):
-                    rows = int((split[a][s1][:, 1][s2] / self.shape[1]))
-                    cols = int((split[a][s1][:, 1][s2] % self.shape[1]))
-                    pair_xy = ([rows, cols])
-
-                    Q = (self.reward[pair_xy[0]][pair_xy[1]] + self.discount * _np.dot(
-                                    split[a][s1][:, 2][s2], self.V[pair_xy[0]][pair_xy[1]]))
-                    #print(Q)
-
-                self.V[pair_xy[0]][pair_xy[1]] = max(Q)
-                self.policy.append(int(Q.argmax()))
-        """
-
-        """
-        for a in range(self.A):
-            for k in range(len(self.P[a])):
-                Q = _np.zeros(self.A)
-                rows = int((self.P[a][k][0] / self.shape[1]))
-                cols = int((self.P[a][k][0] % self.shape[1]))
-                pair_xy = [rows, cols]
-
-                Q[a] = (self.reward[pair_xy[0]][pair_xy[1]] +
-                        self.discount * _np.dot(self.P[a][k][2], self.V[k]))
-            print("Q[a]", Q[a])
-
-            self.V[k] = max(Q)
-            
-            
-
-        for a in range(self.A):  # 4
-            # split.append(_tf.split(self.P[a], 11, axis=0, num=None, name='split'))
-            # print(split[0][0][:, 0])
-            # print(split[0][0][:, 1])
-            # print(split[0][0][:, 2][0])
-            for x in range(self.shape[0]):  # 3
-                for y in range(self.shape[1]):  # 4
-                    for s1 in range(len(split[a])):  # 11
-                        for s2 in range(len(split[a][s1])):  # 3
-                            # print(split[a][s1][:, 1][s2])
-                            rows = int((split[a][s1][:, 1][s2] / self.shape[1]))
-                            cols = int((split[a][s1][:, 1][s2] % self.shape[1]))
-                            pair_xy = ([rows, cols])
-                            # print(pair_xy)
-                            if [x, y] != pair_xy:
-                                continue
-                            else:
-                                Q = self.reward[x][y] + self.discount * (split[a][s1][:, 2][s2] * self.V[x][y])
-
-                    self.V[x][y] = max(Q)
-        """
