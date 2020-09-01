@@ -1589,15 +1589,15 @@ class ValueIterationGS(ValueIteration):
             #print(Vprev)
 
             for s1 in range(len(split_succ_xy[0])):
-                for s2 in range(len(split_succ_xy[0][s1])):
+                #for s2 in range(len(split_succ_xy[0][s1])):
 
-                    Q = [float(self.R[a][split_origin_xy[a][s1][s2]] + self.discount * _np.dot(
-                                split_probability[a][s1], self.V[split_succ_xy[a][s1]]))
-                        for a in range(self.A)]
+                Q = [float(self.R[a][s1] + self.discount * _np.dot(
+                            split_probability[a][s1], self.V[split_succ_xy[a][s1]]))
+                    for a in range(self.A)]
 
-                    self.V[s1] = max(Q)
+                self.V[s1] = max(Q)
 
-                #print("V", self.V[s1])
+                print("V", self.V[s1])
 
             variation = _util.getSpan(self.V - Vprev)
             self.iterations_list.append(variation)
@@ -1617,14 +1617,14 @@ class ValueIterationGS(ValueIteration):
         self.policy = []
         for s1 in range(len(split_succ_xy[0])):
             Q = _np.zeros(self.A)
-            for s2 in range(len(split_succ_xy[0][s1])):
-                for a in range(self.A):
-                    Q[a] = self.R[a][split_origin_xy[a][s1][s2]] + self.discount * _np.dot(
-                        split_probability[a][s1], self.V[split_succ_xy[a][s1]])
+            #for s2 in range(len(split_succ_xy[0][s1])):
+            for a in range(self.A):
+                Q[a] = self.R[a][s1] + self.discount * _np.dot(
+                    split_probability[a][s1], self.V[split_succ_xy[a][s1]])
 
-                self.V[s1] = Q.max()
+            self.V[s1] = Q.max()
 
-            #print(self.V[s1])
+            print(self.V[s1])
 
             self.policy.append(int(Q.argmax()))
 

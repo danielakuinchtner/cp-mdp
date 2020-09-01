@@ -35,9 +35,19 @@ succ_xy, origin_xy, probability_xy, R = mdp_grid(shape=shape, terminals=terminal
 vi = mdptoolbox.mdp.ValueIterationGS(shape, terminals, obstacles, succ_xy, origin_xy, probability_xy, R, states,
                                      discount=1, epsilon=0.001, max_iter=1000, skip_check=True)
 
-vi.run()  # You can check the quadrant values using print vi.V
+vi.run()
 
 print("--- %s seconds ---" % (time.time() - start_time1))
+
+print_policy(vi.policy, shape, obstacles=obstacles, terminals=terminals, actions=actions)
+# display_policy(vi.policy, shape, obstacles=obstacles, terminals=terminals)
+
+# print(output)
+# print(R)
+
+# ----------------------------------------------
+# RESULTS OF MY ALGORITHM
+# ----------------------------------------------
 
 # 3x4
 # --- 0.014991998672485352 seconds ---
@@ -64,7 +74,7 @@ print("--- %s seconds ---" % (time.time() - start_time1))
 # --- 108.47347044944763 seconds --- 1min diminuiu 82% do tempo
 
 # 160x160
-#
+# --- 1083.288479566574 seconds --- 18min diminuiu mais de 93% do tempo
 
 # 200x200
 # --- 2216.2952921390533 seconds --- 36min
@@ -96,14 +106,11 @@ print("--- %s seconds ---" % (time.time() - start_time1))
 # 1000000x1000000
 # vai
 
-print_policy(vi.policy, shape, obstacles=obstacles, terminals=terminals, actions=actions)
-# display_policy(vi.policy, shape, obstacles=obstacles, terminals=terminals)
 
-# print(output)
-# print(R)
+# ----------------------------------------------
+# NORMAL VALUE ITERATION RESULTS (OLD ALGORITHM):
+# ----------------------------------------------
 
-
-# NORMAL VALUE ITERATION RESULTS:
 # 3x4
 # --- 0.0059969425201416016 seconds ---
 # --- 0.004996299743652344 seconds ---
@@ -129,7 +136,7 @@ print_policy(vi.policy, shape, obstacles=obstacles, terminals=terminals, actions
 # --- 590.0848195552826 seconds --- 9min
 
 # 160x160
-# vai
+# more than 4h15min
 
 # 170x170
 # memory error
