@@ -19,7 +19,7 @@ from gen_scenario import *
 """
 
 
-shape = [1000000, 1000000]
+shape = [3, 4]
 rewards = [[0, 3, 100], [1, 3, -100]]
 obstacles = [[1, 1]]
 terminals = [[0, 3], [1, 3]]
@@ -52,16 +52,19 @@ print("--- %s seconds ---" % (time.time() - start_time1))
 # --------------- 0,1861 average
 
 # 30x30
-# --- 2.0977985858917236 seconds --- diminiu 50% do tempo
+# --- 2.0977985858917236 seconds --- diminuiu 50% do tempo
 
 # 40x40
-# --- 5.280977487564087 seconds --- diminiu 61% do tempo
+# --- 5.280977487564087 seconds --- diminuiu 61% do tempo
 
 # 50x50
-# --- 11.123634099960327 seconds --- diminiu 65% do tempo
+# --- 11.123634099960327 seconds --- diminuiu 65% do tempo
 
 # 100x100
-# --- 108.47347044944763 seconds --- 1min diminiu 82% do tempo
+# --- 108.47347044944763 seconds --- 1min diminuiu 82% do tempo
+
+# 160x160
+#
 
 # 200x200
 # --- 2216.2952921390533 seconds --- 36min
