@@ -3,14 +3,16 @@ This implementation relies on the [pymdptoolbox](https://github.com/sawcordwell/
 
 ## MDPs in pymdptoolbox - Class Assignment
 
-MDP planning is implemented in a mathematical toolkit, and track the calculation of the rewards for each state via Value Iteration.
+MDP planning implemented in a mathematical toolkit.
 The following code sets up an MDP environment and computes the policy for the given MDP using the Value Iteration.
 
 <p align="center">
 <img src="mdp_simple.png"/>
 </p>
 
-# Runtimes
+## Runtimes
+
+I run all tests using an Intel Core i7-4500U CPU with 8GB RAM and 64-bit Windows operator system.
 
 | Grid size | My approach (seconds) | Tradicional approach (seconds) |
 | --- | --- | --- |
