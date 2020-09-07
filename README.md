@@ -10,6 +10,8 @@ The following code sets up an MDP environment and computes the policy for the gi
 <img src="mdp_simple.png"/>
 </p>
 
+# Runtimes
+
 | Grid size | My approach (seconds) | Tradicional approach (seconds) |
 | --- | --- | --- |
 | 3x4	 | 0.03537890911 | 	0.005196762085 |
@@ -23,7 +25,7 @@ The following code sets up an MDP environment and computes the policy for the gi
 | 80x80	 | 35.35359769	 | 212.2755362 |
 | 90x90	 | 48.64809175	 | 340.8302681 |
 | 100x100 | 	65.89430323	 | 550.7267468 |
-| 150x150 | 	627.0185016	 | 20304 |
+| 150x150 | 	627.0185016	 | 20304.10504 |
 | 200x200 | 	2196.518497	 | memory error  |
 | 300x300 | 	11588.25407 | 	memory error |
 | 400x400 | 	didn't test yet	 | memory error |
