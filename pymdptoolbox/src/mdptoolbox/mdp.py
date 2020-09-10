@@ -60,7 +60,6 @@ import time as _time
 
 import numpy as _np
 import scipy.sparse as _sp
-#import tensorflow as _tf
 import tensorly as _tl
 
 import mdptoolbox.util as _util
@@ -1597,7 +1596,7 @@ class ValueIterationGS(ValueIteration):
 
                 self.V[s1] = max(Q)
 
-                print("V", self.V[s1])
+                #print("V:", self.V[s1])
 
             variation = _util.getSpan(self.V - Vprev)
             self.iterations_list.append(variation)
@@ -1624,7 +1623,7 @@ class ValueIterationGS(ValueIteration):
 
             self.V[s1] = Q.max()
 
-            print(self.V[s1])
+            #print(self.V[s1])
 
             self.policy.append(int(Q.argmax()))
 

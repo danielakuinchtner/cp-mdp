@@ -18,14 +18,16 @@ from gen_scenario import *
 | Y-1,0 . . .   Y-1X-1
 """
 
+# install openblas lib to improve even more the runtime: conda install -c anaconda openblas
 
-shape = [3, 4]
+shape = [400, 400]
 rewards = [[0, 3, 100], [1, 3, -100]]
 obstacles = [[1, 1]]
 terminals = [[0, 3], [1, 3]]
 actions = ['N', 'E', 'W', 'S']
 final_limits = [shape[0]-1, shape[1]-1]
 states = shape[0] * shape[1]
+print("Executing a", shape, "grid")
 
 start_time1 = time.time()
 succ_xy, origin_xy, probability_xy, R = mdp_grid(shape=shape, terminals=terminals, r=-3,
@@ -58,7 +60,7 @@ print_policy(vi.policy, shape, obstacles=obstacles, terminals=terminals, actions
 # 10x10
 # --- 0.17789649963378906 seconds ---
 # --- 0.21387767791748047 seconds ---
-# --- 0.16690325736999512 seconds ---
+# --- 0.21387767791748047 seconds ---
 # --------------- 0,1861 average
 
 # 30x30
@@ -69,6 +71,7 @@ print_policy(vi.policy, shape, obstacles=obstacles, terminals=terminals, actions
 
 # 50x50
 # --- 11.123634099960327 seconds --- diminuiu 65% do tempo
+# --- 7.264829158782959 seconds ---
 
 # 100x100
 # --- 108.47347044944763 seconds --- 1min diminuiu 82% do tempo

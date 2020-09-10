@@ -1,7 +1,7 @@
 # mdp
 This implementation relies on the [pymdptoolbox](https://github.com/sawcordwell/pymdptoolbox) toolkit.
 
-## MDPs in pymdptoolbox - Class Assignment
+## MDPs in pymdptoolbox
 
 MDP planning implemented in a mathematical toolkit.
 The following code sets up an MDP environment and computes the policy for the given MDP using the Value Iteration.
