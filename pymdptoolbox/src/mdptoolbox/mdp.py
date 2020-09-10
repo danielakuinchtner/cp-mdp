@@ -60,7 +60,7 @@ import time as _time
 
 import numpy as _np
 import scipy.sparse as _sp
-import tensorly as _tl
+
 
 import mdptoolbox.util as _util
 
