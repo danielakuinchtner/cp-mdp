@@ -3,24 +3,13 @@
 # Whereas the line below obviate the need to install that
 import sys
 sys.path.insert(1,'pymdptoolbox/src')
-import mdptoolbox.example
 import time
-from gen_scenario import *
+from elevator_scenario import *
 
-"""
-(Y,X)
-| 00 01 02 ... 0X-1       'N' = North
-| 10  .         .         'S' = South
-| 20    .       .         'W' = West
-| .       .     .         'E' = East
-| .         .   .         'T' = Terminal
-| .           . .         'O' = Obstacle
-| Y-1,0 . . .   Y-1X-1
-"""
 
 # install openblas lib to improve even more the runtime: conda install -c anaconda openblas
-output_file = open("output.txt", "a")
-shape = [400, 400]
+
+shape = [3, 4]
 rewards = [[0, 3, 100], [1, 3, -100]]
 obstacles = [[1, 1]]
 terminals = [[0, 3], [1, 3]]
@@ -40,11 +29,10 @@ vi = mdptoolbox.mdp.ValueIterationGS(shape, terminals, obstacles, succ_xy, origi
 vi.run()
 
 print("--- %s seconds ---" % (time.time() - start_time1))
-output_file.write('\n--- %s seconds ---' % (time.time() - start_time1))
 
 print_policy(vi.policy, shape, obstacles=obstacles, terminals=terminals, actions=actions)
 # display_policy(vi.policy, shape, obstacles=obstacles, terminals=terminals)
-output_file.close()
+
 
 # print(output)
 # print(R)

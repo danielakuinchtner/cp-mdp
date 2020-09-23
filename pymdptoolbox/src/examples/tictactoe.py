@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import cPickle as pickle
+import pickle as pickle
 
 import numpy as np
 from scipy.sparse import dok_matrix
@@ -182,7 +182,7 @@ def isValid(state):
 
 if __name__ == "__main__":
     P, R = getTransitionAndRewardArrays()
-    ttt = mdp.ValueIteration(P, R, 1)
+    ttt = mdp.ValueIterationGS(P, R, 1)
     ttt.setVerbose()
     ttt.run()
     f = "tictactoe.pkl"

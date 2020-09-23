@@ -55,7 +55,7 @@ def setup(S, A):
 if __name__ == "__main__":
     P_sparse, R_sparse, DB_sql = setup(100000000, 3)
     try:
-        sdp = ValueIteration(P_sparse, R_sparse, 0.9)
+        sdp = ValueIterationGS(P_sparse, R_sparse, 0.9)
     except MemoryError:
         print("Killed. Sparse method ran out of memory.")
     except:

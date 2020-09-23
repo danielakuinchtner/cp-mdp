@@ -1575,6 +1575,7 @@ class ValueIterationGS(ValueIteration):
         split_succ_xy = []
         split_origin_xy = []
         split_probability = []
+
         for aa in range(self.A):  # 4
             #split.append(_tf.split(self.P[aa], 12, axis=0, num=None, name='split'))
             split_succ_xy.append(_np.split(self.succ_xy[aa], self.states))

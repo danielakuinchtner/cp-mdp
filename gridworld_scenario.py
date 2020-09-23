@@ -43,6 +43,13 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], r=1, rewards=[], actions=[], 
             [p_right_angles, p_opposite_angle, p_intended, p_right_angles],  # West
             [p_opposite_angle, p_right_angles, p_right_angles, p_intended]]  # South
 
+    # N                E                 W                 S
+    STPM2 = [[p_intended, p_right_angles, p_right_angles, p_opposite_angle],  # North
+            [p_right_angles, p_intended, p_opposite_angle, p_right_angles],  # East
+            [p_right_angles, p_opposite_angle, p_intended, p_right_angles],  # West
+            [p_opposite_angle, p_right_angles, p_right_angles, p_intended]]  # South
+
+
     # STPM = [[0.8(N,N), 0.1(N,E), 0.1(N,W), 0.0(N,S)],
     #         [0.1(E,N), 0.8(E,E), 0.0(E,W), 0.1(E,S)],
     #         [0.1(W,N), 0.0(W,E), 0.8(W,W), 0.1(W,S)],
@@ -57,68 +64,38 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], r=1, rewards=[], actions=[], 
         num_states *= value
     #print(num_states)
 
+    index = dict()
+
     for a in STPM:
         for s in range(num_states):
-            #for d in range(len(shape)):
+            # for d in range(len(shape)):
             for aa in range(len(a)):  # 4
                 if a[aa] == 0:  # remove all zero probabilities
                     continue
 
-                state_pair = ind2sub(shape, s)
+                state_tuple = _np.unravel_index(s, shape)
 
+                successor_state_of_s = succ_tuple(aa, state_tuple, final_limits)
 
-                #state_from = sub2ind(shape, x, y)
+                if successor_state_of_s not in obstacles:
+                    state_to = index_to_coords(successor_state_of_s, shape)
+                    print(state_to, successor_state_of_s)
 
-                # xy = [x, y]
-                # successor = succ(aa, x, y, final_limits)
-                # print("a:", a, "aa:", a[aa], "index aa:", aa, " x:", x, " y:", y, " succ:", successor)
-
-                successor_i, successor_j = succ(aa, state_pair, final_limits)
-
-                # if valid(successor_i, successor_j, obstacles):
-                if [successor_i, successor_j] not in obstacles:
-                    state_to = sub2ind(shape, successor_i, successor_j)
-                    # P[STPM.index(a), state_from, state_to] = P[STPM.index(a), state_from, state_to] + a[aa]
-                    # successor = ind2sub(shape, state_to)
-                    # Ca = Ca + [xy, successor, a[aa]]
-
-                    if state_pair in terminals or state_pair in obstacles:
-                        #rank_3_tensor = tf.constant([
-                            #state_from,
-                            #state_from,
-                            #0.0])
-                        #output.append(rank_3_tensor)
+                    if state_tuple in terminals or state_tuple in obstacles:
                         successors = _np.append(successors, s)
                         origins = _np.append(origins, s)
                         probabilities = _np.append(probabilities, 0)
 
                     else:
-                        #rank_3_tensor = tf.constant([
-                            #state_from,
-                            #state_to,
-                            #a[aa]])
-                        #output.append(rank_3_tensor)
                         successors = _np.append(successors, state_to)
                         origins = _np.append(origins, s)
                         probabilities = _np.append(probabilities, a[aa])
 
                 else:
-                    # P[STPM.index(a), state_from, state_from] = P[STPM.index(a), state_from, state_from] + a[aa]
-                    # Ca = Ca + [xy, xy, a[aa]]
-                    # successor = ind2sub(shape, state_from)
-
-                    #rank_3_tensor = tf.constant([
-                        #state_from,
-                        #state_from,
-                        #a[aa]])
-                    #output.append(rank_3_tensor)
                     successors = _np.append(successors, s)
                     origins = _np.append(origins, s)
                     probabilities = _np.append(probabilities, a[aa])
 
-    # split the output into 4 arrays (because there are 4 actions)
-    #split = tf.split(output, len(STPM), axis=0, num=None, name='split')
-    #print(split)
 
     successors = successors.astype(int)
     succ_xy = _np.split(successors, len(STPM))
@@ -126,9 +103,9 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], r=1, rewards=[], actions=[], 
 
     origins = origins.astype(int)
     origin_xy = _np.split(origins, len(STPM))
-    print("origin", origin_xy)
-    print(len(origin_xy[0]))
-    print(ind2sub(shape, origin_xy))
+    #print("origin", origin_xy)
+    #print(len(origin_xy[0]))
+    #print(ind2sub(shape, origin_xy))
 
     probability_xy = _np.split(probabilities, len(STPM))
     #print("prob", probability_xy)
@@ -153,6 +130,7 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], r=1, rewards=[], actions=[], 
     R = _np.ones([states])
     R = _np.multiply(R, r)
 
+    """
     SR_output = []
     for i in range(len(rewards)):
         Si = rewards[i][0]  # 0 # 1
@@ -161,7 +139,7 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], r=1, rewards=[], actions=[], 
         SR = sub2ind(shape, Si, Sj)  # index 3 and index 7
         SR_output.append(SR)
         R[SR] = Sv  # 100 # -100
-
+    """
     # RSS = r_to_rs(P, R, terminals, shape)
     # print(RSS)
 
@@ -170,6 +148,51 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], r=1, rewards=[], actions=[], 
 
     return succ_xy, origin_xy, probability_xy, R
 
+
+def succ_tuple(a, state_tuple, final_limits):
+
+    successor = []
+    for dim in range(len(state_tuple)):
+
+        if a == 0:  # North
+            if state_tuple[dim] != 0:  # 1: limite inicial de X:0
+                D = state_tuple[dim] - 1
+            else:
+                D = state_tuple[dim]
+
+        if a == 1:  # East
+            if state_tuple[dim] != final_limits[dim]:  # 4: limite final de Y:3
+                D = state_tuple[dim] + 1
+            else:
+                D = state_tuple[dim]
+
+        if a == 2:  # West
+            if state_tuple[dim] != 0:  # 1: limite inicial de Y:0
+                D = state_tuple[dim] - 1
+            else:
+                D = state_tuple[dim]
+
+        if a == 3:  # South
+            if state_tuple[dim] != final_limits[dim]:  # 3 limite inicial de X: 2
+                D = state_tuple[dim] + 1
+            else:
+                D = state_tuple[dim]
+
+        successor.append(D)
+    return successor
+
+"""
+def index_to_coords(index, shape):
+    '''convert index to coordinates given the shape'''
+
+    for i in range(len(shape)):
+        divisor = int(_np.product(shape[i:]))
+        value = index[i]//divisor
+        #coords.append(value)
+        index[i] -= value * divisor
+    print(index)
+    return index
+"""
 
 def reward_tensor(split_tensor, r, rewards, terminals, obstacles, shape):
     RS_tensor = _np.zeros([shape[0], shape[1]])
@@ -190,53 +213,6 @@ def reward_tensor(split_tensor, r, rewards, terminals, obstacles, shape):
                         RS_tensor[i, j] += k[2] * r
 
     return RS_tensor
-
-
-"""
-def r_to_rss(P, R, terminals, obstacles):
-     RSS = _np.zeros([4,len(P[1]),len(P[1])])
-     for A in range(4):
-         for I in range(len(P[1])):
-             for J in range(len(P[1])):
-                 if([I,J] in terminals):
-                     RSS[A,I,J] = R[J]
-                 if([I,J] in obstacles): RSS[A,I,J] = 0
-                 RSS[A,I,J] = (P[A,I,J] * R[J])
-     return RSS
-
-
-def r_to_rs(P, R, terminals, shape):
-    RS = _np.zeros([len(P[1]), 4])
-    for I in range(len(P[1])):
-        for A in range(4):
-            sub = ind2sub(shape, I)
-            # if sub in obstacles: RS[I,A] = 0
-            if sub in terminals:
-                RS[I, A] = R[I]
-            else:
-                for J in range(len(P[1])):
-                    RS[I, A] = RS[I, A] + (P[A, I, J] * R[J])
-    return RS
-"""
-
-
-def sub2ind(shape, rows, cols):
-    return rows * shape[1] + cols
-
-
-def ind2sub(shape, ind):
-
-    rows = int((ind / shape[1]))
-    cols = int((ind % shape[1]))
-    return [rows, cols]
-
-
-"""
-def valid(x, y, obstacles):
-    # valid = ((I >= 0) and (I < shape[0])) and ((J >= 0) and (J < shape[1]))
-    valid = not [x, y] in obstacles
-    return valid
-"""
 
 
 def succ(a, state_pair, final_limits):
@@ -266,6 +242,101 @@ def succ(a, state_pair, final_limits):
 
     return D[0], D[1]
 
+"""
+def r_to_rss(P, R, terminals, obstacles):
+     RSS = _np.zeros([4,len(P[1]),len(P[1])])
+     for A in range(4):
+         for I in range(len(P[1])):
+             for J in range(len(P[1])):
+                 if([I,J] in terminals):
+                     RSS[A,I,J] = R[J]
+                 if([I,J] in obstacles): RSS[A,I,J] = 0
+                 RSS[A,I,J] = (P[A,I,J] * R[J])
+     return RSS
+
+
+def r_to_rs(P, R, terminals, shape):
+    RS = _np.zeros([len(P[1]), 4])
+    for I in range(len(P[1])):
+        for A in range(4):
+            sub = ind2sub(shape, I)
+            # if sub in obstacles: RS[I,A] = 0
+            if sub in terminals:
+                RS[I, A] = R[I]
+            else:
+                for J in range(len(P[1])):
+                    RS[I, A] = RS[I, A] + (P[A, I, J] * R[J])
+    return RS
+
+
+def sub2ind(shape, rows, cols):
+    return rows * shape[1] + cols
+
+
+def ind2sub(shape, ind):
+
+    rows = int((ind / shape[1]))
+    cols = int((ind % shape[1]))
+    return [rows, cols]
+
+
+def valid(x, y, obstacles):
+    # valid = ((I >= 0) and (I < shape[0])) and ((J >= 0) and (J < shape[1]))
+    valid = not [x, y] in obstacles
+    return valid
+
+
+def succ8actions(a, state_pair, final_limits):
+    if a == 0:  # North
+        if state_pair[0] != 0:  # 1: limite inicial de X:0
+            D = [state_pair[0] - 1, state_pair[1]]
+        else:
+            D = [state_pair[0], state_pair[1]]
+
+    if a == 1:  # East
+        if state_pair[1] != final_limits[1]:  # 4: limite final de Y:3
+            D = [state_pair[0], state_pair[1] + 1]
+        else:
+            D = [state_pair[0], state_pair[1]]
+
+    if a == 2:  # West
+        if state_pair[1] != 0:  # 1: limite inicial de Y:0
+            D = [state_pair[0], state_pair[1] - 1]
+        else:
+            D = [state_pair[0], state_pair[1]]
+
+    if a == 3:  # South
+        if state_pair[0] != final_limits[0]:  # 3 limite inicial de X: 2
+            D = [state_pair[0] + 1, state_pair[1]]
+        else:
+            D = [state_pair[0], state_pair[1]]
+
+    if a == 4:  # northeast
+        if state_pair[0] != 0 and state_pair[1] != final_limits[1]:  #
+            D = [state_pair[0] - 1, state_pair[1] + 1]
+        else:
+            D = [state_pair[0], state_pair[1]]
+    if a == 5:  # southeast
+        if state_pair[0] != final_limits[0] and state_pair[1] != final_limits[1]:  #
+            D = [state_pair[0] + 1, state_pair[1] + 1]
+        else:
+            D = [state_pair[0], state_pair[1]]
+
+    if a == 6:  # northwest
+        if state_pair[0] != 0 and state_pair[1] != 0:  #
+            D = [state_pair[0] - 1, state_pair[1] - 1]
+        else:
+            D = [state_pair[0], state_pair[1]]
+
+    if a == 7:  # southwest
+        if state_pair[1] != 0 and state_pair[0] != final_limits[0]:  #
+            D = [state_pair[0] + 1, state_pair[1] - 1]
+        else:
+            D = [state_pair[0], state_pair[1]]
+
+
+    return D[0], D[1]
+"""
 
 def print_policy(policy, shape, obstacles=[], terminals=[], actions=[]):
     p_policy = _np.empty(shape, dtype=object)
