@@ -20,7 +20,9 @@ from gridworld_scenario import *
 
 # install openblas lib to improve even more the runtime: conda install -c anaconda openblas
 
-shape = [3, 4, 2]
+#shape = [3, 4]
+shape = [2, 3, 4]
+#shape = [3, 2, 3, 4]
 
 states = 1
 for value in shape:
@@ -39,11 +41,19 @@ def randomConfig():
         terminals = ''
         obstacles = ''
 
-
-
-rewards = [[0, 3, 0, 100], [1, 3, 0, -100]]
-obstacles = [[1, 1, 1]]
-terminals = [[0, 3, 0], [1, 3, 0]]
+"""
+obstacles = [[1, 1]]
+terminals = [[0, 3], [1, 3]]
+rewards = [100, -100]  # each reward corresponds to a terminal position
+"""
+obstacles = [[0, 1, 1], [1, 1, 1]]
+terminals = [[0, 0, 3], [0, 1, 3], [1, 0, 3], [1, 1, 3]]
+rewards = [100, -100, 100, -100]  # each reward corresponds to a terminal position
+"""
+obstacles = [[0, 0, 1, 1], [0, 1, 1, 1]]
+terminals = [[0, 0, 0, 3], [0, 0, 1, 3], [0, 1, 0, 3], [0, 1, 1, 3]]
+rewards = [100, -100, 100, -100]  # each reward corresponds to a terminal position
+"""
 
 final_limits = []
 for num_dim in range(len(shape)):

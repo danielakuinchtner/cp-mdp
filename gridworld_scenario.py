@@ -24,7 +24,6 @@ R = (A x S x S) the reward function
 
 
 def mdp_grid(shape=[], obstacles=[], terminals=[], r=1, rewards=[], actions=[], final_limits=[]):
-    states = shape[0] * shape[1]  # 3x4
     actions = actions
     r = r
     terminals = terminals
@@ -62,12 +61,12 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], r=1, rewards=[], actions=[], 
                 if a[aa] == 0:  # remove all zero probabilities
                     continue
 
-                state_tuple = _np.unravel_index(s, shape)
+                state_tuple = _np.unravel_index(s, shape)  # ind to sub
+                state_tuple = list(state_tuple)
                 successor_state_of_s = succ_tuple(aa, state_tuple, final_limits)
 
                 if successor_state_of_s not in obstacles:
-
-                    state_to = _np.ravel_multi_index(successor_state_of_s, shape)
+                    state_to = _np.ravel_multi_index(successor_state_of_s, shape)  # sub to ind
 
                     if state_tuple in terminals or state_tuple in obstacles:
                         successors = _np.append(successors, s)
@@ -87,11 +86,11 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], r=1, rewards=[], actions=[], 
 
     successors = successors.astype(int)
     succ_xy = _np.split(successors, len(STPM))
-    print("succ", succ_xy)
+    #print("succ", succ_xy)
 
     origins = origins.astype(int)
     origin_xy = _np.split(origins, len(STPM))
-    print("origin", origin_xy)
+    #print("origin", origin_xy)
 
     probability_xy = _np.split(probabilities, len(STPM))
     print("prob", probability_xy)
@@ -109,45 +108,16 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], r=1, rewards=[], actions=[], 
     #print("Elements along the last axis of tensor:", split_tensor.shape[-1])  # 3
     #print("Total number of elements (3*2*4*5): ", tf.size(split_tensor).numpy())  # 324
 
-    R = _np.ones([states])
+    R = _np.ones([num_states])
     R = _np.multiply(R, r)
 
-    """
-    SR_output = []
-    for i in range(len(rewards)):
-        Si = rewards[i][0]  # 0 # 1
-        Sj = rewards[i][1]  # 3 # 3
-        Sv = rewards[i][2]  # 100 # -100
-        SR = sub2ind(shape, Si, Sj)  # index 3 and index 7
-        SR_output.append(SR)
-        R[SR] = Sv  # 100 # -100
-    """
-
-    #RW = reward_tensor(split_tensor, r, rewards, terminals, obstacles, shape)
-    # print(RW)
+    for i in range(len(terminals)):
+        ind_terminal = _np.ravel_multi_index(terminals[i], shape)
+        R[ind_terminal] = rewards[i]
+    print(R)
 
     return succ_xy, origin_xy, probability_xy, R
 
-
-def reward_tensor(split_tensor, r, rewards, terminals, obstacles, shape):
-    RS_tensor = _np.zeros([shape[0], shape[1]])
-
-    for i in range(shape[0]):
-        for j in range(shape[1]):
-            if [i, j] in terminals:
-                RS_tensor[i, j] = rewards[i][2]
-
-            elif [i, j] in obstacles:
-                RS_tensor[i, j] += r
-
-            else:
-                for k in split_tensor[0]:
-                    pair_xy = ind2sub(shape, k[0])
-
-                    if [i, j] == pair_xy:
-                        RS_tensor[i, j] += k[2] * r
-
-    return RS_tensor
 
 def succ_tuple(a, state_tuple, final_limits):
 
@@ -181,21 +151,23 @@ def succ_tuple(a, state_tuple, final_limits):
         successor.append(D)
     return successor
 
-"""
-def index_to_coords(index, shape):
-    '''convert index to coordinates given the shape'''
 
-    for i in range(len(shape)):
-        divisor = int(_np.product(shape[i:]))
-        value = index[i]//divisor
-        #coords.append(value)
-        index[i] -= value * divisor
-    print(index)
-    return index
-"""
+def print_policy(policy, shape, obstacles=[], terminals=[], actions=[]):
+    p_policy = _np.empty(shape, dtype=object)
+
+    for i in range(len(policy)):
+        sub = _np.unravel_index(i, shape)  # ind to sub
+        if list(sub) in obstacles:
+            p_policy[sub] = 'O'
+        elif list(sub) in terminals:
+            p_policy[sub] = 'T'
+        else:
+            p_policy[sub] = actions[policy[i]]
+    print(p_policy)
 
 
 def succ(a, state_pair, final_limits):
+
     if a == 0:  # North
         if state_pair[0] != 0:  # 1: limite inicial de X:0
             D = [state_pair[0] - 1, state_pair[1]]
@@ -223,6 +195,18 @@ def succ(a, state_pair, final_limits):
     return D[0], D[1]
 
 """
+def index_to_coords(index, shape):
+    '''convert index to coordinates given the shape'''
+
+    for i in range(len(shape)):
+        divisor = int(_np.product(shape[i:]))
+        value = index[i]//divisor
+        #coords.append(value)
+        index[i] -= value * divisor
+    print(index)
+    return index
+    
+    
 def r_to_rss(P, R, terminals, obstacles):
      RSS = _np.zeros([4,len(P[1]),len(P[1])])
      for A in range(4):
@@ -318,20 +302,6 @@ def succ8actions(a, state_pair, final_limits):
     return D[0], D[1]
 """
 
-def print_policy(policy, shape, obstacles=[], terminals=[], actions=[]):
-    p_policy = _np.empty(shape, dtype=object)
-
-    for i in range(len(policy)):
-        sub = ind2sub(shape, i)
-        if sub in obstacles:
-            p_policy[sub[0]][sub[1]] = 'O'
-        elif sub in terminals:
-            p_policy[sub[0]][sub[1]] = 'T'
-        else:
-            p_policy[sub[0]][sub[1]] = actions[policy[i]]
-            #print(actions[policy[i]])
-    print(p_policy)
-
 
 from IPython.display import HTML, display
 
@@ -341,7 +311,7 @@ SYMBOLS = ['&uarr;', '&darr;', '&rarr;', '&larr;']
 def display_policy(policy, shape, obstacles=[], terminals=[]):
     p_policy = _np.empty(shape, dtype=object)
     for i in range(len(policy)):
-        sub = ind2sub(shape, i)
+        sub = _np.unravel_index(i, shape)
         if sub in obstacles:
             p_policy[sub[0]][sub[1]] = '&#x25FE;'
         elif sub in terminals:
