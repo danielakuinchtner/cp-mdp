@@ -27,7 +27,6 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], r=1, rewards=[], actions=[], 
     states = shape[0] * shape[1]  # 3x4
     actions = actions
     r = r
-    # P = _np.zeros([len(actions), states, states])
     terminals = terminals
     obstacles = obstacles
     final_limits = final_limits  # 2x3
@@ -43,13 +42,6 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], r=1, rewards=[], actions=[], 
             [p_right_angles, p_opposite_angle, p_intended, p_right_angles],  # West
             [p_opposite_angle, p_right_angles, p_right_angles, p_intended]]  # South
 
-    # N                E                 W                 S
-    STPM2 = [[p_intended, p_right_angles, p_right_angles, p_opposite_angle],  # North
-            [p_right_angles, p_intended, p_opposite_angle, p_right_angles],  # East
-            [p_right_angles, p_opposite_angle, p_intended, p_right_angles],  # West
-            [p_opposite_angle, p_right_angles, p_right_angles, p_intended]]  # South
-
-
     # STPM = [[0.8(N,N), 0.1(N,E), 0.1(N,W), 0.0(N,S)],
     #         [0.1(E,N), 0.8(E,E), 0.0(E,W), 0.1(E,S)],
     #         [0.1(W,N), 0.0(W,E), 0.8(W,W), 0.1(W,S)],
@@ -62,9 +54,6 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], r=1, rewards=[], actions=[], 
     num_states = 1
     for value in shape:
         num_states *= value
-    #print(num_states)
-
-    index = dict()
 
     for a in STPM:
         for s in range(num_states):
@@ -74,12 +63,11 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], r=1, rewards=[], actions=[], 
                     continue
 
                 state_tuple = _np.unravel_index(s, shape)
-
                 successor_state_of_s = succ_tuple(aa, state_tuple, final_limits)
 
                 if successor_state_of_s not in obstacles:
-                    state_to = index_to_coords(successor_state_of_s, shape)
-                    print(state_to, successor_state_of_s)
+
+                    state_to = _np.ravel_multi_index(successor_state_of_s, shape)
 
                     if state_tuple in terminals or state_tuple in obstacles:
                         successors = _np.append(successors, s)
@@ -99,27 +87,21 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], r=1, rewards=[], actions=[], 
 
     successors = successors.astype(int)
     succ_xy = _np.split(successors, len(STPM))
-    #print("succ", succ_xy)
+    print("succ", succ_xy)
 
     origins = origins.astype(int)
     origin_xy = _np.split(origins, len(STPM))
-    #print("origin", origin_xy)
-    #print(len(origin_xy[0]))
-    #print(ind2sub(shape, origin_xy))
+    print("origin", origin_xy)
 
     probability_xy = _np.split(probabilities, len(STPM))
-    #print("prob", probability_xy)
+    print("prob", probability_xy)
 
     # convert all splits into a tensor
     #split_tensor = tf.convert_to_tensor(list(split), dtype=tf.float32)
     #split_tensor_origin_xy = tf.convert_to_tensor(list(origin_xy), dtype=tf.int32)
     #split_tensor_succ_xy = tf.convert_to_tensor(list(succ_xy), dtype=tf.int32)
-
     #dimensions = split_tensor.ndim
-
     #print(split_tensor)
-    #print(succ_xy)
-
     #print("Type of every element:", split_tensor.dtype)  # float32
     #print("Number of dimensions:", split_tensor.ndim)  # 3
     #print("Shape of tensor:", split_tensor.shape)  # (4, 27, 3)
@@ -140,14 +122,32 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], r=1, rewards=[], actions=[], 
         SR_output.append(SR)
         R[SR] = Sv  # 100 # -100
     """
-    # RSS = r_to_rs(P, R, terminals, shape)
-    # print(RSS)
 
     #RW = reward_tensor(split_tensor, r, rewards, terminals, obstacles, shape)
     # print(RW)
 
     return succ_xy, origin_xy, probability_xy, R
 
+
+def reward_tensor(split_tensor, r, rewards, terminals, obstacles, shape):
+    RS_tensor = _np.zeros([shape[0], shape[1]])
+
+    for i in range(shape[0]):
+        for j in range(shape[1]):
+            if [i, j] in terminals:
+                RS_tensor[i, j] = rewards[i][2]
+
+            elif [i, j] in obstacles:
+                RS_tensor[i, j] += r
+
+            else:
+                for k in split_tensor[0]:
+                    pair_xy = ind2sub(shape, k[0])
+
+                    if [i, j] == pair_xy:
+                        RS_tensor[i, j] += k[2] * r
+
+    return RS_tensor
 
 def succ_tuple(a, state_tuple, final_limits):
 
@@ -193,26 +193,6 @@ def index_to_coords(index, shape):
     print(index)
     return index
 """
-
-def reward_tensor(split_tensor, r, rewards, terminals, obstacles, shape):
-    RS_tensor = _np.zeros([shape[0], shape[1]])
-
-    for i in range(shape[0]):
-        for j in range(shape[1]):
-            if [i, j] in terminals:
-                RS_tensor[i, j] = rewards[i][2]
-
-            elif [i, j] in obstacles:
-                RS_tensor[i, j] += r
-
-            else:
-                for k in split_tensor[0]:
-                    pair_xy = ind2sub(shape, k[0])
-
-                    if [i, j] == pair_xy:
-                        RS_tensor[i, j] += k[2] * r
-
-    return RS_tensor
 
 
 def succ(a, state_pair, final_limits):

@@ -20,8 +20,6 @@ from gridworld_scenario import *
 
 # install openblas lib to improve even more the runtime: conda install -c anaconda openblas
 
-
-
 shape = [3, 4, 2]
 
 states = 1
@@ -52,9 +50,6 @@ for num_dim in range(len(shape)):
     new_shape = shape[num_dim]-1
     final_limits.append(new_shape)
 
-#print(final_limits)
-
-#states = shape[0] * shape[1]
 print("Executing a", shape, "grid")
 
 start_time1 = time.time()
