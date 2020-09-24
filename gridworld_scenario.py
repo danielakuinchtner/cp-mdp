@@ -64,6 +64,7 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], r=1, rewards=[], actions=[], 
                 state_tuple = _np.unravel_index(s, shape)  # ind to sub
                 state_tuple = list(state_tuple)
                 successor_state_of_s = succ_tuple(aa, state_tuple, final_limits)
+                print(successor_state_of_s)
 
                 if successor_state_of_s not in obstacles:
                     state_to = _np.ravel_multi_index(successor_state_of_s, shape)  # sub to ind
@@ -167,32 +168,32 @@ def print_policy(policy, shape, obstacles=[], terminals=[], actions=[]):
 
 
 def succ(a, state_pair, final_limits):
-
+    successor = []
     if a == 0:  # North
-        if state_pair[0] != 0:  # 1: limite inicial de X:0
-            D = [state_pair[0] - 1, state_pair[1]]
+        if state_pair[-2] != 0:  # 1: limite inicial de X:0
+            D = [state_pair[-2] - 1, state_pair[-1]]
         else:
-            D = [state_pair[0], state_pair[1]]
+            D = [state_pair[-2], state_pair[-1]]
 
     if a == 1:  # East
-        if state_pair[1] != final_limits[1]:  # 4: limite final de Y:3
-            D = [state_pair[0], state_pair[1] + 1]
+        if state_pair[-1] != final_limits[-1]:  # 4: limite final de Y:3
+            D = [state_pair[-2], state_pair[-1] + 1]
         else:
-            D = [state_pair[0], state_pair[1]]
+            D = [state_pair[-2], state_pair[-1]]
 
     if a == 2:  # West
-        if state_pair[1] != 0:  # 1: limite inicial de Y:0
-            D = [state_pair[0], state_pair[1] - 1]
+        if state_pair[-1] != 0:  # 1: limite inicial de Y:0
+            D = [state_pair[-2], state_pair[-1] - 1]
         else:
-            D = [state_pair[0], state_pair[1]]
+            D = [state_pair[-2], state_pair[-1]]
 
     if a == 3:  # South
-        if state_pair[0] != final_limits[0]:  # 3 limite inicial de X: 2
-            D = [state_pair[0] + 1, state_pair[1]]
+        if state_pair[-2] != final_limits[-2]:  # 3 limite inicial de X: 2
+            D = [state_pair[-2] + 1, state_pair[-1]]
         else:
-            D = [state_pair[0], state_pair[1]]
-
-    return D[0], D[1]
+            D = [state_pair[-2], state_pair[-1]]
+    successor.append(D)
+    return successor
 
 """
 def index_to_coords(index, shape):
