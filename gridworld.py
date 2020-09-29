@@ -5,6 +5,7 @@ import sys
 sys.path.insert(1,'pymdptoolbox/src')
 import mdptoolbox.example
 import time
+import numpy as _np
 from gridworld_scenario import *
 
 """
@@ -32,7 +33,12 @@ dimensions = len(shape)
 print('Number of dimensions: ', dimensions)
 
 #actions = ['N', 'E', 'W', 'S', 'NE', 'SE', 'NW', 'SW']
-actions = ['N', 'E', 'W', 'S']
+#actions = ['N', 'S', 'W', 'E']
+#actions = ['N', 'S', 'W', 'E', 'B', 'F']
+#actions = ['N', 'S', 'W', 'E', 'B', 'F', 'C', 'D']
+
+actions = _np.ones(len(shape)*2)
+print("Actions:", actions)
 
 
 def randomConfig():
@@ -53,7 +59,7 @@ rewards = [100, -100, 100, -100]  # each reward corresponds to a terminal positi
 obstacles = [[0, 0, 1, 1], [0, 1, 1, 1]]
 terminals = [[0, 0, 0, 3], [0, 0, 1, 3], [0, 1, 0, 3], [0, 1, 1, 3]]
 rewards = [100, -100, 100, -100]  # each reward corresponds to a terminal position
-"""
+#"""
 
 final_limits = []
 for num_dim in range(len(shape)):

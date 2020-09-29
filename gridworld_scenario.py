@@ -31,15 +31,29 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], r=1, rewards=[], actions=[], 
     final_limits = final_limits  # 2x3
 
     p_intended = 0.8  # probability of the desired action taking place
-    p_right_angles = (1 - p_intended) / 2  # 0.1 # stochasticity
+    p_right_angles = (1 - p_intended) / (len(actions)-2)  # 0.1 # stochasticity
     p_opposite_angle = 0.0  # zero probability
 
+    STPM = _np.ones([len(actions), len(actions)])
+    STPM = _np.multiply(STPM, p_right_angles)
+
+    for a1 in range(len(STPM[0])):
+        for a2 in range(len(STPM[1])):
+            if a1 == a2:
+                STPM[a1, a2] = p_intended
+                if a2 % 2 == 0:
+                    STPM[a1, a2 + 1] = p_opposite_angle
+                elif a2 % 2 == 1:
+                    STPM[a1, a2 - 1] = p_opposite_angle
+
+    print(STPM)
+
     # State Transition Probability Matrix
-    # N                E                 W                 S
-    STPM = [[p_intended, p_right_angles, p_right_angles, p_opposite_angle],  # North
-            [p_right_angles, p_intended, p_opposite_angle, p_right_angles],  # East
-            [p_right_angles, p_opposite_angle, p_intended, p_right_angles],  # West
-            [p_opposite_angle, p_right_angles, p_right_angles, p_intended]]  # South
+    #       N                S                 W                 E
+    #STPM = [[p_intended, p_opposite_angle, p_right_angles, p_right_angles],  # North
+    #        [p_opposite_angle, p_intended, p_right_angles, p_right_angles],  # East
+    #        [p_right_angles, p_right_angles, p_intended, p_opposite_angle],  # West
+    #        [p_right_angles, p_right_angles, p_opposite_angle, p_intended]]  # South
 
     # STPM = [[0.8(N,N), 0.1(N,E), 0.1(N,W), 0.0(N,S)],
     #         [0.1(E,N), 0.8(E,E), 0.0(E,W), 0.1(E,S)],
@@ -64,7 +78,7 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], r=1, rewards=[], actions=[], 
                 state_tuple = _np.unravel_index(s, shape)  # ind to sub
                 state_tuple = list(state_tuple)
                 successor_state_of_s = succ_tuple(aa, state_tuple, final_limits)
-                print(successor_state_of_s)
+                #print(state_tuple, successor_state_of_s)
 
                 if successor_state_of_s not in obstacles:
                     state_to = _np.ravel_multi_index(successor_state_of_s, shape)  # sub to ind
@@ -94,7 +108,7 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], r=1, rewards=[], actions=[], 
     #print("origin", origin_xy)
 
     probability_xy = _np.split(probabilities, len(STPM))
-    print("prob", probability_xy)
+    #print("prob", probability_xy)
 
     # convert all splits into a tensor
     #split_tensor = tf.convert_to_tensor(list(split), dtype=tf.float32)
@@ -125,31 +139,22 @@ def succ_tuple(a, state_tuple, final_limits):
     successor = []
     for dim in range(len(state_tuple)):
 
-        if a == 0:  # North
-            if state_tuple[dim] != 0:  # 1: limite inicial de X:0
-                D = state_tuple[dim] - 1
-            else:
-                D = state_tuple[dim]
-
-        if a == 1:  # East
-            if state_tuple[dim] != final_limits[dim]:  # 4: limite final de Y:3
-                D = state_tuple[dim] + 1
-            else:
-                D = state_tuple[dim]
-
-        if a == 2:  # West
-            if state_tuple[dim] != 0:  # 1: limite inicial de Y:0
-                D = state_tuple[dim] - 1
-            else:
-                D = state_tuple[dim]
-
-        if a == 3:  # South
-            if state_tuple[dim] != final_limits[dim]:  # 3 limite inicial de X: 2
-                D = state_tuple[dim] + 1
-            else:
-                D = state_tuple[dim]
+        if a - math.ceil(a / 2) == dim:
+            if a % 2 == 0:
+                if state_tuple[dim] != 0:
+                    D = state_tuple[dim] - 1
+                else:
+                    D = state_tuple[dim]
+            else:# a % 2 == 1:
+                if state_tuple[dim] != final_limits[dim]:
+                    D = state_tuple[dim] + 1
+                else:
+                    D = state_tuple[dim]
+        else:
+            D = state_tuple[dim]
 
         successor.append(D)
+
     return successor
 
 
