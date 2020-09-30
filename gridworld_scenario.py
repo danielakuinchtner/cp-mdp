@@ -46,7 +46,7 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], r=1, rewards=[], actions=[], 
                 elif a2 % 2 == 1:
                     STPM[a1, a2 - 1] = p_opposite_angle
 
-    print(STPM)
+    #print("STPM:\n", STPM)
 
     # State Transition Probability Matrix
     #       N                S                 W                 E
@@ -129,7 +129,7 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], r=1, rewards=[], actions=[], 
     for i in range(len(terminals)):
         ind_terminal = _np.ravel_multi_index(terminals[i], shape)
         R[ind_terminal] = rewards[i]
-    print(R)
+    #print("Rewards:", R)
 
     return succ_xy, origin_xy, probability_xy, R
 
@@ -158,9 +158,9 @@ def succ_tuple(a, state_tuple, final_limits):
     return successor
 
 
-def print_policy(policy, shape, obstacles=[], terminals=[], actions=[]):
+def print_policy(policy, shape, obstacles=[], terminals=[], letters_actions=[]):
     p_policy = _np.empty(shape, dtype=object)
-
+    actions = letters_actions
     for i in range(len(policy)):
         sub = _np.unravel_index(i, shape)  # ind to sub
         if list(sub) in obstacles:
