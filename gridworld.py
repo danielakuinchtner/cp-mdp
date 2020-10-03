@@ -54,7 +54,7 @@ for num_actions in range(len(actions)):
         letters_actions.append(acts[num_actions])
     else:
         letters_actions.append(random.choice(string.ascii_letters))
-print("Actions Letters: ", letters_actions)
+#print("Actions Letters: ", letters_actions)
 
 final_limits = []
 for num_dim in range(len(shape)):
