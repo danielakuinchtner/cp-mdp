@@ -5,7 +5,7 @@ Also, this code generalizes the solution for *n*-dimensional grids.
 
 ## Runtimes
 
-Here I show the runtime comparisons between my method (tensor-based computation) and the tabular method used in pymdptoolbox.
+Here I show runtime comparisons between my method (tensor-based computation) and the tabular method used in pymdptoolbox.
 
 | Grid size | Proposed Method (seconds)| Tabular Method (seconds) |
 | --- | --- | --- |
