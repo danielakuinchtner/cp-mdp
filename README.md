@@ -38,8 +38,8 @@ In file [gridworld.py](gridworld.py) you can set:
 shape = [3, 4]  # grid size
 number_of_obstacles = 1
 number_of_terminals = 2
-rewards = [100, -100]  # rewards in terminal states
-reward_non_terminal_states = -3  # reward in non terminal states, each reward corresponds to a terminal
+rewards = [100, -100]  # rewards in terminal states, each reward corresponds to a terminal
+reward_non_terminal_states = -3  # reward in non terminal states
 p_intended = 0.8  # probability of the desired action (intended direction) taking place
 ```
 
@@ -48,7 +48,7 @@ p_intended = 0.8  # probability of the desired action (intended direction) takin
 shape = [2, 3, 4]  # grid size
 number_of_obstacles = 2
 number_of_terminals = 3
-rewards = [100, -100, -100]  # rewards in terminal states
+rewards = [100, -100, -100]  # rewards in terminal states, each reward corresponds to a terminal
 reward_non_terminal_states = -3  # reward in non terminal states
 p_intended = 0.7  # probability of the desired action (intended direction) taking place
 ```
