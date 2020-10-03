@@ -1616,7 +1616,6 @@ class ValueIterationGS(ValueIteration):
         self.policy = []
         for s1 in range(len(split_succ_xy[0])):
             Q = _np.zeros(self.A)
-            #for s2 in range(len(split_succ_xy[0][s1])):
             for a in range(self.A):
                 Q[a] = self.R[a][s1] + self.discount * _np.dot(
                     split_probability[a][s1], self.V[split_succ_xy[a][s1]])
