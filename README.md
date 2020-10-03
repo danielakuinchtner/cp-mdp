@@ -34,34 +34,34 @@ For a grid with 200x200 states, our method provides a 89,37% runtime improvement
 In file [gridworld.py](gridworld.py) you can set:
 
 ### Scenario 1: 2 dimensions
-``
+```
 shape = [3, 4]  # grid size
 number_of_obstacles = 1
 number_of_terminals = 2
 rewards = [100, -100]  # rewards in terminal states
 reward_non_terminal_states = -3  # reward in non terminal states, each reward corresponds to a terminal
 p_intended = 0.8  # probability of the desired action taking place
-``
+```
 
 ### Scenario 2: 3 dimensions
-``
+```
 shape = [2, 3, 4]  # grid size
 number_of_obstacles = 2
 number_of_terminals = 3
 rewards = [100, -100, -100]  # rewards in terminal states
 reward_non_terminal_states = -3  # reward in non terminal states
 p_intended = 0.7  # probability of the desired action taking place
-``
+```
 
 ### Scenario 3: 4 dimensions
-``
+```
 shape = [2, 3, 8, 10]  # grid size
 number_of_obstacles = 2
 number_of_terminals = 5
 rewards = [100, -100, -100, -100, 100]  # rewards in terminal states, each reward corresponds to a terminal
 reward_non_terminal_states = -3  # reward in non terminal states
 p_intended = 0.6  # probability of the desired action taking place
-``
+```
 
 You also can set manually the positions of obstacles and terminals, but if you prefer, just set the number of obstacles and terminals desired in variables ``number_of_obstacles`` and ``number_of_terminals`` and the code randomly chooses for you.
 
