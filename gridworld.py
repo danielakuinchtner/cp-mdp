@@ -2,7 +2,8 @@
 # import mdptoolbox.example
 # Whereas the line below obviate the need to install that
 import sys
-
+import os
+import psutil
 sys.path.insert(1, 'pymdptoolbox/src')
 import mdptoolbox.example
 import time
@@ -44,7 +45,6 @@ for dim in shape:
 
 dimensions = len(shape)
 # print('Number of dimensions: ', dimensions)
-
 
 actions = _np.ones(len(shape) * 2)
 letters_actions = []
@@ -135,20 +135,21 @@ for a1 in range(len(STPM[0])):
             elif a2 % 2 == 1:
                 STPM[a1, a2 - 1] = p_opposite_angle
 
-print("--- Precomputed actions, obstacles and terminals in: %s seconds ---" % (time.time() - start_time_precompute))
+print("--- Precomputed actions, obstacles and terminals in: %s seconds ---" % (time.time() - start_time_precompute), "\n")
+
 
 start_time_succ = time.time()
 succ_xy, origin_xy, probability_xy, R, output = mdp_grid(shape=shape, terminals=terminals,
                                                  reward_non_terminal_states=reward_non_terminal_states,
                                                  rewards=rewards, obstacles=obstacles, final_limits=final_limits,
                                                  STPM=STPM, states=states)
-print("--- Computed successors and rewards in: %s seconds ---" % (time.time() - start_time_succ))
+print("\n--- Computed successors and rewards in: %s seconds ---" % (time.time() - start_time_succ), "\n")
+
 
 split_output = tf.split(output, len(STPM), axis=0, num=None, name='split')
 output_tensor = tf.convert_to_tensor(list(split_output), dtype=tf.float32)
-
 #print(output_tensor)
-print("Shape of tensor:", output_tensor.shape)  # (4, 27, 3)
+print("\nShape of tensor:", output_tensor.shape)  # (4, 27, 3)
 print("Total number of elements (3*2*4*5): ", tf.size(output_tensor).numpy())  # 324
 
 start_time_vi = time.time()
@@ -157,8 +158,16 @@ vi = mdptoolbox.mdp.ValueIterationGS(shape, terminals, obstacles, succ_xy, origi
 
 vi.run()
 
-print("--- Solved with VI in: %s seconds ---" % (time.time() - start_time_vi))
+print("\n--- Solved with VI in: %s seconds ---" % (time.time() - start_time_vi), "\n")
 
+
+process = psutil.Process(os.getpid())
+print("\nMemory used:", (process.memory_info().rss), "bytes")
+print("Memory used:", (process.memory_info().rss)/1000000, "Mb")
+print("Memory used:", (process.memory_info().rss)/1000000000, "Gb")
+
+
+print("\nPolicy:")
 print_policy(vi.policy, shape, obstacles=obstacles, terminals=terminals, letters_actions=letters_actions)
 # display_policy(vi.policy, shape, obstacles=obstacles, terminals=terminals)
 
