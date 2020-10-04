@@ -1,5 +1,5 @@
 # A Tensor-based Markov Decision Process Solver
-This implementation relies on modifying the [pymdptoolbox](https://github.com/sawcordwell/pymdptoolbox) toolkit, which uses a tabular method to represent the transition models of MDPs, to a tensor-based Value Iteration (see [mdp.py](pymdptoolbox/src/mdptoolbox/mdp.py)). I used the CANDECOMP/PARAFAC decomposition idea to build the transition models as tensor components.
+This implementation relies on modifying the [pymdptoolbox](https://github.com/sawcordwell/pymdptoolbox) toolkit, which uses a tabular method to represent the transition models of MDPs, to a tensor-based Value Iteration (see [mdp.py](pymdptoolbox/src/mdptoolbox/mdp.py)). I use the CANDECOMP/PARAFAC decomposition idea to build the transition models as tensor components in a compact representation.
 
 Also, this code generalizes the solution for *n*-dimensional grids.
 
