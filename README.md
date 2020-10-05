@@ -1,11 +1,11 @@
 # A Tensor-based Markov Decision Process Solver
-This implementation relies on modifying the [pymdptoolbox](https://github.com/sawcordwell/pymdptoolbox) toolkit, which uses a tabular method to represent the transition models of MDPs, to a tensor-based Value Iteration (see [mdp.py](pymdptoolbox/src/mdptoolbox/mdp.py)). I used the CANDECOMP/PARAFAC decomposition idea to build the transition models as tensor components.
+This implementation relies on modifying the [pymdptoolbox](https://github.com/sawcordwell/pymdptoolbox) toolkit, which uses a tabular method to represent the transition models of MDPs, to a tensor-based Value Iteration (see [mdp.py](pymdptoolbox/src/mdptoolbox/mdp.py)). I use the CANDECOMP/PARAFAC decomposition idea to build the transition models as tensor components in a compact representation.
 
 Also, this code generalizes the solution for *n*-dimensional grids.
 
 ## Runtimes
 
-Here I show the runtime comparisons between my method (tensor-based computation) and the tabular method used in pymdptoolbox.
+Here I show runtime comparisons between my method (tensor-based computation) and the tabular method used in pymdptoolbox.
 
 | Grid size | Proposed Method (seconds)| Tabular Method (seconds) |
 | --- | --- | --- |
@@ -38,8 +38,8 @@ In file [gridworld.py](gridworld.py) you can set:
 shape = [3, 4]  # grid size
 number_of_obstacles = 1
 number_of_terminals = 2
-rewards = [100, -100]  # rewards in terminal states
-reward_non_terminal_states = -3  # reward in non terminal states, each reward corresponds to a terminal
+rewards = [100, -100]  # rewards in terminal states, each reward corresponds to a terminal
+reward_non_terminal_states = -3  # reward in non terminal states
 p_intended = 0.8  # probability of the desired action (intended direction) taking place
 ```
 
@@ -48,7 +48,7 @@ p_intended = 0.8  # probability of the desired action (intended direction) takin
 shape = [2, 3, 4]  # grid size
 number_of_obstacles = 2
 number_of_terminals = 3
-rewards = [100, -100, -100]  # rewards in terminal states
+rewards = [100, -100, -100]  # rewards in terminal states, each reward corresponds to a terminal
 reward_non_terminal_states = -3  # reward in non terminal states
 p_intended = 0.7  # probability of the desired action (intended direction) taking place
 ```
