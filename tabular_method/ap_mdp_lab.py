@@ -2,38 +2,35 @@
 # import mdptoolbox.example
 # Whereas the line below obviate the need to install that
 import sys
-import os
-import psutil
-sys.path.insert(1, 'pymdptoolbox/src')
+sys.path.insert(0, 'pymdptoolbox/src')
 import mdptoolbox.example
 import time
-import numpy as _np
+from gen_scenario import *
+import os
+import psutil
 import string
 import random
-import tensorflow as tf
-from gridworld_scenario import *
-
+import numpy as _np
 """
 (Y,X)
-| 00 01 02 ... 0X-1       'N' = North
-| 10  .         .         'S' = South
-| 20    .       .         'W' = West
-| .       .     .         'E' = East
-| .         .   .         'T' = Terminal
-| .           . .         'O' = Obstacle
+| 00 01 02 ... 0X-1
+| 10  .         .
+| 20    .       .
+| .       .     .
+| .         .   .
+| .           . .
 | Y-1,0 . . .   Y-1X-1
-"""
+""" 
 
-# install openblas lib to improve even more the runtime: conda install -c anaconda openblas
 
 shape = [3, 4]
-shape = [2, 3, 40]
+#shape = [2, 3, 4]
 #shape = [3, 2, 3, 4]
 number_of_obstacles = 1
 number_of_terminals = 2
 rewards = [100, -100]
 reward_non_terminal_states = -3
-p_intended = 0.8  # probability of the desired action taking place
+
 
 print("Executing a", shape, "grid, with", number_of_terminals, "terminals and", number_of_obstacles, "obstacles")
 
@@ -44,7 +41,7 @@ for dim in shape:
     states *= dim
 
 dimensions = len(shape)
-# print('Number of dimensions: ', dimensions)
+print('Number of dimensions: ', dimensions)
 
 actions = _np.ones(len(shape) * 2)
 letters_actions = []
@@ -54,7 +51,7 @@ for num_actions in range(len(actions)):
         letters_actions.append(acts[num_actions])
     else:
         letters_actions.append(random.choice(string.ascii_letters))
-#print("Actions Letters: ", letters_actions)
+print("Actions Letters: ", letters_actions)
 
 final_limits = []
 for num_dim in range(len(shape)):
@@ -91,11 +88,11 @@ terminals = []
 for o in range(len(term)):
     terminals.append(term[o].tolist())
 
-"""
+
 obstacles = [[1, 1]]
 terminals = [[0, 3], [1, 3]]
 rewards = [100, -100]  # each reward corresponds to a terminal position
-
+"""
 obstacles = [[0, 1, 1], [1, 1, 1]]
 terminals = [[0, 0, 3], [0, 1, 3], [1, 0, 3], [1, 1, 3]]
 rewards = [100, -100, 100, -100]  # each reward corresponds to a terminal position
@@ -107,7 +104,7 @@ rewards = [100, -100, 100, -100]  # each reward corresponds to a terminal positi
 
 # print("Obstacles:", obstacles)
 # print("Terminals:", terminals)
-
+p_intended = 0.8
 p_right_angles = (1 - p_intended) / (len(actions) - 2)  # 0.1 # stochasticity
 p_opposite_angle = 0.0  # zero probability
 
@@ -137,29 +134,22 @@ for a1 in range(len(STPM[0])):
 
 print("--- Precomputed actions, obstacles and terminals in: %s seconds ---" % (time.time() - start_time_precompute), "\n")
 
-
+print(STPM)
 start_time_succ = time.time()
-succ_xy, origin_xy, probability_xy, R, output = mdp_grid(shape=shape, terminals=terminals,
-                                                 reward_non_terminal_states=reward_non_terminal_states,
-                                                 rewards=rewards, obstacles=obstacles, final_limits=final_limits,
-                                                 STPM=STPM, states=states)
+P, R = mdp_grid(shape=shape, terminals=terminals, r=-3,
+                rewards=rewards, obstacles=obstacles, final_limits=final_limits, states=states, actions=actions, STPM=STPM)
+
 print("\n--- Computed successors and rewards in: %s seconds ---" % (time.time() - start_time_succ), "\n")
 
-
-split_output = tf.split(output, len(STPM), axis=0, num=None, name='split')
-output_tensor = tf.convert_to_tensor(list(split_output), dtype=tf.float32)
-#print(output_tensor)
-print("\nShape of tensor:", output_tensor.shape)  # (4, 27, 3)
-print("Total number of elements (3*2*4*5): ", tf.size(output_tensor).numpy())  # 324
+print(P)
+print(R)
 
 start_time_vi = time.time()
-vi = mdptoolbox.mdp.ValueIterationGS(shape, terminals, obstacles, succ_xy, origin_xy, probability_xy, R, states,
-                                     discount=1, epsilon=0.001, max_iter=1000, skip_check=True)
+vi = mdptoolbox.mdp.ValueIterationGS(P, R, discount=1, epsilon=0.001, max_iter=1000, skip_check=True)
 
+# vi.verbose = True # Uncomment this for question 2
 vi.run()
-
 print("\n--- Solved with VI in: %s seconds ---" % (time.time() - start_time_vi), "\n")
-
 
 process = psutil.Process(os.getpid())
 print("\nMemory used:", (process.memory_info().rss), "bytes")
@@ -169,5 +159,6 @@ print("Memory used:", (process.memory_info().rss)/1000000000, "Gb")
 
 print("\nPolicy:")
 print_policy(vi.policy, shape, obstacles=obstacles, terminals=terminals, letters_actions=letters_actions)
-# display_policy(vi.policy, shape, obstacles=obstacles, terminals=terminals)
 
+#You can check the quadrant values using print vi.V
+#print_policy(vi.policy, shape, obstacles=obstacles, terminals=terminals)
