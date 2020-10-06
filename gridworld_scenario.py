@@ -72,7 +72,7 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], reward_non_terminal_states=1,
     probability_xy = _np.split(probabilities, len(STPM))
     #print("prob", probability_xy)
 
-    return succ_xy, origin_xy, probability_xy, R#, output
+    return succ_xy, origin_xy, probability_xy, R
 
 
 def succ_tuple(a, state_tuple, final_limits):

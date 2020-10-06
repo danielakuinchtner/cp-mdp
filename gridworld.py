@@ -10,7 +10,7 @@ import time
 import numpy as _np
 import string
 import random
-import tensorflow as tf
+#import tensorflow as tf
 from gridworld_scenario import *
 
 """
@@ -137,7 +137,7 @@ for a1 in range(len(STPM[0])):
 ind_terminals = []
 for t in range(len(terminals)):
     ind_terminals.append(_np.ravel_multi_index(terminals[t], shape))
-print(ind_terminals)
+#print(ind_terminals)
 
 print("--- Precomputed actions, obstacles and terminals in: %s seconds ---" % (time.time() - start_time_precompute))
 
@@ -172,7 +172,7 @@ print("Memory used:", (process.memory_info().rss)/1000000, "Mb")
 print("Memory used:", (process.memory_info().rss)/1000000000, "Gb")
 
 
-print("\nPolicy:")
-print_policy(vi.policy, shape, obstacles=obstacles, terminals=terminals, letters_actions=letters_actions)
+#print("\nPolicy:")
+#print_policy(vi.policy, shape, obstacles=obstacles, terminals=terminals, letters_actions=letters_actions)
 # display_policy(vi.policy, shape, obstacles=obstacles, terminals=terminals)
 

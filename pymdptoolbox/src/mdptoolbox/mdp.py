@@ -182,7 +182,7 @@ class MDP(object):
 
     """
 
-    def __init__(self, shape, terminals, obstacles, succ_xy, origin_xy, probability_xy, R, states, ind_terminals, ind_obstacles, discount,
+    def __init__(self, shape, terminals, obstacles, succ_xy, origin_xy, probability_xy, R, states, discount,
                  epsilon, max_iter, skip_check=False):
         # Initialise a MDP based on the input parameters.
 
@@ -218,8 +218,6 @@ class MDP(object):
 
         self.S, self.A = _computeDimensions(origin_xy)
         self.shape = shape
-        self.ind_obstacles = ind_obstacles
-        self.ind_terminals = ind_terminals
         self.probabilities_xy = probability_xy
         self.succ_xy = succ_xy
         self.origin_xy = origin_xy
@@ -1532,8 +1530,7 @@ class ValueIterationGS(ValueIteration):
 
     """
 
-    def __init__(self, shape, terminals, obstacles, succ_xy, origin_xy, probability_xy, R, states, discount,
-                 epsilon=0.01, max_iter=10, initial_value=0, skip_check=False):
+    def __init__(self, shape, terminals, obstacles, succ_xy, origin_xy, probability_xy, R, states, discount, epsilon=0.01, max_iter=10, initial_value=0, skip_check=False):
         # Initialise a value iteration Gauss-Seidel MDP.
 
         MDP.__init__(self, shape, terminals, obstacles, succ_xy, origin_xy, probability_xy, R, states, discount, epsilon, max_iter, skip_check=skip_check)
@@ -1588,9 +1585,6 @@ class ValueIterationGS(ValueIteration):
 
             for s1 in range(len(split_succ_xy[0])):
                 #for s2 in range(len(split_succ_xy[0][s1])):
-
-                if s1 == self.ind_terminals or s1 == self.ind_obstacles:
-                    continue
 
                 Q = [float(self.R[a][s1] + self.discount * _np.dot(
                             split_probability[a][s1], self.V[split_succ_xy[a][s1]]))
