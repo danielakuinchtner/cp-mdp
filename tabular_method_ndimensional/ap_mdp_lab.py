@@ -11,6 +11,7 @@ import psutil
 import string
 import random
 import numpy as _np
+import tensorflow as tf
 """
 (Y,X)
 | 00 01 02 ... 0X-1
@@ -23,13 +24,14 @@ import numpy as _np
 """ 
 
 
-shape = [3, 4]
-#shape = [2, 3, 4]
+shape = [50, 50]
+shape = [2, 3, 4]
 #shape = [3, 2, 3, 4]
 number_of_obstacles = 1
 number_of_terminals = 2
 rewards = [100, -100]
 reward_non_terminal_states = -3
+p_intended = 0.8
 
 
 print("Executing a", shape, "grid, with", number_of_terminals, "terminals and", number_of_obstacles, "obstacles")
@@ -88,11 +90,11 @@ terminals = []
 for o in range(len(term)):
     terminals.append(term[o].tolist())
 
-
+"""
 obstacles = [[1, 1]]
 terminals = [[0, 3], [1, 3]]
 rewards = [100, -100]  # each reward corresponds to a terminal position
-"""
+
 obstacles = [[0, 1, 1], [1, 1, 1]]
 terminals = [[0, 0, 3], [0, 1, 3], [1, 0, 3], [1, 1, 3]]
 rewards = [100, -100, 100, -100]  # each reward corresponds to a terminal position
@@ -104,7 +106,6 @@ rewards = [100, -100, 100, -100]  # each reward corresponds to a terminal positi
 
 # print("Obstacles:", obstacles)
 # print("Terminals:", terminals)
-p_intended = 0.8
 p_right_angles = (1 - p_intended) / (len(actions) - 2)  # 0.1 # stochasticity
 p_opposite_angle = 0.0  # zero probability
 
@@ -144,6 +145,10 @@ print("\n--- Computed successors and rewards in: %s seconds ---" % (time.time() 
 print(P)
 print(R)
 
+output_tensor = tf.convert_to_tensor(list(P), dtype=tf.float32)
+print("\nShape of tensor:", output_tensor.shape)  # (4, 27, 3)
+print("Total number of elements (3*2*4*5): ", tf.size(output_tensor).numpy())  # 324
+
 start_time_vi = time.time()
 vi = mdptoolbox.mdp.ValueIterationGS(P, R, discount=1, epsilon=0.001, max_iter=1000, skip_check=True)
 
@@ -158,7 +163,7 @@ print("Memory used:", (process.memory_info().rss)/1000000000, "Gb")
 
 
 print("\nPolicy:")
-print_policy(vi.policy, shape, obstacles=obstacles, terminals=terminals, letters_actions=letters_actions)
+#print_policy(vi.policy, shape, obstacles=obstacles, terminals=terminals, letters_actions=letters_actions)
 
 #You can check the quadrant values using print vi.V
 #print_policy(vi.policy, shape, obstacles=obstacles, terminals=terminals)

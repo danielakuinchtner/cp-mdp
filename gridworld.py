@@ -27,18 +27,17 @@ from gridworld_scenario import *
 # install openblas lib to improve even more the runtime: conda install -c anaconda openblas
 
 shape = [3, 4]
-shape = [2, 3, 40]
 #shape = [3, 2, 3, 4]
 number_of_obstacles = 1
 number_of_terminals = 2
-rewards = [100, -100]
+rewards = [100, -100, 100, -100]
 reward_non_terminal_states = -3
 p_intended = 0.8  # probability of the desired action taking place
 
 print("Executing a", shape, "grid, with", number_of_terminals, "terminals and", number_of_obstacles, "obstacles")
 
 start_time_precompute = time.time()
-
+start_time_all = time.time()
 states = 1
 for dim in shape:
     states *= dim
@@ -91,11 +90,11 @@ terminals = []
 for o in range(len(term)):
     terminals.append(term[o].tolist())
 
-"""
+
 obstacles = [[1, 1]]
 terminals = [[0, 3], [1, 3]]
 rewards = [100, -100]  # each reward corresponds to a terminal position
-
+"""
 obstacles = [[0, 1, 1], [1, 1, 1]]
 terminals = [[0, 0, 3], [0, 1, 3], [1, 0, 3], [1, 1, 3]]
 rewards = [100, -100, 100, -100]  # each reward corresponds to a terminal position
@@ -135,30 +134,36 @@ for a1 in range(len(STPM[0])):
             elif a2 % 2 == 1:
                 STPM[a1, a2 - 1] = p_opposite_angle
 
-print("--- Precomputed actions, obstacles and terminals in: %s seconds ---" % (time.time() - start_time_precompute), "\n")
+ind_terminals = []
+for t in range(len(terminals)):
+    ind_terminals.append(_np.ravel_multi_index(terminals[t], shape))
+print(ind_terminals)
 
+print("--- Precomputed actions, obstacles and terminals in: %s seconds ---" % (time.time() - start_time_precompute))
 
+start_time_succ_vi = time.time()
 start_time_succ = time.time()
-succ_xy, origin_xy, probability_xy, R, output = mdp_grid(shape=shape, terminals=terminals,
+succ_xy, origin_xy, probability_xy, R = mdp_grid(shape=shape, terminals=terminals,
                                                  reward_non_terminal_states=reward_non_terminal_states,
                                                  rewards=rewards, obstacles=obstacles, final_limits=final_limits,
                                                  STPM=STPM, states=states)
-print("\n--- Computed successors and rewards in: %s seconds ---" % (time.time() - start_time_succ), "\n")
+print("--- Computed successors and rewards in: %s seconds ---" % (time.time() - start_time_succ))
 
 
-split_output = tf.split(output, len(STPM), axis=0, num=None, name='split')
-output_tensor = tf.convert_to_tensor(list(split_output), dtype=tf.float32)
+#split_output = tf.split(output, len(STPM), axis=0, num=None, name='split')
+#output_tensor = tf.convert_to_tensor(list(split_output), dtype=tf.float32)
 #print(output_tensor)
-print("\nShape of tensor:", output_tensor.shape)  # (4, 27, 3)
-print("Total number of elements (3*2*4*5): ", tf.size(output_tensor).numpy())  # 324
+#print("\nShape of tensor:", output_tensor.shape)  # (4, 27, 3)
+#print("Total number of elements (3*2*4*5): ", tf.size(output_tensor).numpy())  # 324
 
 start_time_vi = time.time()
-vi = mdptoolbox.mdp.ValueIterationGS(shape, terminals, obstacles, succ_xy, origin_xy, probability_xy, R, states,
-                                     discount=1, epsilon=0.001, max_iter=1000, skip_check=True)
+vi = mdptoolbox.mdp.ValueIterationGS(shape, terminals, obstacles, succ_xy, origin_xy, probability_xy, R, states, discount=1, epsilon=0.001, max_iter=1000, skip_check=True)
 
 vi.run()
 
-print("\n--- Solved with VI in: %s seconds ---" % (time.time() - start_time_vi), "\n")
+print("\n--- Solved with VI in: %s seconds ---" % (time.time() - start_time_vi))
+print("\n--- Computed successors and rewards solved with VI in: %s seconds ---" % (time.time() - start_time_succ_vi))
+print("\n--- Solved all in: %s seconds ---" % (time.time() - start_time_all))
 
 
 process = psutil.Process(os.getpid())

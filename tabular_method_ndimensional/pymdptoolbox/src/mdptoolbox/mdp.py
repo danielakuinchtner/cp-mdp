@@ -1595,7 +1595,7 @@ class ValueIterationGS(ValueIteration):
 
             #print("dot", self.P[a][s, :])
             self.V[s] = Q.max()
-            print(self.V[s])
+            #print(self.V[s])
 
             self.policy.append(int(Q.argmax()))
             #print(int(Q.argmax()))

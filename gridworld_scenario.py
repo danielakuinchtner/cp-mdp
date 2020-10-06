@@ -28,6 +28,7 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], reward_non_terminal_states=1,
 
                 state_tuple = _np.unravel_index(s, shape)  # ind to sub
                 state_tuple = list(state_tuple)
+
                 successor_state_of_s = succ_tuple(aa, state_tuple, final_limits)
                 #print(state_tuple, successor_state_of_s)
 
@@ -38,19 +39,19 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], reward_non_terminal_states=1,
                         successors = _np.append(successors, s)
                         origins = _np.append(origins, s)
                         probabilities = _np.append(probabilities, 0)
-                        output.append([s, s, 0])
+                        #output.append([s, s, 0])
 
                     else:
                         successors = _np.append(successors, state_to)
                         origins = _np.append(origins, s)
                         probabilities = _np.append(probabilities, a[aa])
-                        output.append([state_to, s, a[aa]])
+                        #output.append([state_to, s, a[aa]])
 
                 else:
                     successors = _np.append(successors, s)
                     origins = _np.append(origins, s)
                     probabilities = _np.append(probabilities, a[aa])
-                    output.append([s, s, a[aa]])
+                    #output.append([s, s, a[aa]])
 
     R = _np.ones([num_states])
     R = _np.multiply(R, r)
@@ -71,7 +72,7 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], reward_non_terminal_states=1,
     probability_xy = _np.split(probabilities, len(STPM))
     #print("prob", probability_xy)
 
-    return succ_xy, origin_xy, probability_xy, R, output
+    return succ_xy, origin_xy, probability_xy, R#, output
 
 
 def succ_tuple(a, state_tuple, final_limits):
