@@ -37,23 +37,23 @@ p_intended = 0.8
 print("Executing a", shape, "grid, with", number_of_terminals, "terminals and", number_of_obstacles, "obstacles")
 
 start_time_precompute = time.time()
-
+start_time_all = time.time()
 states = 1
 for dim in shape:
     states *= dim
 
 dimensions = len(shape)
-print('Number of dimensions: ', dimensions)
+#print('Number of dimensions: ', dimensions)
 
 actions = _np.ones(len(shape) * 2)
 letters_actions = []
-acts = ['N', 'S', 'W', 'E', 'B', 'F']  # North, South, West, East, Backward, Forward
+#acts = ['N', 'S', 'W', 'E', 'B', 'F']  # North, South, West, East, Backward, Forward
 for num_actions in range(len(actions)):
     if len(actions) < 7:
         letters_actions.append(acts[num_actions])
     else:
         letters_actions.append(random.choice(string.ascii_letters))
-print("Actions Letters: ", letters_actions)
+#print("Actions Letters: ", letters_actions)
 
 final_limits = []
 for num_dim in range(len(shape)):
@@ -135,26 +135,26 @@ for a1 in range(len(STPM[0])):
 
 print("--- Precomputed actions, obstacles and terminals in: %s seconds ---" % (time.time() - start_time_precompute), "\n")
 
-print(STPM)
+#print(STPM)
+start_time_succ_vi = time.time()
 start_time_succ = time.time()
 P, R = mdp_grid(shape=shape, terminals=terminals, r=-3,
                 rewards=rewards, obstacles=obstacles, final_limits=final_limits, states=states, actions=actions, STPM=STPM)
 
 print("\n--- Computed successors and rewards in: %s seconds ---" % (time.time() - start_time_succ), "\n")
 
-print(P)
-print(R)
+#print(P)
+#print(R)
 
-output_tensor = tf.convert_to_tensor(list(P), dtype=tf.float32)
-print("\nShape of tensor:", output_tensor.shape)  # (4, 27, 3)
-print("Total number of elements (3*2*4*5): ", tf.size(output_tensor).numpy())  # 324
 
 start_time_vi = time.time()
 vi = mdptoolbox.mdp.ValueIterationGS(P, R, discount=1, epsilon=0.001, max_iter=1000, skip_check=True)
 
 # vi.verbose = True # Uncomment this for question 2
 vi.run()
-print("\n--- Solved with VI in: %s seconds ---" % (time.time() - start_time_vi), "\n")
+print("\n--- Solved with VI in: %s seconds ---" % (time.time() - start_time_vi))
+print("\n--- Computed successors and rewards solved with VI in: %s seconds ---" % (time.time() - start_time_succ_vi))
+print("\n--- Solved all in: %s seconds ---" % (time.time() - start_time_all))
 
 process = psutil.Process(os.getpid())
 print("\nMemory used:", (process.memory_info().rss), "bytes")
