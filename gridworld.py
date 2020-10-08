@@ -90,11 +90,11 @@ terminals = []
 for o in range(len(term)):
     terminals.append(term[o].tolist())
 
-
+"""
 obstacles = [[1, 1]]
 terminals = [[0, 3], [1, 3]]
 rewards = [100, -100]  # each reward corresponds to a terminal position
-"""
+
 obstacles = [[0, 1, 1], [1, 1, 1]]
 terminals = [[0, 0, 3], [0, 1, 3], [1, 0, 3], [1, 1, 3]]
 rewards = [100, -100, 100, -100]  # each reward corresponds to a terminal position
@@ -143,21 +143,43 @@ print("--- Precomputed actions, obstacles and terminals in: %s seconds ---" % (t
 
 start_time_succ_vi = time.time()
 start_time_succ = time.time()
-succ_xy, origin_xy, probability_xy, R = mdp_grid(shape=shape, terminals=terminals,
+succ_xy, probability_xy, R = mdp_grid(shape=shape, terminals=terminals,
                                                  reward_non_terminal_states=reward_non_terminal_states,
                                                  rewards=rewards, obstacles=obstacles, final_limits=final_limits,
                                                  STPM=STPM, states=states)
 print("--- Computed successors and rewards in: %s seconds ---" % (time.time() - start_time_succ))
 
+#print(succ_xy, probability_xy)
 
-#split_output = tf.split(output, len(STPM), axis=0, num=None, name='split')
-#output_tensor = tf.convert_to_tensor(list(split_output), dtype=tf.float32)
-#print(output_tensor)
-#print("\nShape of tensor:", output_tensor.shape)  # (4, 27, 3)
-#print("Total number of elements (3*2*4*5): ", tf.size(output_tensor).numpy())  # 324
+"""
+split_succ = tf.split(succ_xy, len(STPM), axis=0, num=None, name='split')
+split_succ_tensor = tf.convert_to_tensor(list(split_succ), dtype=tf.float32)
+
+split_probability = tf.split(probability_xy, len(STPM), axis=0, num=None, name='split')
+split_probability_tensor = tf.convert_to_tensor(list(split_probability), dtype=tf.float32)
+
+print(split_probability_tensor)
+print(split_succ_tensor)
+print("\nShape of tensor:", split_probability_tensor.shape)  # (4, 27, 3)
+print("Total number of elements (3*2*4*5): ", tf.size(split_probability_tensor).numpy())  # 324
+
+print("\nShape of tensor:", split_succ_tensor.shape)  # (4, 27, 3)
+print("Total number of elements (3*2*4*5): ", tf.size(split_succ_tensor).numpy())  # 324
+"""
+succ_xy = _np.asarray(succ_xy)
+probability_xy = _np.asarray(probability_xy)
+
+#print(type(succ_xy))
+#print(succ_xy)
+
+succ_xy = _np.split(succ_xy, len(STPM[0]))
+probability_xy = _np.split(probability_xy, len(STPM[0]))
+
+#print(type(succ_xy))
+#print(succ_xy)
 
 start_time_vi = time.time()
-vi = mdptoolbox.mdp.ValueIterationGS(shape, terminals, obstacles, succ_xy, origin_xy, probability_xy, R, states, discount=1, epsilon=0.001, max_iter=1000, skip_check=True)
+vi = mdptoolbox.mdp.ValueIterationGS(shape, terminals, obstacles, succ_xy, probability_xy, R, states, discount=1, epsilon=0.001, max_iter=1000, skip_check=True)
 
 vi.run()
 
@@ -173,6 +195,6 @@ print("Memory used:", (process.memory_info().rss)/1000000000, "Gb")
 
 
 #print("\nPolicy:")
-#print_policy(vi.policy, shape, obstacles=obstacles, terminals=terminals, letters_actions=letters_actions)
+print_policy(vi.policy, shape, obstacles=obstacles, terminals=terminals, letters_actions=letters_actions)
 # display_policy(vi.policy, shape, obstacles=obstacles, terminals=terminals)
 

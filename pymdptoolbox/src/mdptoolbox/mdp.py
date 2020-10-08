@@ -182,7 +182,7 @@ class MDP(object):
 
     """
 
-    def __init__(self, shape, terminals, obstacles, succ_xy, origin_xy, probability_xy, R, states, discount,
+    def __init__(self, shape, terminals, obstacles, succ_xy, probability_xy, R, states, discount,
                  epsilon, max_iter, skip_check=False):
         # Initialise a MDP based on the input parameters.
 
@@ -214,18 +214,18 @@ class MDP(object):
             # We run a check on P and R to make sure they are describing an
             # MDP. If an exception isn't raised then they are assumed to be
             # correct.
-            _util.check(origin_xy, R)
+            _util.check(succ_xy, R)
 
-        self.S, self.A = _computeDimensions(origin_xy)
+        self.S, self.A = _computeDimensions(succ_xy)
         self.shape = shape
         self.probabilities_xy = probability_xy
         self.succ_xy = succ_xy
-        self.origin_xy = origin_xy
+        #self.origin_xy = origin_xy
         self.obstacles = obstacles
         self.terminals = terminals
-        self.P = self._computeTransition(origin_xy)
+        self.P = self._computeTransition(succ_xy)
         self.states = states
-        self.R = self._computeReward(R, origin_xy)
+        self.R = self._computeReward(R, succ_xy)
         # print("R: ", self.R)
         #print("reward:", R)
 
@@ -1530,10 +1530,10 @@ class ValueIterationGS(ValueIteration):
 
     """
 
-    def __init__(self, shape, terminals, obstacles, succ_xy, origin_xy, probability_xy, R, states, discount, epsilon=0.01, max_iter=10, initial_value=0, skip_check=False):
+    def __init__(self, shape, terminals, obstacles, succ_xy, probability_xy, R, states, discount, epsilon=0.01, max_iter=10, initial_value=0, skip_check=False):
         # Initialise a value iteration Gauss-Seidel MDP.
 
-        MDP.__init__(self, shape, terminals, obstacles, succ_xy, origin_xy, probability_xy, R, states, discount, epsilon, max_iter, skip_check=skip_check)
+        MDP.__init__(self, shape, terminals, obstacles, succ_xy, probability_xy, R, states, discount, epsilon, max_iter, skip_check=skip_check)
         self.iterations_list = []
         self.v_list = []
         # initialization of optional arguments
@@ -1574,7 +1574,7 @@ class ValueIterationGS(ValueIteration):
 
         for aa in range(self.A):  # 4
             split_succ_xy.append(_np.split(self.succ_xy[aa], self.states))
-            split_origin_xy.append(_np.split(self.origin_xy[aa], self.states))
+            #split_origin_xy.append(_np.split(self.origin_xy[aa], self.states))
             split_probability.append(_np.split(self.probabilities_xy[aa], self.states))
 
         while True:

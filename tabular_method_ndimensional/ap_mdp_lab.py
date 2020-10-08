@@ -24,8 +24,8 @@ import tensorflow as tf
 """ 
 
 
-shape = [50, 50]
-shape = [2, 3, 4]
+shape = [3, 4]
+#shape = [2, 3, 4]
 #shape = [3, 2, 3, 4]
 number_of_obstacles = 1
 number_of_terminals = 2
@@ -47,7 +47,7 @@ dimensions = len(shape)
 
 actions = _np.ones(len(shape) * 2)
 letters_actions = []
-#acts = ['N', 'S', 'W', 'E', 'B', 'F']  # North, South, West, East, Backward, Forward
+acts = ['N', 'S', 'W', 'E', 'B', 'F']  # North, South, West, East, Backward, Forward
 for num_actions in range(len(actions)):
     if len(actions) < 7:
         letters_actions.append(acts[num_actions])
@@ -90,11 +90,11 @@ terminals = []
 for o in range(len(term)):
     terminals.append(term[o].tolist())
 
-"""
+
 obstacles = [[1, 1]]
 terminals = [[0, 3], [1, 3]]
 rewards = [100, -100]  # each reward corresponds to a terminal position
-
+"""
 obstacles = [[0, 1, 1], [1, 1, 1]]
 terminals = [[0, 0, 3], [0, 1, 3], [1, 0, 3], [1, 1, 3]]
 rewards = [100, -100, 100, -100]  # each reward corresponds to a terminal position
@@ -163,7 +163,7 @@ print("Memory used:", (process.memory_info().rss)/1000000000, "Gb")
 
 
 print("\nPolicy:")
-#print_policy(vi.policy, shape, obstacles=obstacles, terminals=terminals, letters_actions=letters_actions)
+print_policy(vi.policy, shape, obstacles=obstacles, terminals=terminals, letters_actions=letters_actions)
 
 #You can check the quadrant values using print vi.V
 #print_policy(vi.policy, shape, obstacles=obstacles, terminals=terminals)
