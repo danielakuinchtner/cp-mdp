@@ -60,7 +60,7 @@ import time as _time
 
 import numpy as _np
 import scipy.sparse as _sp
-
+from numba import autojit
 
 import mdptoolbox.util as _util
 
@@ -1242,7 +1242,7 @@ class RelativeValueIteration(MDP):
 
         self._endRun()
 
-
+@autojit
 class ValueIteration(MDP):
     """A discounted MDP solved using the value iteration algorithm.
 
@@ -1472,7 +1472,7 @@ class ValueIteration(MDP):
 
         self._endRun()
 
-@jit(target ="cuda")
+@autojit
 class ValueIterationGS(ValueIteration):
     """
     A discounted MDP solved using the value iteration Gauss-Seidel algorithm.
