@@ -4,11 +4,13 @@ import scipy.sparse as _sp
 import sys
 sys.path.insert(1, 'pymdptoolbox/src')
 import mdptoolbox.example
-from numba import autojit
+
+from numba import cuda
+from numba import jit
 
 
 
-@autojit
+@numba.jit(nopython=True, parallel=True)
 def mdp_grid(shape=[], obstacles=[], terminals=[], reward_non_terminal_states=1, rewards=[], final_limits=[],
              STPM=[], states=[]):
     r = reward_non_terminal_states
@@ -94,7 +96,7 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], reward_non_terminal_states=1,
 
     return successors, probabilities, R
 
-@autojit
+@numba.jit(nopython=True, parallel=True)
 def succ_tuple(a, state_tuple, final_limits):
 
     successor = []
