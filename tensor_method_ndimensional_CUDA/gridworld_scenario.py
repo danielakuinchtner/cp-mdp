@@ -4,7 +4,6 @@ import scipy.sparse as _sp
 import sys
 sys.path.insert(1, 'pymdptoolbox/src')
 import mdptoolbox.example
-import numba
 from numba import njit, prange
 
 #from numba import cuda
@@ -13,7 +12,7 @@ from numba import njit, prange
 #from pylab import imshow, show
 
 
-#@njit(parallel=True)
+@autojit
 def mdp_grid(shape=[], obstacles=[], terminals=[], reward_non_terminal_states=1, rewards=[], final_limits=[],
              STPM=[], states=[]):
     r = reward_non_terminal_states
@@ -32,7 +31,7 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], reward_non_terminal_states=1,
     #origins = []
     probabilities = []
 
-    for a in range(len(STPM)):
+    for a in prange(len(STPM)):
         for s in range(num_states):
             for aa in range(len(STPM[a])):
                 if STPM[a][aa] == 0: # remove all zero probabilities
@@ -99,10 +98,11 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], reward_non_terminal_states=1,
 
 #@cuda.jit(device=True)
 #@njit(parallel=True)
+@autojit
 def succ_tuple(a, state_tuple, final_limits):
 
     successor = []
-    for dim in range(len(state_tuple)):
+    for dim in prange(len(state_tuple)):
 
         if a - math.ceil(a / 2) == dim:
             if a % 2 == 0:

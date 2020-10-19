@@ -1471,7 +1471,7 @@ class ValueIteration(MDP):
 
         self._endRun()
 
-#@autojit
+
 class ValueIterationGS(ValueIteration):
     """
     A discounted MDP solved using the value iteration Gauss-Seidel algorithm.
@@ -1561,7 +1561,7 @@ class ValueIterationGS(ValueIteration):
             # threshold of variation for V for an epsilon-optimal policy
             self.thresh = epsilon
 
-    @njit(parallel=True)
+    #@njit(parallel=True)
     def run(self):
         # Run the value iteration Gauss-Seidel algorithm.
 
@@ -1589,7 +1589,7 @@ class ValueIterationGS(ValueIteration):
 
                 Q = [float(self.R[a][s1] + self.discount * _np.dot(
                             split_probability[a][s1], self.V[split_succ_xy[a][s1]]))
-                    for a in prange(self.A)]
+                    for a in range(self.A)]
 
                 self.V[s1] = max(Q)
 
