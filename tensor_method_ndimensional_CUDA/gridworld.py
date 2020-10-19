@@ -152,9 +152,8 @@ start_time_succ = time.time()
 
 
 succ_xy, probability_xy, R = mdp_grid(shape=shape, terminals=terminals,
-                                                 reward_non_terminal_states=reward_non_terminal_states,
-                                                 rewards=rewards, obstacles=obstacles, final_limits=final_limits,
-                                                 STPM=STPM, states=states)
+                                      reward_non_terminal_states=reward_non_terminal_states, rewards=rewards,
+                                      obstacles=obstacles, final_limits=final_limits, STPM=STPM, states=states)
 #gpu_STPM.to_host()
 print("--- Computed successors and rewards in: %s seconds ---" % (time.time() - start_time_succ))
 

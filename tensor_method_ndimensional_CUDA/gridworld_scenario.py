@@ -13,7 +13,7 @@ from numba import cuda
 
 
 @cuda.jit
-def mdp_grid(shape=[], obstacles=[], terminals=[], reward_non_terminal_states=1, rewards=[], final_limits=[],
+def mdp_grid(shape=[], terminals=[], reward_non_terminal_states=1, rewards=[], obstacles=[], final_limits=[],
              STPM=[], states=[]):
     r = reward_non_terminal_states
     num_states = states
