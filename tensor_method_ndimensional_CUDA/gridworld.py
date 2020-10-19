@@ -12,6 +12,8 @@ import string
 import random
 #import tensorflow as tf
 from gridworld_scenario import *
+from numba import njit, prange
+
 
 """
 (Y,X)
@@ -141,19 +143,19 @@ for t in range(len(terminals)):
 
 print("--- Precomputed actions, obstacles and terminals in: %s seconds ---" % (time.time() - start_time_precompute))
 
-threads_per_block = 512
-blocks_per_grid = 36
-gpu_STPM = cuda.to_device(STPM)
+#threads_per_block = 512
+#blocks_per_grid = 36
+#gpu_STPM = cuda.to_device(STPM)
 
 start_time_succ_vi = time.time()
 start_time_succ = time.time()
 
 
-succ_xy, probability_xy, R = mdp_grid[blocks_per_grid, threads_per_block](shape=shape, terminals=terminals,
+succ_xy, probability_xy, R = mdp_grid(shape=shape, terminals=terminals,
                                                  reward_non_terminal_states=reward_non_terminal_states,
                                                  rewards=rewards, obstacles=obstacles, final_limits=final_limits,
-                                                 STPM=gpu_STPM, states=states)
-gpu_STPM.to_host()
+                                                 STPM=STPM, states=states)
+#gpu_STPM.to_host()
 print("--- Computed successors and rewards in: %s seconds ---" % (time.time() - start_time_succ))
 
 #print(succ_xy, probability_xy)

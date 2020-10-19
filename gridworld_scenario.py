@@ -24,10 +24,10 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], reward_non_terminal_states=1,
     origins = []
     probabilities = []
 
-    for a in STPM:
+    for a in range(len(STPM)):
         for s in range(num_states):
-            for aa in range(len(a)):  # 4
-                if a[aa] == 0:  # remove all zero probabilities
+            for aa in range(len(STPM[a])):
+                if STPM[a][aa] == 0:  # remove all zero probabilities
                     continue
 
                 state_tuple = _np.unravel_index(s, shape)  # ind to sub
@@ -56,7 +56,7 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], reward_non_terminal_states=1,
                         #output.append([state_to, s, a[aa]])
 
                         successors.append(state_to)
-                        probabilities.append(a[aa])
+                        probabilities.append(STPM[a][aa])
 
                 else:
                     #successors = _np.append(successors, s)
@@ -64,7 +64,7 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], reward_non_terminal_states=1,
                     #probabilities = _np.append(probabilities, a[aa])
                     #output.append([s, s, a[aa]])
                     successors.append(s)
-                    probabilities.append(a[aa])
+                    probabilities.append(STPM[a][aa])
 
     R = _np.ones([num_states])
     R = _np.multiply(R, r)

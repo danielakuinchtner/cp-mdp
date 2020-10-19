@@ -4,15 +4,16 @@ import scipy.sparse as _sp
 import sys
 sys.path.insert(1, 'pymdptoolbox/src')
 import mdptoolbox.example
-
 import numba
-from numba import cuda
-from numba import *
+from numba import njit, prange
+
+#from numba import cuda
+#from numba import *
 #from timeit import default_timer as timer
 #from pylab import imshow, show
 
 
-#@cuda.jit
+@njit(parallel=True)
 def mdp_grid(shape=[], obstacles=[], terminals=[], reward_non_terminal_states=1, rewards=[], final_limits=[],
              STPM=[], states=[]):
     r = reward_non_terminal_states
@@ -31,10 +32,10 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], reward_non_terminal_states=1,
     #origins = []
     probabilities = []
 
-    for a in STPM:
+    for a in prange(len(STPM)):
         for s in range(num_states):
-            for aa in range(len(a)):  # 4
-                if a[aa] == 0:  # remove all zero probabilities
+            for aa in range(len(STPM[a])):
+                if STPM[a][aa] == 0: # remove all zero probabilities
                     continue
 
                 state_tuple = _np.unravel_index(s, shape)  # ind to sub
@@ -63,7 +64,7 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], reward_non_terminal_states=1,
                         #output.append([state_to, s, a[aa]])
 
                         successors.append(state_to)
-                        probabilities.append(a[aa])
+                        probabilities.append(STPM[a][aa])
 
                 else:
                     #successors = _np.append(successors, s)
@@ -71,7 +72,7 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], reward_non_terminal_states=1,
                     #probabilities = _np.append(probabilities, a[aa])
                     #output.append([s, s, a[aa]])
                     successors.append(s)
-                    probabilities.append(a[aa])
+                    probabilities.append(STPM[a][aa])
 
     R = _np.ones([num_states])
     R = _np.multiply(R, r)
@@ -97,10 +98,11 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], reward_non_terminal_states=1,
     return successors, probabilities, R
 
 #@cuda.jit(device=True)
+@njit(parallel=True)
 def succ_tuple(a, state_tuple, final_limits):
 
     successor = []
-    for dim in range(len(state_tuple)):
+    for dim in prange(len(state_tuple)):
 
         if a - math.ceil(a / 2) == dim:
             if a % 2 == 0:

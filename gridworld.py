@@ -90,11 +90,11 @@ terminals = []
 for o in range(len(term)):
     terminals.append(term[o].tolist())
 
-"""
+
 obstacles = [[1, 1]]
 terminals = [[0, 3], [1, 3]]
 rewards = [100, -100]  # each reward corresponds to a terminal position
-
+"""
 obstacles = [[0, 1, 1], [1, 1, 1]]
 terminals = [[0, 0, 3], [0, 1, 3], [1, 0, 3], [1, 1, 3]]
 rewards = [100, -100, 100, -100]  # each reward corresponds to a terminal position

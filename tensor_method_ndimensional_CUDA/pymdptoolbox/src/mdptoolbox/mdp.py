@@ -57,9 +57,10 @@ Available classes
 
 import math as _math
 import time as _time
-from numba import autojit
 import numpy as _np
 import scipy.sparse as _sp
+import multiprocessing
+from joblib import Parallel, delayed
 
 import mdptoolbox.util as _util
 
@@ -1575,6 +1576,8 @@ class ValueIterationGS(ValueIteration):
             split_succ_xy.append(_np.split(self.succ_xy[aa], self.states))
             #split_origin_xy.append(_np.split(self.origin_xy[aa], self.states))
             split_probability.append(_np.split(self.probabilities_xy[aa], self.states))
+
+        num_cores = multiprocessing.cpu_count()
 
         while True:
             self.iter += 1
