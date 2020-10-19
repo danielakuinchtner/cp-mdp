@@ -1471,7 +1471,7 @@ class ValueIteration(MDP):
 
         self._endRun()
 
-@autojit
+#@autojit
 class ValueIterationGS(ValueIteration):
     """
     A discounted MDP solved using the value iteration Gauss-Seidel algorithm.
