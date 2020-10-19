@@ -24,22 +24,22 @@ def mandel(x, y, max_iters):
 
 @cuda.jit
 def mandel_kernel(min_x, max_x, min_y, max_y, image, iters):
-  height = image.shape[0]
-  width = image.shape[1]
+    height = image.shape[0]
+    width = image.shape[1]
 
-  pixel_size_x = (max_x - min_x) / width
-  pixel_size_y = (max_y - min_y) / height
+    pixel_size_x = (max_x - min_x) / width
+    pixel_size_y = (max_y - min_y) / height
 
-  startX = cuda.blockDim.x * cuda.blockIdx.x + cuda.threadIdx.x
-  startY = cuda.blockDim.y * cuda.blockIdx.y + cuda.threadIdx.y
-  gridX = cuda.gridDim.x * cuda.blockDim.x;
-  gridY = cuda.gridDim.y * cuda.blockDim.y;
+    startX = cuda.blockDim.x * cuda.blockIdx.x + cuda.threadIdx.x
+    startY = cuda.blockDim.y * cuda.blockIdx.y + cuda.threadIdx.y
+    gridX = cuda.gridDim.x * cuda.blockDim.x;
+    gridY = cuda.gridDim.y * cuda.blockDim.y;
 
-  for x in range(startX, width, gridX):
-    real = min_x + x * pixel_size_x
-    for y in range(startY, height, gridY):
-      imag = min_y + y * pixel_size_y
-      image[y, x] = mandel(real, imag, iters)
+    for x in range(startX, width, gridX):
+      real = min_x + x * pixel_size_x
+      for y in range(startY, height, gridY):
+        imag = min_y + y * pixel_size_y
+        image[y, x] = mandel(real, imag, iters)
 
 gimage = np.zeros((1024, 1536), dtype = np.uint8)
 blockdim = (32, 8)

@@ -141,12 +141,19 @@ for t in range(len(terminals)):
 
 print("--- Precomputed actions, obstacles and terminals in: %s seconds ---" % (time.time() - start_time_precompute))
 
+threads_per_block = 512
+blocks_per_grid = 36
+gpu_STPM = cuda.to_device(STPM)
+
 start_time_succ_vi = time.time()
 start_time_succ = time.time()
-succ_xy, probability_xy, R = mdp_grid(shape=shape, terminals=terminals,
+
+
+succ_xy, probability_xy, R = mdp_grid[blocks_per_grid, threads_per_block](shape=shape, terminals=terminals,
                                                  reward_non_terminal_states=reward_non_terminal_states,
                                                  rewards=rewards, obstacles=obstacles, final_limits=final_limits,
-                                                 STPM=STPM, states=states)
+                                                 STPM=gpu_STPM, states=states)
+gpu_STPM.to_host()
 print("--- Computed successors and rewards in: %s seconds ---" % (time.time() - start_time_succ))
 
 #print(succ_xy, probability_xy)
@@ -179,9 +186,14 @@ probability_xy = _np.split(probability_xy, len(STPM[0]))
 #print(succ_xy)
 
 start_time_vi = time.time()
+#d_succ_xy = cuda.to_device(succ_xy)
+#d_probability_xy = cuda.to_device(probability_xy)
 vi = mdptoolbox.mdp.ValueIterationGS(shape, terminals, obstacles, succ_xy, probability_xy, R, states, discount=1, epsilon=0.001, max_iter=1000, skip_check=True)
-
+#d_succ_xy.to_host()
+#d_probability_xy.to_host()
 vi.run()
+#d_succ_xy.to_host()
+#d_probability_xy.to_host()
 
 print("\n--- Solved with VI in: %s seconds ---" % (time.time() - start_time_vi))
 print("\n--- Computed successors and rewards solved with VI in: %s seconds ---" % (time.time() - start_time_succ_vi))
