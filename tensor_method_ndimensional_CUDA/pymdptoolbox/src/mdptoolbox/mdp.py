@@ -59,8 +59,7 @@ import math as _math
 import time as _time
 import numpy as _np
 import scipy.sparse as _sp
-import multiprocessing
-from joblib import Parallel, delayed
+from numba import njit, prange
 
 import mdptoolbox.util as _util
 
@@ -1562,6 +1561,7 @@ class ValueIterationGS(ValueIteration):
             # threshold of variation for V for an epsilon-optimal policy
             self.thresh = epsilon
 
+    @njit(parallel=True)
     def run(self):
         # Run the value iteration Gauss-Seidel algorithm.
 
@@ -1590,7 +1590,7 @@ class ValueIterationGS(ValueIteration):
 
                 Q = [float(self.R[a][s1] + self.discount * _np.dot(
                             split_probability[a][s1], self.V[split_succ_xy[a][s1]]))
-                    for a in range(self.A)]
+                    for a in prange(self.A)]
 
                 self.V[s1] = max(Q)
 
