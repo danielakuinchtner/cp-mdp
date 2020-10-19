@@ -12,7 +12,6 @@ import string
 import random
 #import tensorflow as tf
 from gridworld_scenario import *
-from numba import autojit
 
 """
 (Y,X)
