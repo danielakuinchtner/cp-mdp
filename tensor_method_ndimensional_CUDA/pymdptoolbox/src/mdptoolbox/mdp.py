@@ -1577,7 +1577,6 @@ class ValueIterationGS(ValueIteration):
             #split_origin_xy.append(_np.split(self.origin_xy[aa], self.states))
             split_probability.append(_np.split(self.probabilities_xy[aa], self.states))
 
-        num_cores = multiprocessing.cpu_count()
 
         while True:
             self.iter += 1
