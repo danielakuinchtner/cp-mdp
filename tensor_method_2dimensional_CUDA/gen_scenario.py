@@ -3,6 +3,8 @@ import math
 #import tensorflow as tf  # .\venv\Scripts\activate
 import scipy.sparse as _sp
 import sys
+from numba import cuda
+from numba import *
 
 sys.path.insert(1, 'pymdptoolbox/src')
 import mdptoolbox.example
@@ -52,9 +54,15 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], r=1, rewards=[], actions=[], 
     origins = _np.array([])
     probabilities = _np.array([])
 
+    startX = cuda.blockDim.x * cuda.blockIdx.x + cuda.threadIdx.x
+    startY = cuda.blockDim.y * cuda.blockIdx.y + cuda.threadIdx.y
+    gridX = cuda.gridDim.x * cuda.blockDim.x;
+    gridY = cuda.gridDim.y * cuda.blockDim.y;
+
     for a in STPM:  # 4
-        for x in range(shape[0]):  # 3
-            for y in range(shape[1]):  # 4
+        for x in range(startX, shape[0], gridX):  # 3
+            for y in range(startY, shape[1], gridY):  # 4
+
                 #if [x, y] in obstacles or [x, y] in terminals:  # remove obstacles and terminals
                 #    continue
                 for aa in range(len(a)):  # 4
@@ -113,6 +121,7 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], r=1, rewards=[], actions=[], 
     # split the output into 4 arrays (because there are 4 actions)
     #split = tf.split(output, len(STPM), axis=0, num=None, name='split')
     #print(split)
+
 
     successors = successors.astype(int)
     succ_xy = _np.split(successors, len(STPM))
@@ -229,7 +238,7 @@ def valid(x, y, obstacles):
     return valid
 """
 
-
+@cuda.jit(device=True)
 def succ(a, x, y, final_limits):
     if a == 0:  # North
         if x != 0:  # 1: limite inicial de X:0
