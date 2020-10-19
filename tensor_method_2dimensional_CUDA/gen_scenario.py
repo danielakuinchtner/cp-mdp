@@ -57,8 +57,8 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], r=1, rewards=[], actions=[], 
 
 
     for a in STPM:  # 4
-        for x in prange(startX, shape[0], gridX):  # 3
-            for y in prange(startY, shape[1], gridY):  # 4
+        for x in prange(shape[0]):  # 3
+            for y in prange(shape[1]):  # 4
 
                 #if [x, y] in obstacles or [x, y] in terminals:  # remove obstacles and terminals
                 #    continue

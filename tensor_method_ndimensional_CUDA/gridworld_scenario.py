@@ -5,14 +5,14 @@ import sys
 sys.path.insert(1, 'pymdptoolbox/src')
 import mdptoolbox.example
 #from numba import njit, prange
-from numba import autojit, prange
-#from numba import cuda
+#from numba import autojit, prange
+from numba import cuda
 #from numba import *
 #from timeit import default_timer as timer
 #from pylab import imshow, show
 
 
-@autojit
+@cuda.jit
 def mdp_grid(shape=[], obstacles=[], terminals=[], reward_non_terminal_states=1, rewards=[], final_limits=[],
              STPM=[], states=[]):
     r = reward_non_terminal_states
@@ -98,7 +98,8 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], reward_non_terminal_states=1,
 
 #@cuda.jit(device=True)
 #@njit(parallel=True)
-@autojit
+#@autojit
+@cuda.jit(device=True)
 def succ_tuple(a, state_tuple, final_limits):
 
     successor = []
