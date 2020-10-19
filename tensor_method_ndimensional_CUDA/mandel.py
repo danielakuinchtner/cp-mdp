@@ -5,7 +5,6 @@ import numba
 from numba import cuda
 from numba import *
 
-mandel_gpu = cuda.jit(device=True)(mandel)
 
 @cuda.jit(device=True)
 def mandel(x, y, max_iters):
