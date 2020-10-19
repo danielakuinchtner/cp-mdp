@@ -6,8 +6,6 @@ sys.path.insert(1,'pymdptoolbox/src')
 import mdptoolbox.example
 import time
 from gen_scenario import *
-from numba import cuda
-from numba import *
 """
 (Y,X)
 | 00 01 02 ... 0X-1       'N' = North
@@ -31,13 +29,10 @@ states = shape[0] * shape[1]
 print("Executing a", shape, "grid")
 
 start_time1 = time.time()
-blockdim = (32, 8)
-griddim = (32,16)
-d_shape = cuda.to_device(shape)
-succ_xy, origin_xy, probability_xy, R = mdp_grid[griddim, blockdim](shape=d_shape, terminals=terminals, r=-3,
+
+succ_xy, origin_xy, probability_xy, R = mdp_grid(shape=shape, terminals=terminals, r=-3,
                                                                          rewards=rewards, obstacles=obstacles,
                                                                          actions=actions, final_limits=final_limits)
-d_shape.to_host()
 print("--- Succ: %s seconds ---" % (time.time() - start_time1))
 
 start_time = time.time()
