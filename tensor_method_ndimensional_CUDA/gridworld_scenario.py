@@ -5,12 +5,13 @@ import sys
 sys.path.insert(1, 'pymdptoolbox/src')
 import mdptoolbox.example
 
-from numba import vectorize
+from numba import autojit
+from timeit import default_timer as timer
+from pylab import imshow, show
 
 
 
-
-@vectorize(['float32(float32, float32)'], target='cpu')
+@autojit
 def mdp_grid(shape=[], obstacles=[], terminals=[], reward_non_terminal_states=1, rewards=[], final_limits=[],
              STPM=[], states=[]):
     r = reward_non_terminal_states
@@ -96,7 +97,7 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], reward_non_terminal_states=1,
 
     return successors, probabilities, R
 
-
+@autojit
 def succ_tuple(a, state_tuple, final_limits):
 
     successor = []
