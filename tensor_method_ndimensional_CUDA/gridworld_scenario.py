@@ -4,8 +4,8 @@ import scipy.sparse as _sp
 import sys
 sys.path.insert(1, 'pymdptoolbox/src')
 import mdptoolbox.example
-from numba import njit, prange
-
+#from numba import njit, prange
+from numba import autojit, prange
 #from numba import cuda
 #from numba import *
 #from timeit import default_timer as timer
