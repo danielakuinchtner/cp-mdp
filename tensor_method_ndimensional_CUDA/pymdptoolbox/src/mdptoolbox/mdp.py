@@ -57,7 +57,7 @@ Available classes
 
 import math as _math
 import time as _time
-
+from numba import autojit
 import numpy as _np
 import scipy.sparse as _sp
 
@@ -1471,7 +1471,7 @@ class ValueIteration(MDP):
 
         self._endRun()
 
-
+@autojit
 class ValueIterationGS(ValueIteration):
     """
     A discounted MDP solved using the value iteration Gauss-Seidel algorithm.

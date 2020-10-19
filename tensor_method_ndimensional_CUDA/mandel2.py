@@ -41,4 +41,4 @@ create_fractal(-2.0, 1.0, -1.0, 1.0, image, 20)
 dt = timer() - start
 
 print("Mandelbrot created in %f s" % dt)
-imshow(image)
+#imshow(image)

@@ -6,8 +6,8 @@ sys.path.insert(1, 'pymdptoolbox/src')
 import mdptoolbox.example
 
 from numba import autojit
-from timeit import default_timer as timer
-from pylab import imshow, show
+#from timeit import default_timer as timer
+#from pylab import imshow, show
 
 
 
@@ -30,7 +30,6 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], reward_non_terminal_states=1,
     origins = []
     probabilities = []
 
-    nBlocks = (states + THREADSPERBLOCK - 1) / THREADSPERBLOCK;
 
     for a in STPM:
         for s in range(num_states):
