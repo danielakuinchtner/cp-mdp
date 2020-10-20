@@ -15,16 +15,6 @@ import numpy as _np
 
 from numba import cuda
 from numba import *
-"""
-(Y,X)
-| 00 01 02 ... 0X-1
-| 10  .         .
-| 20    .       .
-| .       .     .
-| .         .   .
-| .           . .
-| Y-1,0 . . .   Y-1X-1
-""" 
 
 
 shape = [3, 4]
@@ -142,12 +132,13 @@ print("--- Precomputed actions, obstacles and terminals in: %s seconds ---" % (t
 start_time_succ_vi = time.time()
 start_time_succ = time.time()
 
-P_transtion_model = _np.zeros([len(A), S, S])
+P_transtion_model = _np.zeros([len(actions), states, states])
 blockdim = (32, 8)
 griddim = (32,16)
 d_P_transtion_model = cuda.to_device(P_transtion_model)
 
-P, R = mdp_grid[griddim, blockdim](shape=shape, terminals=terminals, r=-3, P=d_P_transtion_model,
+
+P, R = mdp_grid(shape=shape, terminals=terminals, r=-3, P=d_P_transtion_model,
                 rewards=rewards, obstacles=obstacles, final_limits=final_limits, states=states, actions=actions, STPM=STPM)
 
 d_P_transtion_model.to_host()

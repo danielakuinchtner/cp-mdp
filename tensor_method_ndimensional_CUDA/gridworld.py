@@ -14,7 +14,7 @@ import random
 from gridworld_scenario import *
 from numba import njit, prange
 
-
+import cupy as cp
 """
 (Y,X)
 | 00 01 02 ... 0X-1       'N' = North
@@ -47,33 +47,33 @@ for dim in shape:
 dimensions = len(shape)
 # print('Number of dimensions: ', dimensions)
 
-actions = _np.ones(len(shape) * 2)
-letters_actions = []
+actions = cp.ones(len(shape) * 2)
+letters_actions = cp.array([])
 acts = ['N', 'S', 'W', 'E', 'B', 'F']  # North, South, West, East, Backward, Forward
 for num_actions in range(len(actions)):
     if len(actions) < 7:
-        letters_actions.append(acts[num_actions])
+        letters_actions = cp.concatenate(acts[num_actions])
     else:
-        letters_actions.append(random.choice(string.ascii_letters))
+        letters_actions = cp.concatenate(random.choice(string.ascii_letters))
 #print("Actions Letters: ", letters_actions)
 
-final_limits = []
+final_limits = cp.array([])
 for num_dim in range(len(shape)):
     new_shape = shape[num_dim] - 1
-    final_limits.append(new_shape)
+    final_limits = cp.concatenate(final_limits, new_shape)
 
 
 def randomConfig():
-    obstacles = _np.array([])
-    terminals = _np.array([])
+    obstacles = cp.array([])
+    terminals = cp.array([])
 
     for n_obst in range(number_of_obstacles):
         for dim in range(len(shape)):
-            obstacles = _np.append(obstacles, random.randint(0, final_limits[dim]))
+            obstacles = cp.concatenate(obstacles, random.randint(0, final_limits[dim]))
 
     for n_term in range(number_of_terminals):
         for dim in range(len(shape)):
-            terminals = _np.append(terminals, random.randint(0, final_limits[dim]))
+            terminals = cp.concatenate(terminals, random.randint(0, final_limits[dim]))
     return obstacles, terminals
 
 
@@ -84,13 +84,13 @@ terminals = terminals.astype(int)
 obs = _np.split(obstacles, number_of_obstacles)
 term = _np.split(terminals, number_of_terminals)
 
-obstacles = []
+obstacles = cp.array([])
 for o in range(len(obs)):
-    obstacles.append(obs[o].tolist())
+    obstacles = cp.concatenate(obstacles, obs[o].tolist())
 
-terminals = []
+terminals = cp.array([])
 for o in range(len(term)):
-    terminals.append(term[o].tolist())
+    terminals = cp.concatenate(terminals, term[o].tolist())
 
 
 obstacles = [[1, 1]]
@@ -124,8 +124,8 @@ p_opposite_angle = 0.0  # zero probability
 #         [0.1(W,N), 0.0(W,E), 0.8(W,W), 0.1(W,S)],
 #         [0.0(S,N), 0.1(S,E), 0.1(S,W), 0.8(S,S)]]
 
-STPM = _np.ones([len(actions), len(actions)])
-STPM = _np.multiply(STPM, p_right_angles)
+STPM = cp.ones([len(actions), len(actions)])
+STPM = cp.multiply(STPM, p_right_angles)
 
 for a1 in range(len(STPM[0])):
     for a2 in range(len(STPM[1])):
@@ -136,9 +136,10 @@ for a1 in range(len(STPM[0])):
             elif a2 % 2 == 1:
                 STPM[a1, a2 - 1] = p_opposite_angle
 
-ind_terminals = []
+#ind_terminals = []
+ind_terminals = cp.array([])
 for t in range(len(terminals)):
-    ind_terminals.append(_np.ravel_multi_index(terminals[t], shape))
+    ind_terminals = cp.concatenate(_np.ravel_multi_index(terminals[t], shape))
 #print(ind_terminals)
 
 print("--- Precomputed actions, obstacles and terminals in: %s seconds ---" % (time.time() - start_time_precompute))
@@ -174,14 +175,14 @@ print("Total number of elements (3*2*4*5): ", tf.size(split_probability_tensor).
 print("\nShape of tensor:", split_succ_tensor.shape)  # (4, 27, 3)
 print("Total number of elements (3*2*4*5): ", tf.size(split_succ_tensor).numpy())  # 324
 """
-succ_xy = _np.asarray(succ_xy)
-probability_xy = _np.asarray(probability_xy)
+succ_xy = cp.asarray(succ_xy)
+probability_xy = cp.asarray(probability_xy)
 
 #print(type(succ_xy))
 #print(succ_xy)
 
-succ_xy = _np.split(succ_xy, len(STPM[0]))
-probability_xy = _np.split(probability_xy, len(STPM[0]))
+succ_xy = cp.split(succ_xy, len(STPM[0]))
+probability_xy = cp.split(probability_xy, len(STPM[0]))
 
 #print(type(succ_xy))
 #print(succ_xy)
