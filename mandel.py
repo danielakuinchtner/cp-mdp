@@ -47,7 +47,7 @@ griddim = (32,16)
 
 start = timer()
 d_image = cuda.to_device(gimage)
-mandel_kernel(-2.0, 1.0, -1.0, 1.0, d_image, 20)
+mandel_kernel[griddim, blockdim](-2.0, 1.0, -1.0, 1.0, d_image, 20)
 d_image.to_host()
 dt = timer() - start
 

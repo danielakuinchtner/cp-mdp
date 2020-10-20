@@ -5,14 +5,14 @@ import sys
 sys.path.insert(1, 'pymdptoolbox/src')
 import mdptoolbox.example
 #from numba import njit, prange
-#from numba import autojit, prange
-from numba import cuda
+from numba import autojit, prange
+#from numba import cuda
 #from numba import *
 #from timeit import default_timer as timer
 #from pylab import imshow, show
 
 
-@cuda.jit
+@autojit
 def mdp_grid(shape=[], terminals=[], reward_non_terminal_states=1, rewards=[], obstacles=[], final_limits=[],
              STPM=[], states=[]):
     r = reward_non_terminal_states
@@ -98,8 +98,7 @@ def mdp_grid(shape=[], terminals=[], reward_non_terminal_states=1, rewards=[], o
 
 #@cuda.jit(device=True)
 #@njit(parallel=True)
-#@autojit
-@cuda.jit(device=True)
+@autojit
 def succ_tuple(a, state_tuple, final_limits):
 
     successor = []
@@ -136,27 +135,3 @@ def print_policy(policy, shape, obstacles=[], terminals=[], letters_actions=[]):
         else:
             p_policy[sub] = actions[policy[i]]
     print(p_policy)
-
-
-
-from IPython.display import HTML, display
-
-SYMBOLS = ['&uarr;', '&darr;', '&rarr;', '&larr;']
-
-
-def display_policy(policy, shape, obstacles=[], terminals=[]):
-    p_policy = _np.empty(shape, dtype=object)
-    for i in range(len(policy)):
-        sub = _np.unravel_index(i, shape)
-        if sub in obstacles:
-            p_policy[sub[0]][sub[1]] = '&#x25FE;'
-        elif sub in terminals:
-            p_policy[sub[0]][sub[1]] = '&#x25CE;'
-        else:
-            p_policy[sub[0]][sub[1]] = SYMBOLS[policy[i]]
-    display(HTML(
-        '<table style="font-size:300%;border: thick solid;"><tr>{}</tr></table>'.format(
-            '</tr><tr>'.join(
-                '<td>{}</td>'.format('</td><td>'.join(str(_) for _ in row)) for row in p_policy)
-        )
-    ))

@@ -5,10 +5,8 @@ import scipy.sparse as _sp
 import sys
 from numba import cuda
 from numba import *
-
 sys.path.insert(1, 'pymdptoolbox/src')
 import mdptoolbox.example
-from numba import njit, prange
 """
 ACTIONS = ['N','S','E','W']
 input:
@@ -24,7 +22,7 @@ P = (A x S x S) the transition function
 R = (A x S x S) the reward function
 """
 
-@njit(parallel=True)
+@cuda.jit
 def mdp_grid(shape=[], obstacles=[], terminals=[], r=1, rewards=[], actions=[], final_limits=[]):
     states = shape[0] * shape[1]  # 3x4
     actions = actions
@@ -54,11 +52,14 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], r=1, rewards=[], actions=[], 
     origins = _np.array([])
     probabilities = _np.array([])
 
-
+    startX = cuda.blockDim.x * cuda.blockIdx.x + cuda.threadIdx.x
+    startY = cuda.blockDim.y * cuda.blockIdx.y + cuda.threadIdx.y
+    gridX = cuda.gridDim.x * cuda.blockDim.x;
+    gridY = cuda.gridDim.y * cuda.blockDim.y;
 
     for a in STPM:  # 4
-        for x in prange(shape[0]):  # 3
-            for y in prange(shape[1]):  # 4
+        for x in prange(startX, shape[0], gridX):  # 3
+            for y in prange(startY, shape[1], gridY):  # 4
 
                 #if [x, y] in obstacles or [x, y] in terminals:  # remove obstacles and terminals
                 #    continue
@@ -235,7 +236,7 @@ def valid(x, y, obstacles):
     return valid
 """
 
-@njit(parallel=True)
+@cuda.jit(device=True)
 def succ(a, x, y, final_limits):
     if a == 0:  # North
         if x != 0:  # 1: limite inicial de X:0
