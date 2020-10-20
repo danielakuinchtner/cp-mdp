@@ -4,14 +4,14 @@ import scipy.sparse as _sp
 import sys
 sys.path.insert(1, 'pymdptoolbox/src')
 import mdptoolbox.example
+import tensorflow as tf
 #from numba import njit, prange
-from numba import autojit, prange
-import cupy as cp
+#from numba import prange, autojit
 #from numba import cuda
 #from numba import *
 #from timeit import default_timer as timer
 #from pylab import imshow, show
-
+#import cupy as cp
 
 #@autojit
 def mdp_grid(shape=[], terminals=[], reward_non_terminal_states=1, rewards=[], obstacles=[], final_limits=[],
@@ -23,14 +23,14 @@ def mdp_grid(shape=[], terminals=[], reward_non_terminal_states=1, rewards=[], o
     final_limits = final_limits  # 2x3
     STPM = STPM
 
-    successors = cp.array([])
+    #successors = _np.array([])
     #origins = _np.array([])
-    probabilities = cp.array([])
+    #probabilities = _np.array([])
     #output = []
 
-    #successors = []
+    successors = []
     #origins = []
-    #probabilities = []
+    probabilities = []
 
     for a in range(len(STPM)):
         for s in range(num_states):
@@ -49,33 +49,43 @@ def mdp_grid(shape=[], terminals=[], reward_non_terminal_states=1, rewards=[], o
                     state_to = state_to.item()
 
                     if state_tuple in terminals or state_tuple in obstacles:
-                        successors = cp.concatenate(successors, s)
+                        #successors = _np.append(successors, s)
                         #origins = _np.append(origins, s)
-                        probabilities = cp.concatenate(probabilities, 0)
+                        #probabilities = _np.append(probabilities, 0)
 
-                        #probabilities.append(0)
-                        #successors.append(s)
+                        probabilities.append(0)
+                        successors.append(s)
+                        #tensor_succ = tf.concat(s, 0)
+                        #tensor_prob = tf.concat(0, 0)
                         #output.append([s, s, 0])
 
                     else:
-                        successors = cp.concatenate(successors, state_to)
+                        #successors = _np.append(successors, state_to)
                         #origins = _np.append(origins, s)
-                        probabilities = cp.concatenate(probabilities, STPM[a][aa])
+                        #probabilities = _np.append(probabilities, a[aa])
                         #output.append([state_to, s, a[aa]])
 
-                        #successors.append(state_to)
-                        #probabilities.append(STPM[a][aa])
+                        successors.append(state_to)
+                        probabilities.append(STPM[a][aa])
+                        #tensor_succ = tf.concat(state_to, 0)
+                        #tensor_prob = tf.concat(STPM[a][aa], 0)
 
                 else:
-                    successors = cp.concatenate(successors, s)
+                    #successors = _np.append(successors, s)
                     #origins = _np.append(origins, s)
-                    probabilities = cp.concatenate(probabilities, STPM[a][aa])
+                    #probabilities = _np.append(probabilities, a[aa])
                     #output.append([s, s, a[aa]])
-                    #successors.append(s)
-                    #probabilities.append(STPM[a][aa])
+                    successors.append(s)
+                    probabilities.append(STPM[a][aa])
+                    #tensor_succ = tf.concat(s, 0)
+                    #tensor_prob = tf.concat(STPM[a][aa], 0)
 
-    R = cp.ones([num_states])
-    R = cp.multiply(R, r)
+    successors = tf.stack(successors)
+    probabilities = tf.stack(probabilities)
+    print(type(successors))
+
+    R = _np.ones([num_states])
+    R = _np.multiply(R, r)
 
     for i in range(len(terminals)):
         ind_terminal = _np.ravel_multi_index(terminals[i], shape)
@@ -94,7 +104,10 @@ def mdp_grid(shape=[], terminals=[], reward_non_terminal_states=1, rewards=[], o
 
     #probability_xy = _np.split(probabilities, len(STPM))
     #print("prob", probability_xy)
+    #tf_successors = tf.convert_to_tensor(list(successors), dtype=tf.int32)
+    #tf_probabilities = tf.convert_to_tensor(list(probabilities), dtype=tf.float32)
 
+    #return tf_successors, tf_probabilities, R
     return successors, probabilities, R
 
 #@cuda.jit(device=True)
@@ -102,8 +115,7 @@ def mdp_grid(shape=[], terminals=[], reward_non_terminal_states=1, rewards=[], o
 #@autojit
 def succ_tuple(a, state_tuple, final_limits):
 
-    #successor = []
-    sucessor = cp.array([])
+    successor = []
     for dim in range(len(state_tuple)):
 
         if a - math.ceil(a / 2) == dim:
@@ -119,13 +131,14 @@ def succ_tuple(a, state_tuple, final_limits):
                     D = state_tuple[dim]
         else:
             D = state_tuple[dim]
-        successor = cp.concatenate(successor, D)
+
+        successor.append(D)
 
     return successor
 
 
 def print_policy(policy, shape, obstacles=[], terminals=[], letters_actions=[]):
-    p_policy = cp.empty(shape, dtype=object)
+    p_policy = _np.empty(shape, dtype=object)
     actions = letters_actions
     for i in range(len(policy)):
         sub = _np.unravel_index(i, shape)  # ind to sub

@@ -10,11 +10,11 @@ import time
 import numpy as _np
 import string
 import random
-#import tensorflow as tf
+import tensorflow as tf
 from gridworld_scenario import *
-from numba import njit, prange
+#from numba import njit, prange
 
-import cupy as cp
+
 """
 (Y,X)
 | 00 01 02 ... 0X-1       'N' = North
@@ -47,33 +47,33 @@ for dim in shape:
 dimensions = len(shape)
 # print('Number of dimensions: ', dimensions)
 
-actions = cp.ones(len(shape) * 2)
-letters_actions = cp.array([])
+actions = _np.ones(len(shape) * 2)
+letters_actions = []
 acts = ['N', 'S', 'W', 'E', 'B', 'F']  # North, South, West, East, Backward, Forward
 for num_actions in range(len(actions)):
     if len(actions) < 7:
-        letters_actions = cp.concatenate(acts[num_actions])
+        letters_actions.append(acts[num_actions])
     else:
-        letters_actions = cp.concatenate(random.choice(string.ascii_letters))
+        letters_actions.append(random.choice(string.ascii_letters))
 #print("Actions Letters: ", letters_actions)
 
-final_limits = cp.array([])
+final_limits = []
 for num_dim in range(len(shape)):
     new_shape = shape[num_dim] - 1
-    final_limits = cp.concatenate(final_limits, new_shape)
+    final_limits.append(new_shape)
 
 
 def randomConfig():
-    obstacles = cp.array([])
-    terminals = cp.array([])
+    obstacles = _np.array([])
+    terminals = _np.array([])
 
     for n_obst in range(number_of_obstacles):
         for dim in range(len(shape)):
-            obstacles = cp.concatenate(obstacles, random.randint(0, final_limits[dim]))
+            obstacles = _np.append(obstacles, random.randint(0, final_limits[dim]))
 
     for n_term in range(number_of_terminals):
         for dim in range(len(shape)):
-            terminals = cp.concatenate(terminals, random.randint(0, final_limits[dim]))
+            terminals = _np.append(terminals, random.randint(0, final_limits[dim]))
     return obstacles, terminals
 
 
@@ -84,19 +84,19 @@ terminals = terminals.astype(int)
 obs = _np.split(obstacles, number_of_obstacles)
 term = _np.split(terminals, number_of_terminals)
 
-obstacles = cp.array([])
+obstacles = []
 for o in range(len(obs)):
-    obstacles = cp.concatenate(obstacles, obs[o].tolist())
+    obstacles.append(obs[o].tolist())
 
-terminals = cp.array([])
+terminals = []
 for o in range(len(term)):
-    terminals = cp.concatenate(terminals, term[o].tolist())
+    terminals.append(term[o].tolist())
 
-
+"""
 obstacles = [[1, 1]]
 terminals = [[0, 3], [1, 3]]
 rewards = [100, -100]  # each reward corresponds to a terminal position
-"""
+
 obstacles = [[0, 1, 1], [1, 1, 1]]
 terminals = [[0, 0, 3], [0, 1, 3], [1, 0, 3], [1, 1, 3]]
 rewards = [100, -100, 100, -100]  # each reward corresponds to a terminal position
@@ -124,8 +124,8 @@ p_opposite_angle = 0.0  # zero probability
 #         [0.1(W,N), 0.0(W,E), 0.8(W,W), 0.1(W,S)],
 #         [0.0(S,N), 0.1(S,E), 0.1(S,W), 0.8(S,S)]]
 
-STPM = cp.ones([len(actions), len(actions)])
-STPM = cp.multiply(STPM, p_right_angles)
+STPM = _np.ones([len(actions), len(actions)])
+STPM = _np.multiply(STPM, p_right_angles)
 
 for a1 in range(len(STPM[0])):
     for a2 in range(len(STPM[1])):
@@ -136,10 +136,9 @@ for a1 in range(len(STPM[0])):
             elif a2 % 2 == 1:
                 STPM[a1, a2 - 1] = p_opposite_angle
 
-#ind_terminals = []
-ind_terminals = cp.array([])
+ind_terminals = []
 for t in range(len(terminals)):
-    ind_terminals = cp.concatenate(_np.ravel_multi_index(terminals[t], shape))
+    ind_terminals.append(_np.ravel_multi_index(terminals[t], shape))
 #print(ind_terminals)
 
 print("--- Precomputed actions, obstacles and terminals in: %s seconds ---" % (time.time() - start_time_precompute))
@@ -152,7 +151,11 @@ start_time_succ_vi = time.time()
 start_time_succ = time.time()
 
 
-succ_xy, probability_xy, R = mdp_grid(shape=shape, terminals=terminals,
+#succ_xy, probability_xy, R = mdp_grid(shape=shape, terminals=terminals,
+#                                      reward_non_terminal_states=reward_non_terminal_states, rewards=rewards,
+#                                      obstacles=obstacles, final_limits=final_limits, STPM=STPM, states=states)
+
+tensor_succ, tensor_prob, R = mdp_grid(shape=shape, terminals=terminals,
                                       reward_non_terminal_states=reward_non_terminal_states, rewards=rewards,
                                       obstacles=obstacles, final_limits=final_limits, STPM=STPM, states=states)
 #gpu_STPM.to_host()
@@ -175,14 +178,31 @@ print("Total number of elements (3*2*4*5): ", tf.size(split_probability_tensor).
 print("\nShape of tensor:", split_succ_tensor.shape)  # (4, 27, 3)
 print("Total number of elements (3*2*4*5): ", tf.size(split_succ_tensor).numpy())  # 324
 """
-succ_xy = cp.asarray(succ_xy)
-probability_xy = cp.asarray(probability_xy)
+#tensor_succ = _np.asarray(tensor_succ)
+#tensor_prob = _np.asarray(tensor_prob)
 
 #print(type(succ_xy))
 #print(succ_xy)
 
-succ_xy = cp.split(succ_xy, len(STPM[0]))
-probability_xy = cp.split(probability_xy, len(STPM[0]))
+#succ_xy = _np.split(succ_xy, len(STPM[0]))
+#probability_xy = _np.split(probability_xy, len(STPM[0]))
+
+
+tensor_succ = _np.split(tensor_succ, len(STPM[0]))
+tensor_prob = _np.split(tensor_prob, len(STPM[0]))
+#print(len(tensor_prob), len(tensor_succ))
+
+split_tensor_succ=[]
+split_tensor_prob=[]
+for aa in range(len(actions)):  # 4
+    split_tensor_succ.append(_np.split(tensor_succ[aa], states))
+    # split_origin.append(_np.split(self.origin_xy[aa], states))
+    split_tensor_prob.append(_np.split(tensor_prob[aa], states))
+
+#print(split_tensor_succ, len(split_tensor_prob[0]))
+tensor_succ = tf.convert_to_tensor(list(split_tensor_succ), dtype=tf.int32)
+tensor_prob = tf.convert_to_tensor(list(split_tensor_prob), dtype=tf.float32)
+#print(tensor_prob, len(tensor_succ[0]))
 
 #print(type(succ_xy))
 #print(succ_xy)
@@ -190,7 +210,7 @@ probability_xy = cp.split(probability_xy, len(STPM[0]))
 start_time_vi = time.time()
 #d_succ_xy = cuda.to_device(succ_xy)
 #d_probability_xy = cuda.to_device(probability_xy)
-vi = mdptoolbox.mdp.ValueIterationGS(shape, terminals, obstacles, succ_xy, probability_xy, R, states, discount=1, epsilon=0.001, max_iter=1000, skip_check=True)
+vi = mdptoolbox.mdp.ValueIterationGS(shape, terminals, obstacles, tensor_succ, tensor_prob, R, states, discount=1, epsilon=0.001, max_iter=1000, skip_check=True)
 #d_succ_xy.to_host()
 #d_probability_xy.to_host()
 vi.run()
