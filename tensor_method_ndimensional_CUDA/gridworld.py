@@ -200,9 +200,13 @@ for aa in range(len(actions)):  # 4
     # split_origin.append(_np.split(self.origin_xy[aa], states))
     split_tensor_prob.append(cp.split(tensor_prob[aa], states))
 
+print(type(split_tensor_prob))
+tensor_succ = cp.asarray(split_tensor_succ, dtype=cp.int32)
+tensor_prob = cp.asarray(split_tensor_prob, dtype=cp.float32)
+print(type(split_tensor_prob))
 #print(split_tensor_succ, len(split_tensor_prob[0]))
-tensor_succ = tf.convert_to_tensor(list(split_tensor_succ), dtype=tf.int32)
-tensor_prob = tf.convert_to_tensor(list(split_tensor_prob), dtype=tf.float32)
+#tensor_succ = tf.convert_to_tensor(list(split_tensor_succ), dtype=tf.int32)
+#tensor_prob = tf.convert_to_tensor(list(split_tensor_prob), dtype=tf.float32)
 #print(tensor_prob, len(tensor_succ[0]))
 
 #print(type(succ_xy))
