@@ -48,6 +48,7 @@ dimensions = len(shape)
 # print('Number of dimensions: ', dimensions)
 
 actions = cp.ones(len(shape) * 2)
+print(actions)
 letters_actions = []
 acts = ['N', 'S', 'W', 'E', 'B', 'F']  # North, South, West, East, Backward, Forward
 for num_actions in range(len(actions)):
@@ -81,8 +82,8 @@ obstacles, terminals = randomConfig()
 obstacles = obstacles.astype(int)
 terminals = terminals.astype(int)
 
-obs = cp.split(obstacles, number_of_obstacles)
-term = cp.split(terminals, number_of_terminals)
+obs = _np.split(obstacles, number_of_obstacles)
+term = _np.split(terminals, number_of_terminals)
 
 obstacles = []
 for o in range(len(obs)):
