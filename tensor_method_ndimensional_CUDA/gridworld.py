@@ -179,8 +179,8 @@ print("Total number of elements (3*2*4*5): ", tf.size(split_probability_tensor).
 print("\nShape of tensor:", split_succ_tensor.shape)  # (4, 27, 3)
 print("Total number of elements (3*2*4*5): ", tf.size(split_succ_tensor).numpy())  # 324
 """
-tensor_succ = cp.asarray(tensor_succ, dtype=tf.int32)
-tensor_prob = cp.asarray(tensor_prob, dtype=tf.float32)
+tensor_succ = cp.asarray(tensor_succ, dtype=cp.int32)
+tensor_prob = cp.asarray(tensor_prob, dtype=cp.float32)
 
 #print(type(succ_xy))
 #print(succ_xy)
