@@ -162,7 +162,7 @@ tensor_succ, tensor_prob, R = mdp_grid(shape=shape, terminals=terminals,
 #gpu_STPM.to_host()
 print("--- Computed successors and rewards in: %s seconds ---" % (time.time() - start_time_succ))
 
-#print(succ_xy, probability_xy)
+print(tensor_succ)
 
 """
 split_succ = tf.split(succ_xy, len(STPM), axis=0, num=None, name='split')

@@ -38,14 +38,14 @@ def mdp_grid(shape=[], terminals=[], reward_non_terminal_states=1, rewards=[], o
                 if STPM[a][aa] == 0: # remove all zero probabilities
                     continue
 
-                state_tuple = cp.unravel_index(s, shape)  # ind to sub
+                state_tuple = _np.unravel_index(s, shape)  # ind to sub
                 state_tuple = list(state_tuple)
 
                 successor_state_of_s = succ_tuple(aa, state_tuple, final_limits)
                 #print(state_tuple, successor_state_of_s)
 
                 if successor_state_of_s not in obstacles:
-                    state_to = cp.ravel_multi_index(successor_state_of_s, shape)  # sub to ind
+                    state_to = _np.ravel_multi_index(successor_state_of_s, shape)  # sub to ind
                     state_to = state_to.item()
 
                     if state_tuple in terminals or state_tuple in obstacles:
@@ -141,7 +141,7 @@ def print_policy(policy, shape, obstacles=[], terminals=[], letters_actions=[]):
     p_policy = cp.empty(shape, dtype=object)
     actions = letters_actions
     for i in range(len(policy)):
-        sub = cp.unravel_index(i, shape)  # ind to sub
+        sub = _np.unravel_index(i, shape)  # ind to sub
         if list(sub) in obstacles:
             p_policy[sub] = 'O'
         elif list(sub) in terminals:
