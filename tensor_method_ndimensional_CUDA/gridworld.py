@@ -52,7 +52,8 @@ letters_actions = cp.array([])
 acts = ['N', 'S', 'W', 'E', 'B', 'F']  # North, South, West, East, Backward, Forward
 for num_actions in range(len(actions)):
     if len(actions) < 7:
-        letters_actions = cp.concatenate(letters_actions, acts[num_actions])
+        letters_actions = cp.concatenate(acts[num_actions], 0, letters_actions)
+        print(letters_actions)
     else:
         letters_actions = cp.concatenate(letters_actions, random.choice(string.ascii_letters))
 #print("Actions Letters: ", letters_actions)
