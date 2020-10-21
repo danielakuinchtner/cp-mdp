@@ -80,8 +80,8 @@ def mdp_grid(shape=[], terminals=[], reward_non_terminal_states=1, rewards=[], o
                     #tensor_succ = tf.concat(s, 0)
                     #tensor_prob = tf.concat(STPM[a][aa], 0)
 
-    successors = tf.stack(successors)
-    probabilities = tf.stack(probabilities)
+    successors = cp.stack(successors)
+    probabilities = cp.stack(probabilities)
     print(type(successors))
 
     R = cp.ones([num_states])
