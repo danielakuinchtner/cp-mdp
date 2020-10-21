@@ -48,34 +48,32 @@ dimensions = len(shape)
 # print('Number of dimensions: ', dimensions)
 
 actions = cp.ones(len(shape) * 2)
-letters_actions = cp.array([])
+letters_actions = []
 acts = ['N', 'S', 'W', 'E', 'B', 'F']  # North, South, West, East, Backward, Forward
 for num_actions in range(len(actions)):
     if len(actions) < 7:
-        letters_actions = cp.concatenate(acts[num_actions], 0, letters_actions)
-        print(letters_actions)
+        letters_actions.append(acts[num_actions])
     else:
-        letters_actions = cp.concatenate(letters_actions, random.choice(string.ascii_letters))
+        letters_actions.append(random.choice(string.ascii_letters))
 #print("Actions Letters: ", letters_actions)
 
-#final_limits = []
-final_limits = cp.array([])
+final_limits = []
 for num_dim in range(len(shape)):
     new_shape = shape[num_dim] - 1
-    final_limits = cp.concatenate(final_limits, new_shape)
+    final_limits.append(new_shape)
 
 
 def randomConfig():
-    obstacles = cp.array([])
-    terminals = cp.array([])
+    obstacles = _np.array([])
+    terminals = _np.array([])
 
     for n_obst in range(number_of_obstacles):
         for dim in range(len(shape)):
-            obstacles = cp.concatenate(obstacles, random.randint(0, final_limits[dim]))
+            obstacles = _np.append(obstacles, random.randint(0, final_limits[dim]))
 
     for n_term in range(number_of_terminals):
         for dim in range(len(shape)):
-            terminals = cp.concatenate(terminals, random.randint(0, final_limits[dim]))
+            terminals = _np.append(terminals, random.randint(0, final_limits[dim]))
     return obstacles, terminals
 
 
@@ -86,13 +84,13 @@ terminals = terminals.astype(int)
 obs = cp.split(obstacles, number_of_obstacles)
 term = cp.split(terminals, number_of_terminals)
 
-obstacles = cp.array([])
+obstacles = []
 for o in range(len(obs)):
-    obstacles = cp.concatenate(obstacles, obs[o].tolist())
+    obstacles.append(obs[o].tolist())
 
-terminals = cp.array([])
+terminals = []
 for o in range(len(term)):
-    terminals = cp.concatenate(terminals, term[o].tolist())
+    terminals.append(term[o].tolist())
 
 """
 obstacles = [[1, 1]]
@@ -138,9 +136,9 @@ for a1 in range(len(STPM[0])):
             elif a2 % 2 == 1:
                 STPM[a1, a2 - 1] = p_opposite_angle
 
-ind_terminals = cp.array([])
+ind_terminals = []
 for t in range(len(terminals)):
-    ind_terminals = cp.concatenate(ind_terminals, cp.ravel_multi_index(terminals[t], shape))
+    ind_terminals.append(_np.ravel_multi_index(terminals[t], shape))
 #print(ind_terminals)
 
 print("--- Precomputed actions, obstacles and terminals in: %s seconds ---" % (time.time() - start_time_precompute))
@@ -190,16 +188,16 @@ print("Total number of elements (3*2*4*5): ", tf.size(split_succ_tensor).numpy()
 #probability_xy = _np.split(probability_xy, len(STPM[0]))
 
 
-tensor_succ = cp.split(tensor_succ, len(STPM[0]))
-tensor_prob = cp.split(tensor_prob, len(STPM[0]))
+tensor_succ = _np.split(tensor_succ, len(STPM[0]))
+tensor_prob = _np.split(tensor_prob, len(STPM[0]))
 #print(len(tensor_prob), len(tensor_succ))
 
-split_tensor_succ = cp.array([])
-split_tensor_prob = cp.array([])
+split_tensor_succ=[]
+split_tensor_prob=[]
 for aa in range(len(actions)):  # 4
-    split_tensor_succ = cp.concatenate(split_tensor_succ, cp.split(tensor_succ[aa], states))
+    split_tensor_succ.append(_np.split(tensor_succ[aa], states))
     # split_origin.append(_np.split(self.origin_xy[aa], states))
-    split_tensor_prob = cp.concatenate(split_tensor_prob, cp.split(tensor_prob[aa], states))
+    split_tensor_prob.append(_np.split(tensor_prob[aa], states))
 
 #print(split_tensor_succ, len(split_tensor_prob[0]))
 tensor_succ = tf.convert_to_tensor(list(split_tensor_succ), dtype=tf.int32)
