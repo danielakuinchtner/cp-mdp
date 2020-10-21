@@ -88,7 +88,7 @@ def mdp_grid(shape=[], terminals=[], reward_non_terminal_states=1, rewards=[], o
     R = cp.multiply(R, r)
 
     for i in range(len(terminals)):
-        ind_terminal = cp.ravel_multi_index(terminals[i], shape)
+        ind_terminal = _np.ravel_multi_index(terminals[i], shape)
         R[ind_terminal] = rewards[i]
     #print("Rewards:", R)
 
