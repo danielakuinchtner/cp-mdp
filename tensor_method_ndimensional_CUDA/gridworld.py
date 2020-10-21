@@ -179,8 +179,8 @@ print("Total number of elements (3*2*4*5): ", tf.size(split_probability_tensor).
 print("\nShape of tensor:", split_succ_tensor.shape)  # (4, 27, 3)
 print("Total number of elements (3*2*4*5): ", tf.size(split_succ_tensor).numpy())  # 324
 """
-#tensor_succ = _np.asarray(tensor_succ)
-#tensor_prob = _np.asarray(tensor_prob)
+tensor_succ = cp.asarray(tensor_succ)
+tensor_prob = cp.asarray(tensor_prob)
 
 #print(type(succ_xy))
 #print(succ_xy)
@@ -189,16 +189,16 @@ print("Total number of elements (3*2*4*5): ", tf.size(split_succ_tensor).numpy()
 #probability_xy = _np.split(probability_xy, len(STPM[0]))
 
 
-tensor_succ = _np.split(tensor_succ, len(STPM[0]))
-tensor_prob = _np.split(tensor_prob, len(STPM[0]))
+tensor_succ = cp.split(tensor_succ, len(STPM[0]))
+tensor_prob = cp.split(tensor_prob, len(STPM[0]))
 #print(len(tensor_prob), len(tensor_succ))
 
 split_tensor_succ=[]
 split_tensor_prob=[]
 for aa in range(len(actions)):  # 4
-    split_tensor_succ.append(_np.split(tensor_succ[aa], states))
+    split_tensor_succ.append(cp.split(tensor_succ[aa], states))
     # split_origin.append(_np.split(self.origin_xy[aa], states))
-    split_tensor_prob.append(_np.split(tensor_prob[aa], states))
+    split_tensor_prob.append(cp.split(tensor_prob[aa], states))
 
 #print(split_tensor_succ, len(split_tensor_prob[0]))
 tensor_succ = tf.convert_to_tensor(list(split_tensor_succ), dtype=tf.int32)
