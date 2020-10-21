@@ -11,7 +11,7 @@ import tensorflow as tf
 #from numba import *
 #from timeit import default_timer as timer
 #from pylab import imshow, show
-#import cupy as cp
+import cupy as cp
 
 #@autojit
 def mdp_grid(shape=[], terminals=[], reward_non_terminal_states=1, rewards=[], obstacles=[], final_limits=[],
@@ -23,14 +23,14 @@ def mdp_grid(shape=[], terminals=[], reward_non_terminal_states=1, rewards=[], o
     final_limits = final_limits  # 2x3
     STPM = STPM
 
-    #successors = _np.array([])
-    #origins = _np.array([])
-    #probabilities = _np.array([])
+    successors = cp.array([])
+    #origins = cp.array([])
+    probabilities = cp.array([])
     #output = []
 
-    successors = []
+    #successors = []
     #origins = []
-    probabilities = []
+    #probabilities = []
 
     for a in range(len(STPM)):
         for s in range(num_states):
@@ -38,45 +38,45 @@ def mdp_grid(shape=[], terminals=[], reward_non_terminal_states=1, rewards=[], o
                 if STPM[a][aa] == 0: # remove all zero probabilities
                     continue
 
-                state_tuple = _np.unravel_index(s, shape)  # ind to sub
+                state_tuple = cp.unravel_index(s, shape)  # ind to sub
                 state_tuple = list(state_tuple)
 
                 successor_state_of_s = succ_tuple(aa, state_tuple, final_limits)
                 #print(state_tuple, successor_state_of_s)
 
                 if successor_state_of_s not in obstacles:
-                    state_to = _np.ravel_multi_index(successor_state_of_s, shape)  # sub to ind
+                    state_to = cp.ravel_multi_index(successor_state_of_s, shape)  # sub to ind
                     state_to = state_to.item()
 
                     if state_tuple in terminals or state_tuple in obstacles:
-                        #successors = _np.append(successors, s)
-                        #origins = _np.append(origins, s)
-                        #probabilities = _np.append(probabilities, 0)
+                        successors = cp.concatenate(successors, s)
+                        #origins = cp.append(origins, s)
+                        probabilities = cp.concatenate(probabilities, 0)
 
-                        probabilities.append(0)
-                        successors.append(s)
+                        #probabilities.append(0)
+                        #successors.append(s)
                         #tensor_succ = tf.concat(s, 0)
                         #tensor_prob = tf.concat(0, 0)
                         #output.append([s, s, 0])
 
                     else:
-                        #successors = _np.append(successors, state_to)
+                        successors = cp.concatenate(successors, state_to)
                         #origins = _np.append(origins, s)
-                        #probabilities = _np.append(probabilities, a[aa])
+                        probabilities = cp.concatenate(probabilities, STPM[a][aa])
                         #output.append([state_to, s, a[aa]])
 
-                        successors.append(state_to)
-                        probabilities.append(STPM[a][aa])
+                        #successors.append(state_to)
+                        #probabilities.append(STPM[a][aa])
                         #tensor_succ = tf.concat(state_to, 0)
                         #tensor_prob = tf.concat(STPM[a][aa], 0)
 
                 else:
-                    #successors = _np.append(successors, s)
+                    successors = cp.concatenate(successors, s)
                     #origins = _np.append(origins, s)
-                    #probabilities = _np.append(probabilities, a[aa])
+                    probabilities = cp.concatenate(probabilities, STPM[a][aa])
                     #output.append([s, s, a[aa]])
-                    successors.append(s)
-                    probabilities.append(STPM[a][aa])
+                    #successors.append(s)
+                    #probabilities.append(STPM[a][aa])
                     #tensor_succ = tf.concat(s, 0)
                     #tensor_prob = tf.concat(STPM[a][aa], 0)
 
@@ -84,11 +84,11 @@ def mdp_grid(shape=[], terminals=[], reward_non_terminal_states=1, rewards=[], o
     probabilities = tf.stack(probabilities)
     print(type(successors))
 
-    R = _np.ones([num_states])
-    R = _np.multiply(R, r)
+    R = cp.ones([num_states])
+    R = cp.multiply(R, r)
 
     for i in range(len(terminals)):
-        ind_terminal = _np.ravel_multi_index(terminals[i], shape)
+        ind_terminal = cp.ravel_multi_index(terminals[i], shape)
         R[ind_terminal] = rewards[i]
     #print("Rewards:", R)
 
@@ -138,10 +138,10 @@ def succ_tuple(a, state_tuple, final_limits):
 
 
 def print_policy(policy, shape, obstacles=[], terminals=[], letters_actions=[]):
-    p_policy = _np.empty(shape, dtype=object)
+    p_policy = cp.empty(shape, dtype=object)
     actions = letters_actions
     for i in range(len(policy)):
-        sub = _np.unravel_index(i, shape)  # ind to sub
+        sub = cp.unravel_index(i, shape)  # ind to sub
         if list(sub) in obstacles:
             p_policy[sub] = 'O'
         elif list(sub) in terminals:
