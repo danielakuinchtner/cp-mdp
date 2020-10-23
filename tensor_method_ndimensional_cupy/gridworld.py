@@ -110,11 +110,9 @@ print(obstacles, terminals)
 obstacles = [[1, 1]]
 terminals = [[0, 3], [1, 3]]
 rewards = [100, -100]  # each reward corresponds to a terminal position
-
 obstacles = [[0, 1, 1], [1, 1, 1]]
 terminals = [[0, 0, 3], [0, 1, 3], [1, 0, 3], [1, 1, 3]]
 rewards = [100, -100, 100, -100]  # each reward corresponds to a terminal position
-
 obstacles = [[0, 0, 1, 1], [0, 1, 1, 1]]
 terminals = [[0, 0, 0, 3], [0, 0, 1, 3], [0, 1, 0, 3], [0, 1, 1, 3]]
 rewards = [100, -100, 100, -100]  # each reward corresponds to a terminal position
@@ -151,9 +149,9 @@ for a1 in range(len(STPM[0])):
                 STPM[a1, a2 - 1] = p_opposite_angle
 
 ind_terminals = []
-for t in range(len(terminals)):	
-	i = _np.ravel_multi_index(terminals[t], shape)
-	ind_terminals.append(i)
+for t in range(len(terminals)):
+    i = _np.ravel_multi_index(terminals[t], shape)
+    ind_terminals.append(i)
 print("ind t", ind_terminals)
 
 print("--- Precomputed actions, obstacles and terminals in: %s seconds ---" % (time.time() - start_time_precompute))
@@ -181,15 +179,12 @@ print(tensor_succ)
 """
 split_succ = tf.split(succ_xy, len(STPM), axis=0, num=None, name='split')
 split_succ_tensor = tf.convert_to_tensor(list(split_succ), dtype=tf.float32)
-
 split_probability = tf.split(probability_xy, len(STPM), axis=0, num=None, name='split')
 split_probability_tensor = tf.convert_to_tensor(list(split_probability), dtype=tf.float32)
-
 print(split_probability_tensor)
 print(split_succ_tensor)
 print("\nShape of tensor:", split_probability_tensor.shape)  # (4, 27, 3)
 print("Total number of elements (3*2*4*5): ", tf.size(split_probability_tensor).numpy())  # 324
-
 print("\nShape of tensor:", split_succ_tensor.shape)  # (4, 27, 3)
 print("Total number of elements (3*2*4*5): ", tf.size(split_succ_tensor).numpy())  # 324
 """
@@ -244,4 +239,3 @@ print("Memory used:", (process.memory_info().rss)/1000000000, "Gb")
 #print("\nPolicy:")
 print_policy(vi.policy, shape, obstacles=obstacles, terminals=terminals, letters_actions=letters_actions)
 # display_policy(vi.policy, shape, obstacles=obstacles, terminals=terminals)
-

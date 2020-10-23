@@ -1572,10 +1572,13 @@ class ValueIterationGS(ValueIteration):
         split_origin_xy = []
         split_probability = []
 
+        print(self.succ_xy[0])
+
         for aa in range(self.A):  # 4
             split_succ_xy.append(_np.split(self.succ_xy[aa], self.states))
             #split_origin_xy.append(_np.split(self.origin_xy[aa], self.states))
             split_probability.append(_np.split(self.probabilities_xy[aa], self.states))
+        print(split_succ_xy)
 
 
         while True:
