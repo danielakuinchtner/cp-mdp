@@ -60,8 +60,7 @@ import time as _time
 
 import numpy as _np
 import scipy.sparse as _sp
-
-
+import cupy as cp
 import mdptoolbox.util as _util
 
 _MSG_STOP_MAX_ITER = "Iterating stopped due to maximum number of iterations " \
