@@ -64,7 +64,7 @@ final_limits = []
 for num_dim in range(len(shape)):
     new_shape = shape[num_dim] - 1
     final_limits.append(new_shape)
-
+print(final_limits)
 
 def randomConfig():
     obstacles = []
