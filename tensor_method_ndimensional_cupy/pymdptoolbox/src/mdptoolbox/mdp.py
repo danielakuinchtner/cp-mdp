@@ -1576,9 +1576,9 @@ class ValueIterationGS(ValueIteration):
         print(type(self.succ_xy))
 
         for aa in range(self.A):  # 4
-            split_succ_xy.append(_np.split(self.succ_xy[aa], self.states))
+            split_succ_xy.append(cp.split(self.succ_xy[aa], self.states))
             #split_origin_xy.append(_np.split(self.origin_xy[aa], self.states))
-            split_probability.append(_np.split(self.probabilities_xy[aa], self.states))
+            split_probability.append(cp.split(self.probabilities_xy[aa], self.states))
         print(split_succ_xy)
         print(type(split_succ_xy))
 
