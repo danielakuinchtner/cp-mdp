@@ -1595,7 +1595,7 @@ class ValueIterationGS(ValueIteration):
                     for a in range(self.A)]
 
                 self.V[s1] = max(Q)
-                print("V:", self.V[s1])
+                #print("V:", self.V[s1])
 
             variation = _util.getSpan(self.V - Vprev)
             self.iterations_list.append(variation)
@@ -1621,7 +1621,7 @@ class ValueIterationGS(ValueIteration):
 
             self.V[s1] = Q.max()
 
-            print(self.V[s1])
+            #print(self.V[s1])
 
             self.policy.append(int(Q.argmax()))
 

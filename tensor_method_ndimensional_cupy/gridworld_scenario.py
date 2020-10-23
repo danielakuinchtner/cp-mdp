@@ -82,7 +82,7 @@ def mdp_grid(shape=[], terminals=[], reward_non_terminal_states=1, rewards=[], o
 
     #successors = cp.stack(successors)
     #probabilities = cp.stack(probabilities)
-    print(type(successors))
+    #print(type(successors))
 
     R = _np.ones([num_states])
     R = _np.multiply(R, r)

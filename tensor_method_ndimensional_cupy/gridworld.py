@@ -57,14 +57,14 @@ for num_actions in range(len(actions)):
     else:
         letters_actions.append(random.choice(string.ascii_letters))
 print("Actions Letters: ", letters_actions)
-print(type(letters_actions))
-print(type(actions))
+#print(type(letters_actions))
+#print(type(actions))
 
 final_limits = []
 for num_dim in range(len(shape)):
     new_shape = shape[num_dim] - 1
     final_limits.append(new_shape)
-print(final_limits)
+#print(final_limits)
 
 def randomConfig():
     obstacles = []
@@ -81,7 +81,7 @@ def randomConfig():
 
 
 obstacles, terminals = randomConfig()
-print(obstacles, terminals)
+#print(obstacles, terminals)
 
 #obs = cp.stack(obstacles)
 #term = cp.stack(terminals)
@@ -92,9 +92,9 @@ obs = cp.asarray(obstacles, dtype=cp.int32)
 term = cp.asarray(terminals, dtype=cp.int32)
 
 obs = cp.split(obs, number_of_obstacles)
-print("obs", obs)
+#print("obs", obs)
 term = cp.split(term, number_of_terminals)
-print("term", term)
+#print("term", term)
 
 obstacles = []
 for o in range(len(obs)):
@@ -104,12 +104,13 @@ terminals = []
 for o in range(len(term)):
     terminals.append(term[o].tolist())
 
-print(obstacles, terminals)
+#print(obstacles, terminals)
 
-"""
+
 obstacles = [[1, 1]]
 terminals = [[0, 3], [1, 3]]
 rewards = [100, -100]  # each reward corresponds to a terminal position
+"""
 obstacles = [[0, 1, 1], [1, 1, 1]]
 terminals = [[0, 0, 3], [0, 1, 3], [1, 0, 3], [1, 1, 3]]
 rewards = [100, -100, 100, -100]  # each reward corresponds to a terminal position
@@ -152,7 +153,7 @@ ind_terminals = []
 for t in range(len(terminals)):
     i = _np.ravel_multi_index(terminals[t], shape)
     ind_terminals.append(i)
-print("ind t", ind_terminals)
+#print("ind t", ind_terminals)
 
 print("--- Precomputed actions, obstacles and terminals in: %s seconds ---" % (time.time() - start_time_precompute))
 
@@ -174,7 +175,7 @@ tensor_succ, tensor_prob, R = mdp_grid(shape=shape, terminals=terminals,
 #gpu_STPM.to_host()
 print("--- Computed successors and rewards in: %s seconds ---" % (time.time() - start_time_succ))
 
-print(tensor_succ)
+#print(tensor_succ)
 
 """
 split_succ = tf.split(succ_xy, len(STPM), axis=0, num=None, name='split')
@@ -200,7 +201,7 @@ tensor_prob = cp.asarray(tensor_prob, dtype=cp.float32)
 
 tensor_succ = cp.split(tensor_succ, len(STPM[0]))
 tensor_prob = cp.split(tensor_prob, len(STPM[0]))
-print(type(tensor_prob), (tensor_succ))
+#print(type(tensor_prob), (tensor_succ))
 
 
 #print(type(split_tensor_prob))
