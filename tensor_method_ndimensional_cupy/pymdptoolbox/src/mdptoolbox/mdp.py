@@ -1537,7 +1537,7 @@ class ValueIterationGS(ValueIteration):
         self.v_list = []
         # initialization of optional arguments
         if initial_value == 0:
-            self.V = _np.zeros(self.states)
+            self.V = cp.zeros(self.states)
 
         else:
             if len(initial_value) != self.states:
@@ -1614,7 +1614,7 @@ class ValueIterationGS(ValueIteration):
 
         self.policy = []
         for s1 in range(len(split_succ_xy[0])):
-            Q = _np.zeros(self.A)
+            Q = cp.zeros(self.A)
             for a in range(self.A):
                 Q[a] = self.R[a][s1] + self.discount * _np.dot(
                     split_probability[a][s1], self.V[split_succ_xy[a][s1]])
