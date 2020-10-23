@@ -138,7 +138,7 @@ def succ_tuple(a, state_tuple, final_limits):
 
 
 def print_policy(policy, shape, obstacles=[], terminals=[], letters_actions=[]):
-    p_policy = cp.empty(shape, dtype=object)
+    p_policy = _np.empty(shape, dtype=object)
     actions = letters_actions
     for i in range(len(policy)):
         sub = _np.unravel_index(i, shape)  # ind to sub

@@ -48,7 +48,7 @@ dimensions = len(shape)
 # print('Number of dimensions: ', dimensions)
 
 actions = cp.ones(len(shape) * 2)
-print(actions)
+#print(actions)
 letters_actions = []
 acts = ['N', 'S', 'W', 'E', 'B', 'F']  # North, South, West, East, Backward, Forward
 for num_actions in range(len(actions)):
@@ -56,7 +56,7 @@ for num_actions in range(len(actions)):
         letters_actions.append(acts[num_actions])
     else:
         letters_actions.append(random.choice(string.ascii_letters))
-print("Actions Letters: ", letters_actions)
+#print("Actions Letters: ", letters_actions)
 #print(type(letters_actions))
 #print(type(actions))
 
