@@ -56,7 +56,9 @@ for num_actions in range(len(actions)):
         letters_actions.append(acts[num_actions])
     else:
         letters_actions.append(random.choice(string.ascii_letters))
-#print("Actions Letters: ", letters_actions)
+print("Actions Letters: ", letters_actions)
+print(type(letters_actions))
+print(type(actions))
 
 final_limits = []
 for num_dim in range(len(shape)):
@@ -65,25 +67,34 @@ for num_dim in range(len(shape)):
 
 
 def randomConfig():
-    obstacles = _np.array([])
-    terminals = _np.array([])
+    obstacles = []
+    terminals = []
 
     for n_obst in range(number_of_obstacles):
         for dim in range(len(shape)):
-            obstacles = _np.append(obstacles, random.randint(0, final_limits[dim]))
+            obstacles.append(random.randint(0, final_limits[dim]))
 
     for n_term in range(number_of_terminals):
         for dim in range(len(shape)):
-            terminals = _np.append(terminals, random.randint(0, final_limits[dim]))
+            terminals.append(random.randint(0, final_limits[dim]))
     return obstacles, terminals
 
 
 obstacles, terminals = randomConfig()
-obstacles = obstacles.astype(int)
-terminals = terminals.astype(int)
+print(obstacles, terminals)
 
-obs = _np.split(obstacles, number_of_obstacles)
-term = _np.split(terminals, number_of_terminals)
+#obs = cp.stack(obstacles)
+#term = cp.stack(terminals)
+#obstacles = obstacles.astype(int)
+#terminals = terminals.astype(int)
+
+obs = cp.asarray(obstacles, dtype=cp.int32)
+term = cp.asarray(terminals, dtype=cp.int32)
+
+obs = cp.split(obs, number_of_obstacles)
+print("obs", obs)
+term = cp.split(term, number_of_terminals)
+print("term", term)
 
 obstacles = []
 for o in range(len(obs)):
@@ -92,6 +103,8 @@ for o in range(len(obs)):
 terminals = []
 for o in range(len(term)):
     terminals.append(term[o].tolist())
+
+print(obstacles, terminals)
 
 """
 obstacles = [[1, 1]]
@@ -138,9 +151,10 @@ for a1 in range(len(STPM[0])):
                 STPM[a1, a2 - 1] = p_opposite_angle
 
 ind_terminals = []
-for t in range(len(terminals)):
-    ind_terminals.append(_np.ravel_multi_index(terminals[t], shape))
-#print(ind_terminals)
+for t in range(len(terminals)):	
+	i = _np.ravel_multi_index(terminals[t], shape)
+	ind_terminals.append(i)
+print("ind t", ind_terminals)
 
 print("--- Precomputed actions, obstacles and terminals in: %s seconds ---" % (time.time() - start_time_precompute))
 
@@ -191,7 +205,7 @@ tensor_prob = cp.asarray(tensor_prob, dtype=cp.float32)
 
 tensor_succ = cp.split(tensor_succ, len(STPM[0]))
 tensor_prob = cp.split(tensor_prob, len(STPM[0]))
-#print(len(tensor_prob), len(tensor_succ))
+print(type(tensor_prob), (tensor_succ))
 
 
 #print(type(split_tensor_prob))
