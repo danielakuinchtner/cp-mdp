@@ -20,7 +20,7 @@ from gen_scenario import *
 """
 
 
-shape = [150,150]
+shape = [3,4]
 rewards = [[0,3,100],[1,3,-100]]
 obstacles = [[1,1]]
 terminals = [[0,3],[1,3]]
@@ -36,3 +36,5 @@ vi = mdptoolbox.mdp.ValueIterationGS(P, R, discount=1, epsilon=0.001, max_iter=1
 vi.run()
 print("\n--- Solved with VI in: %s seconds ---" % (time.time() - start_time_vi))
 print("\n--- Solved all in: %s seconds ---" % (time.time() - start_time_all))
+
+print_policy(vi.policy, shape, obstacles=obstacles, terminals=terminals)

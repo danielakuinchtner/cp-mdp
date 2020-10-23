@@ -84,8 +84,8 @@ def mdp_grid(shape=[], terminals=[], reward_non_terminal_states=1, rewards=[], o
     #probabilities = cp.stack(probabilities)
     print(type(successors))
 
-    R = cp.ones([num_states])
-    R = cp.multiply(R, r)
+    R = _np.ones([num_states])
+    R = _np.multiply(R, r)
 
     for i in range(len(terminals)):
         ind_terminal = _np.ravel_multi_index(terminals[i], shape)

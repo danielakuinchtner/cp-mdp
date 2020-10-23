@@ -45,6 +45,7 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], reward_non_terminal_states=1,
                         #origins = _np.append(origins, s)
                         #probabilities = _np.append(probabilities, 0)
 
+                        #origins.append(s)
                         probabilities.append(0)
                         successors.append(s)
                         #output.append([s, s, 0])
@@ -53,17 +54,18 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], reward_non_terminal_states=1,
                         #successors = _np.append(successors, state_to)
                         #origins = _np.append(origins, s)
                         #probabilities = _np.append(probabilities, a[aa])
-                        #output.append([state_to, s, a[aa]])
-
+                        #output.append([s, state_to, STPM[a][aa]])
                         successors.append(state_to)
+                        #origins.append(s)
                         probabilities.append(STPM[a][aa])
 
                 else:
                     #successors = _np.append(successors, s)
                     #origins = _np.append(origins, s)
                     #probabilities = _np.append(probabilities, a[aa])
-                    #output.append([s, s, a[aa]])
+                    #output.append([s, s, STPM[a][aa]])
                     successors.append(s)
+                    #origins.append(s)
                     probabilities.append(STPM[a][aa])
 
     R = _np.ones([num_states])
@@ -75,7 +77,7 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], reward_non_terminal_states=1,
     #print("Rewards:", R)
 
     #print(probabilities)
-    #print(successors)
+    #print(output)
     #successors = successors.astype(int)
     #succ_xy = _np.split(successors, len(STPM))
     #print("succ", succ_xy)

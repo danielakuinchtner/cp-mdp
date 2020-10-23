@@ -149,7 +149,8 @@ succ_xy, probability_xy, R = mdp_grid(shape=shape, terminals=terminals,
                                                  STPM=STPM, states=states)
 print("--- Computed successors and rewards in: %s seconds ---" % (time.time() - start_time_succ))
 
-#print(succ_xy, probability_xy)
+#print(succ_xy)
+#print(probability_xy)
 
 """
 split_succ = tf.split(succ_xy, len(STPM), axis=0, num=None, name='split')
@@ -168,18 +169,16 @@ print("Total number of elements (3*2*4*5): ", tf.size(split_succ_tensor).numpy()
 """
 succ_xy = _np.asarray(succ_xy)
 probability_xy = _np.asarray(probability_xy)
-
 #print(type(succ_xy))
 #print(succ_xy)
 
 succ_xy = _np.split(succ_xy, len(STPM[0]))
 probability_xy = _np.split(probability_xy, len(STPM[0]))
 
-#print(type(succ_xy))
-#print(succ_xy)
 
 start_time_vi = time.time()
-vi = mdptoolbox.mdp.ValueIterationGS(shape, terminals, obstacles, succ_xy, probability_xy, R, states, discount=1, epsilon=0.001, max_iter=1000, skip_check=True)
+vi = mdptoolbox.mdp.ValueIterationGS(shape, terminals, obstacles, succ_xy, probability_xy, R, states, discount=1,
+                                     epsilon=0.001, max_iter=1000, skip_check=True)
 
 vi.run()
 
