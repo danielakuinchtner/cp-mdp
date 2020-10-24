@@ -1593,7 +1593,7 @@ class ValueIterationGS(ValueIteration):
             for s1 in range(len(split_succ_xy[0])):
 
                 Q = [float(self.R[a][s1] + self.discount * tf.tensordot(
-                            split_probability[a][s1], self.V[split_succ_xy[a][s1]]))
+                            split_probability[a][s1], self.V[split_succ_xy[a][s1]], axes=0))
                     for a in range(self.A)]
 
                 self.V[s1] = max(Q)
