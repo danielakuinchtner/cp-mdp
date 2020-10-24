@@ -62,6 +62,7 @@ import numpy as _np
 import scipy.sparse as _sp
 import cupy as cp
 import mdptoolbox.util as _util
+import tensorflow as tf
 
 _MSG_STOP_MAX_ITER = "Iterating stopped due to maximum number of iterations " \
                      "condition."
@@ -1570,7 +1571,7 @@ class ValueIterationGS(ValueIteration):
         split_succ_xy = []
         split_origin_xy = []
         split_probability = []
-
+        tf.debugging.set_log_device_placement(True)
         #print(self.succ_xy[0])
         #print(type(self.succ_xy))
 
@@ -1588,9 +1589,10 @@ class ValueIterationGS(ValueIteration):
             Vprev = self.V.copy()
             #print(Vprev)
 
+
             for s1 in range(len(split_succ_xy[0])):
 
-                Q = [float(self.R[a][s1] + self.discount * _np.dot(
+                Q = [float(self.R[a][s1] + self.discount * tf.tensordot(
                             split_probability[a][s1], self.V[split_succ_xy[a][s1]]))
                     for a in range(self.A)]
 
