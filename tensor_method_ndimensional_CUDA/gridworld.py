@@ -200,4 +200,12 @@ print_policy(vi.policy, shape, obstacles=obstacles, terminals=terminals, letters
 import torch
 
 print(torch.cuda.is_available())
-print(torch.cuda.get_device_name(0))
+
+
+import pycuda.driver as cuda
+cuda.init()
+## Get Id of default device
+torch.cuda.current_device()
+# 0
+cuda.Device(0).name() # '0' is the id of your GPU
+# Tesla K80
