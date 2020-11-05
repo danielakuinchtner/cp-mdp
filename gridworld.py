@@ -30,7 +30,7 @@ shape = [3, 4]
 #shape = [3, 2, 3, 4]
 number_of_obstacles = 1
 number_of_terminals = 2
-rewards = [100, -100, 100, -100]
+rewards = [100, -100]  # , 100, -100]
 reward_non_terminal_states = -3
 p_intended = 0.8  # probability of the desired action taking place
 
@@ -177,7 +177,7 @@ probability_xy = _np.split(probability_xy, len(STPM[0]))
 
 
 start_time_vi = time.time()
-vi = mdptoolbox.mdp.ValueIterationGS(shape, terminals, obstacles, succ_xy, probability_xy, R, states, discount=1,
+vi = mdptoolbox.mdp.ValueIterationGS(shape, terminals, obstacles, succ_xy, probability_xy, R, states, discount=0.9,
                                      epsilon=0.001, max_iter=1000, skip_check=True)
 
 vi.run()

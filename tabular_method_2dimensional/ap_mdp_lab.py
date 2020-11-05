@@ -30,7 +30,7 @@ start_time_succ = time.time()
 P, R = mdp_grid(shape=shape, terminals=terminals, r=-3, rewards=rewards, obstacles=obstacles)
 print("\n--- Computed successors and rewards in: %s seconds ---" % (time.time() - start_time_succ))
 start_time_vi = time.time()
-vi = mdptoolbox.mdp.ValueIterationGS(P, R, discount=1, epsilon=0.001, max_iter=1000, skip_check=True)
+vi = mdptoolbox.mdp.ValueIterationGS(P, R, discount=0.9, epsilon=0.001, max_iter=1000, skip_check=True)
 
 # vi.verbose = True # Uncomment this for question 2
 vi.run()

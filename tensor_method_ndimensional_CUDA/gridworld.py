@@ -10,10 +10,8 @@ import time
 import numpy as _np
 import string
 import random
-import tensorflow as tf
+#import tensorflow as tf
 from gridworld_scenario import *
-#from numba import njit, prange
-import cupy as cp
 
 """
 (Y,X)
@@ -32,7 +30,7 @@ shape = [3, 4]
 #shape = [3, 2, 3, 4]
 number_of_obstacles = 1
 number_of_terminals = 2
-rewards = [100, -100]#, 100, -100]
+rewards = [100, -100]  # , 100, -100]
 reward_non_terminal_states = -3
 p_intended = 0.8  # probability of the desired action taking place
 
@@ -47,8 +45,7 @@ for dim in shape:
 dimensions = len(shape)
 # print('Number of dimensions: ', dimensions)
 
-actions = cp.ones(len(shape) * 2)
-print(actions)
+actions = _np.ones(len(shape) * 2)
 letters_actions = []
 acts = ['N', 'S', 'W', 'E', 'B', 'F']  # North, South, West, East, Backward, Forward
 for num_actions in range(len(actions)):
@@ -93,11 +90,11 @@ terminals = []
 for o in range(len(term)):
     terminals.append(term[o].tolist())
 
-"""
+
 obstacles = [[1, 1]]
 terminals = [[0, 3], [1, 3]]
 rewards = [100, -100]  # each reward corresponds to a terminal position
-
+"""
 obstacles = [[0, 1, 1], [1, 1, 1]]
 terminals = [[0, 0, 3], [0, 1, 3], [1, 0, 3], [1, 1, 3]]
 rewards = [100, -100, 100, -100]  # each reward corresponds to a terminal position
@@ -125,8 +122,8 @@ p_opposite_angle = 0.0  # zero probability
 #         [0.1(W,N), 0.0(W,E), 0.8(W,W), 0.1(W,S)],
 #         [0.0(S,N), 0.1(S,E), 0.1(S,W), 0.8(S,S)]]
 
-STPM = cp.ones([len(actions), len(actions)])
-STPM = cp.multiply(STPM, p_right_angles)
+STPM = _np.ones([len(actions), len(actions)])
+STPM = _np.multiply(STPM, p_right_angles)
 
 for a1 in range(len(STPM[0])):
     for a2 in range(len(STPM[1])):
@@ -144,25 +141,16 @@ for t in range(len(terminals)):
 
 print("--- Precomputed actions, obstacles and terminals in: %s seconds ---" % (time.time() - start_time_precompute))
 
-#threads_per_block = 512
-#blocks_per_grid = 36
-#gpu_STPM = cuda.to_device(STPM)
-
 start_time_succ_vi = time.time()
 start_time_succ = time.time()
-
-
-#succ_xy, probability_xy, R = mdp_grid(shape=shape, terminals=terminals,
-#                                      reward_non_terminal_states=reward_non_terminal_states, rewards=rewards,
-#                                      obstacles=obstacles, final_limits=final_limits, STPM=STPM, states=states)
-
-tensor_succ, tensor_prob, R = mdp_grid(shape=shape, terminals=terminals,
-                                      reward_non_terminal_states=reward_non_terminal_states, rewards=rewards,
-                                      obstacles=obstacles, final_limits=final_limits, STPM=STPM, states=states)
-#gpu_STPM.to_host()
+succ_xy, probability_xy, R = mdp_grid(shape=shape, terminals=terminals,
+                                                 reward_non_terminal_states=reward_non_terminal_states,
+                                                 rewards=rewards, obstacles=obstacles, final_limits=final_limits,
+                                                 STPM=STPM, states=states)
 print("--- Computed successors and rewards in: %s seconds ---" % (time.time() - start_time_succ))
 
-print(tensor_succ)
+#print(succ_xy)
+#print(probability_xy)
 
 """
 split_succ = tf.split(succ_xy, len(STPM), axis=0, num=None, name='split')
@@ -179,48 +167,20 @@ print("Total number of elements (3*2*4*5): ", tf.size(split_probability_tensor).
 print("\nShape of tensor:", split_succ_tensor.shape)  # (4, 27, 3)
 print("Total number of elements (3*2*4*5): ", tf.size(split_succ_tensor).numpy())  # 324
 """
-tensor_succ = cp.asarray(tensor_succ, dtype=cp.int32)
-tensor_prob = cp.asarray(tensor_prob, dtype=cp.float32)
-
+succ_xy = _np.asarray(succ_xy)
+probability_xy = _np.asarray(probability_xy)
 #print(type(succ_xy))
 #print(succ_xy)
 
-#succ_xy = _np.split(succ_xy, len(STPM[0]))
-#probability_xy = _np.split(probability_xy, len(STPM[0]))
+succ_xy = _np.split(succ_xy, len(STPM[0]))
+probability_xy = _np.split(probability_xy, len(STPM[0]))
 
-
-tensor_succ = cp.split(tensor_succ, len(STPM[0]))
-tensor_prob = cp.split(tensor_prob, len(STPM[0]))
-#print(len(tensor_prob), len(tensor_succ))
-
-split_tensor_succ=[]
-split_tensor_prob=[]
-for aa in range(len(actions)):  # 4
-    split_tensor_succ.append(cp.split(tensor_succ[aa], states))
-    # split_origin.append(_np.split(self.origin_xy[aa], states))
-    split_tensor_prob.append(cp.split(tensor_prob[aa], states))
-
-#print(type(split_tensor_prob))
-#tensor_succ = cp.asarray(split_tensor_succ, dtype=cp.int32)
-#tensor_prob = cp.asarray(split_tensor_prob, dtype=cp.float32)
-#print(type(split_tensor_prob))
-#print(split_tensor_succ, len(split_tensor_prob[0]))
-#tensor_succ = tf.convert_to_tensor(list(split_tensor_succ), dtype=tf.int32)
-#tensor_prob = tf.convert_to_tensor(list(split_tensor_prob), dtype=tf.float32)
-#print(tensor_prob, len(tensor_succ[0]))
-
-#print(type(succ_xy))
-#print(succ_xy)
 
 start_time_vi = time.time()
-#d_succ_xy = cuda.to_device(succ_xy)
-#d_probability_xy = cuda.to_device(probability_xy)
-vi = mdptoolbox.mdp.ValueIterationGS(shape, terminals, obstacles, tensor_succ, tensor_prob, R, states, discount=1, epsilon=0.001, max_iter=1000, skip_check=True)
-#d_succ_xy.to_host()
-#d_probability_xy.to_host()
+vi = mdptoolbox.mdp.ValueIterationGS(shape, terminals, obstacles, succ_xy, probability_xy, R, states, discount=1,
+                                     epsilon=0.001, max_iter=1000, skip_check=True)
+
 vi.run()
-#d_succ_xy.to_host()
-#d_probability_xy.to_host()
 
 print("\n--- Solved with VI in: %s seconds ---" % (time.time() - start_time_vi))
 print("\n--- Computed successors and rewards solved with VI in: %s seconds ---" % (time.time() - start_time_succ_vi))
@@ -237,3 +197,7 @@ print("Memory used:", (process.memory_info().rss)/1000000000, "Gb")
 print_policy(vi.policy, shape, obstacles=obstacles, terminals=terminals, letters_actions=letters_actions)
 # display_policy(vi.policy, shape, obstacles=obstacles, terminals=terminals)
 
+import torch
+
+print(torch.cuda.is_available())
+print(torch.cuda.get_device_name(0))
