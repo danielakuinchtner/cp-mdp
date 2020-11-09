@@ -60,9 +60,9 @@ import time as _time
 
 import numpy as _np
 import scipy.sparse as _sp
-
-
+import cupy as cp
 import mdptoolbox.util as _util
+import tensorflow as tf
 
 _MSG_STOP_MAX_ITER = "Iterating stopped due to maximum number of iterations " \
                      "condition."
@@ -613,14 +613,31 @@ class PolicyIteration(MDP):
     -----
     In verbose mode, at each iteration, displays the number
     of differents actions between policy n-1 and n
+
+    Examples
+    --------
+    >>> import mdptoolbox, mdptoolbox.example
+    >>> P, R = mdptoolbox.example.rand(10, 3)
+    >>> pi = mdptoolbox.mdp.PolicyIteration(P, R, 0.9)
+    >>> pi.run()
+
+    >>> P, R = mdptoolbox.example.forest()
+    >>> pi = mdptoolbox.mdp.PolicyIteration(P, R, 0.9)
+    >>> pi.run()
+    >>> expected = (26.244000000000014, 29.484000000000016, 33.484000000000016)
+    >>> all(expected[k] - pi.V[k] < 1e-12 for k in range(len(expected)))
+    True
+    >>> pi.policy
+    (0, 0, 0)
     """
 
-    def __init__(self, succ_xy, probability_xy, reward, discount, policy0=None,
+    def __init__(self, transitions, reward, shape, succ_xy, states, discount, policy0=None,
                  max_iter=1000, eval_type=0, skip_check=False):
         # Initialise a policy iteration MDP.
         #
         # Set up the MDP, but don't need to worry about epsilon values
-        MDP.__init__(self, succ_xy, probability_xy, reward, discount, None, max_iter,
+        MDP.__init__(self, transitions, reward
+                     , shape, succ_xy, states, discount, None, max_iter,
                      skip_check=skip_check)
         # Check if the user has supplied an initial policy. If not make one.
         if policy0 is None:
@@ -885,7 +902,7 @@ class PolicyIterationModified(PolicyIteration):
 
     """
 
-    def __init__(self, succ_xy, probability_xy, reward, discount, epsilon=0.01,
+    def __init__(self, transitions, reward, shape, succ_xy, discount, epsilon=0.01,
                  max_iter=10, skip_check=False):
         # Initialise a (modified) policy iteration MDP.
 
@@ -894,7 +911,7 @@ class PolicyIterationModified(PolicyIteration):
         # being calculated here which doesn't need to be. The only thing that
         # is needed from the PolicyIteration class is the _evalPolicyIterative
         # function. Perhaps there is a better way to do it?
-        PolicyIteration.__init__(self, succ_xy, probability_xy, reward, discount, None,
+        PolicyIteration.__init__(self, transitions, reward, shape, succ_xy, discount, None,
                                  max_iter, 1, skip_check=skip_check)
 
         # PolicyIteration doesn't pass epsilon to MDP.__init__() so we will
@@ -1019,7 +1036,7 @@ class QLearning(MDP):
 
     """
 
-    def __init__(self, transitions, reward, discount, n_iter=10000,
+    def __init__(self, transitions, reward, discount, shape, n_iter=10000,
                  skip_check=False):
         # Initialise a Q-learning MDP.
 
@@ -1457,61 +1474,6 @@ class ValueIteration(MDP):
 
 
 class ValueIterationGS(ValueIteration):
-    """
-    A discounted MDP solved using the value iteration Gauss-Seidel algorithm.
-
-    Parameters
-    ----------
-    transitions : array
-        Transition probability matrices. See the documentation for the ``MDP``
-        class for details.
-    reward : array
-        Reward matrices or vectors. See the documentation for the ``MDP`` class
-        for details.
-    discount : float
-        Discount factor. See the documentation for the ``MDP`` class for
-        details.
-    epsilon : float, optional
-        Stopping criterion. See the documentation for the ``MDP`` class for
-        details. Default: 0.01.
-    max_iter : int, optional
-        Maximum number of iterations. See the documentation for the ``MDP``
-        and ``ValueIteration`` classes for details. Default: computed.
-    initial_value : array, optional
-        The starting value function. Default: a vector of zeros.
-    skip_check : bool
-        By default we run a check on the ``transitions`` and ``rewards``
-        arguments to make sure they describe a valid MDP. You can set this
-        argument to True in order to skip this check.
-
-    Data Attribues
-    --------------
-    policy : tuple
-        epsilon-optimal policy
-    iter : int
-        number of done iterations
-    time : float
-        used CPU time
-
-    Notes
-    -----
-    In verbose mode, at each iteration, displays the variation of V
-    and the condition which stopped iterations: epsilon-optimum policy found
-    or maximum number of iterations reached.
-
-    Examples
-    --------
-    >>> import mdptoolbox.example, numpy as np
-    >>> P, R = mdptoolbox.example.forest()
-    >>> vigs = mdptoolbox.mdp.ValueIterationGS(P, R, 0.9)
-    >>> vigs.run()
-    >>> expected = (25.5833879767579, 28.830654635546928, 32.83065463554693)
-    >>> all(expected[k] - vigs.V[k] < 1e-12 for k in range(len(expected)))
-    True
-    >>> vigs.policy
-    (0, 0, 0)
-
-    """
 
     def __init__(self, shape, terminals, obstacles, succ_xy, probability_xy, R, states, discount, epsilon=0.01, max_iter=10, initial_value=0, skip_check=False):
         # Initialise a value iteration Gauss-Seidel MDP.
@@ -1521,7 +1483,7 @@ class ValueIterationGS(ValueIteration):
         self.v_list = []
         # initialization of optional arguments
         if initial_value == 0:
-            self.V = _np.zeros(self.states)
+            self.V = torch.zeros(self.states).cuda()
 
         else:
             if len(initial_value) != self.states:
@@ -1549,36 +1511,38 @@ class ValueIterationGS(ValueIteration):
         # Run the value iteration Gauss-Seidel algorithm.
 
         self._startRun()
-        self.v_list.append(self.V.copy())
+        self.v_list.append(self.V.clone())
 
-        split_succ_xy = []
-        split_origin_xy = []
+        split_succ = []
+        split_origin = []
         split_probability = []
 
+        div = self.A - 1
         for aa in range(self.A):  # 4
-            split_succ_xy.append(_np.split(self.succ_xy[aa], self.states))
+            split_succ.append(torch.split(self.succ_xy[aa], div))
             #split_origin_xy.append(_np.split(self.origin_xy[aa], self.states))
-            split_probability.append(_np.split(self.probabilities_xy[aa], self.states))
+            split_probability.append(torch.split(self.probabilities_xy[aa], div))
+
 
 
         while True:
             self.iter += 1
 
-            Vprev = self.V.copy()
-            #print(Vprev)
+            Vprev = self.V.clone()
 
-            for s1 in range(len(split_succ_xy[0])):
+            for s1 in range(len(split_succ[0])):
 
-                Q = [float(self.R[a][s1] + self.discount * _np.dot(
-                            split_probability[a][s1], self.V[split_succ_xy[a][s1]]))
+
+                Q = [float(self.R[a][s1] + self.discount * torch.dot(
+                            split_probability[a][s1], self.V[split_succ[a][s1]]))
                     for a in range(self.A)]
 
                 self.V[s1] = max(Q)
                 #print("V:", self.V[s1])
 
-            variation = _util.getSpan(self.V - Vprev)
+            variation = getSpan(self.V - Vprev)
             self.iterations_list.append(variation)
-            self.v_list.append(self.V.copy())
+            self.v_list.append(self.V.clone())
             if self.verbose:
                 _printVerbosity(self.iter, variation)
 
@@ -1592,11 +1556,11 @@ class ValueIterationGS(ValueIteration):
                 break
 
         self.policy = []
-        for s1 in range(len(split_succ_xy[0])):
+        for s1 in range(len(split_succ[0])):
             Q = _np.zeros(self.A)
-            for a in range(self.A):
-                Q[a] = self.R[a][s1] + self.discount * _np.dot(
-                    split_probability[a][s1], self.V[split_succ_xy[a][s1]])
+            for a in prange(self.A):
+                Q[a] = self.R[a][s1] + self.discount * torch.dot(
+                    split_probability[a][s1], self.V[split_succ[a][s1]])
 
             self.V[s1] = Q.max()
 
@@ -1605,3 +1569,6 @@ class ValueIterationGS(ValueIteration):
             self.policy.append(int(Q.argmax()))
 
         self._endRun()
+
+
+
