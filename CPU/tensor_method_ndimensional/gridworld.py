@@ -12,7 +12,7 @@ import string
 import random
 #import tensorflow as tf
 from gridworld_scenario import *
-
+import torch
 """
 (Y,X)
 | 00 01 02 ... 0X-1       'N' = North
@@ -26,17 +26,17 @@ from gridworld_scenario import *
 
 # install openblas lib to improve even more the runtime: conda install -c anaconda openblas
 
-shape = [3, 4]
+shape = [50, 50]
 #shape = [3, 2, 3, 4]
 number_of_obstacles = 1
 number_of_terminals = 2
-rewards = [100, -100]  # , 100, -100]
+rewards = [100, -100] #, 100, -100]
 reward_non_terminal_states = -3
 p_intended = 0.8  # probability of the desired action taking place
 
 print("Executing a", shape, "grid, with", number_of_terminals, "terminals and", number_of_obstacles, "obstacles")
 
-start_time_precompute = time.time()
+#start_time_precompute = time.time()
 start_time_all = time.time()
 states = 1
 for dim in shape:
@@ -110,17 +110,6 @@ rewards = [100, -100, 100, -100]  # each reward corresponds to a terminal positi
 p_right_angles = (1 - p_intended) / (len(actions) - 2)  # 0.1 # stochasticity
 p_opposite_angle = 0.0  # zero probability
 
-# State Transition Probability Matrix
-#       N                S                 W                 E
-# STPM = [[p_intended, p_opposite_angle, p_right_angles, p_right_angles],  # North
-#        [p_opposite_angle, p_intended, p_right_angles, p_right_angles],  # East
-#        [p_right_angles, p_right_angles, p_intended, p_opposite_angle],  # West
-#        [p_right_angles, p_right_angles, p_opposite_angle, p_intended]]  # South
-
-# STPM = [[0.8(N,N), 0.1(N,E), 0.1(N,W), 0.0(N,S)],
-#         [0.1(E,N), 0.8(E,E), 0.0(E,W), 0.1(E,S)],
-#         [0.1(W,N), 0.0(W,E), 0.8(W,W), 0.1(W,S)],
-#         [0.0(S,N), 0.1(S,E), 0.1(S,W), 0.8(S,S)]]
 
 STPM = _np.ones([len(actions), len(actions)])
 STPM = _np.multiply(STPM, p_right_angles)
@@ -139,61 +128,76 @@ for t in range(len(terminals)):
     ind_terminals.append(_np.ravel_multi_index(terminals[t], shape))
 #print(ind_terminals)
 
-print("--- Precomputed actions, obstacles and terminals in: %s seconds ---" % (time.time() - start_time_precompute))
+#print("--- Precomputed actions, obstacles and terminals in: %s seconds ---" % (time.time() - start_time_precompute))
 
-start_time_succ_vi = time.time()
+#start_time_succ_vi = time.time()
 start_time_succ = time.time()
-succ_xy, probability_xy, R = mdp_grid(shape=shape, terminals=terminals,
+
+succ_s, probability_s, R = mdp_grid(shape=shape, terminals=terminals,
                                                  reward_non_terminal_states=reward_non_terminal_states,
                                                  rewards=rewards, obstacles=obstacles, final_limits=final_limits,
                                                  STPM=STPM, states=states)
 print("--- Computed successors and rewards in: %s seconds ---" % (time.time() - start_time_succ))
 
-#print(succ_xy)
-#print(probability_xy)
+#print(succ_s)
+#print(probability_s)
 
-"""
-split_succ = tf.split(succ_xy, len(STPM), axis=0, num=None, name='split')
-split_succ_tensor = tf.convert_to_tensor(list(split_succ), dtype=tf.float32)
+#succ_s = _np.asarray(succ_s)
+#probability_s = _np.asarray(probability_s)
+#print(type(succ_s))
+#print(succ_s)
 
-split_probability = tf.split(probability_xy, len(STPM), axis=0, num=None, name='split')
-split_probability_tensor = tf.convert_to_tensor(list(split_probability), dtype=tf.float32)
 
-print(split_probability_tensor)
-print(split_succ_tensor)
-print("\nShape of tensor:", split_probability_tensor.shape)  # (4, 27, 3)
-print("Total number of elements (3*2*4*5): ", tf.size(split_probability_tensor).numpy())  # 324
-
-print("\nShape of tensor:", split_succ_tensor.shape)  # (4, 27, 3)
-print("Total number of elements (3*2*4*5): ", tf.size(split_succ_tensor).numpy())  # 324
-"""
-succ_xy = _np.asarray(succ_xy)
-probability_xy = _np.asarray(probability_xy)
-#print(type(succ_xy))
-#print(succ_xy)
-
-succ_xy = _np.split(succ_xy, len(STPM[0]))
-probability_xy = _np.split(probability_xy, len(STPM[0]))
+act_valid = len(STPM[0])-1
+div = act_valid*states
+succ_s = torch.split(succ_s, div)
+probability_s = torch.split(probability_s, div)
 
 
 start_time_vi = time.time()
-vi = mdptoolbox.mdp.ValueIterationGS(shape, terminals, obstacles, succ_xy, probability_xy, R, states, discount=0.9,
+vi = ValueIterationGS(shape, terminals, obstacles, succ_s, probability_s, R, states, discount=1,
                                      epsilon=0.001, max_iter=1000, skip_check=True)
 
 vi.run()
 
 print("\n--- Solved with VI in: %s seconds ---" % (time.time() - start_time_vi))
-print("\n--- Computed successors and rewards solved with VI in: %s seconds ---" % (time.time() - start_time_succ_vi))
+#print("\n--- Computed successors and rewards solved with VI in: %s seconds ---" % (time.time() - start_time_succ_vi))
 print("\n--- Solved all in: %s seconds ---" % (time.time() - start_time_all))
 
 
 process = psutil.Process(os.getpid())
-print("\nMemory used:", (process.memory_info().rss), "bytes")
+print("Memory used:", (process.memory_info().rss), "bytes")
 print("Memory used:", (process.memory_info().rss)/1000000, "Mb")
 print("Memory used:", (process.memory_info().rss)/1000000000, "Gb")
 
 
-#print("\nPolicy:")
+print("\nPolicy:")
 print_policy(vi.policy, shape, obstacles=obstacles, terminals=terminals, letters_actions=letters_actions)
-# display_policy(vi.policy, shape, obstacles=obstacles, terminals=terminals)
 
+from platform import python_version
+
+print(python_version())
+
+
+print(torch.cuda.is_available())
+
+"""
+start_time_pi = time.time()
+pi = mdptoolbox.mdp.PolicyIteration(succ_xy, probability_xy, R, discount=1, policy0=None, max_iter=1000, eval_type=0, skip_check=True)
+pi.run()
+print("\n--- Solved with PI in: %s seconds ---" % (time.time() - start_time_pi))
+
+start_time_mpi = time.time()
+mpi = mdptoolbox.mdp.PolicyIterationModified(succ_xy, probability_xy, R, discount=1, epsilon=0.001, max_iter=1000, skip_check=True)
+mpi.run()
+print("\n--- Solved with MPI in: %s seconds ---" % (time.time() - start_time_mpi))
+
+
+
+# display_policy(vi.policy, shape, obstacles=obstacles, terminals=terminals)
+print("\nPolicy PI:")
+print_policy(pi.policy, shape, obstacles=obstacles, terminals=terminals)
+print("\nPolicy MPI:")
+print_policy(mpi.policy, shape, obstacles=obstacles, terminals=terminals)
+
+"""

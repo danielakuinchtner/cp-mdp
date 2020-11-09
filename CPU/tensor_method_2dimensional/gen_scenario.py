@@ -22,7 +22,7 @@ P = (A x S x S) the transition function
 R = (A x S x S) the reward function
 """
 
-@cuda.jit
+
 def mdp_grid(shape=[], obstacles=[], terminals=[], r=1, rewards=[], actions=[], final_limits=[]):
     states = shape[0] * shape[1]  # 3x4
     actions = actions
@@ -236,7 +236,6 @@ def valid(x, y, obstacles):
     return valid
 """
 
-@cuda.jit(device=True)
 def succ(a, x, y, final_limits):
     if a == 0:  # North
         if x != 0:  # 1: limite inicial de X:0

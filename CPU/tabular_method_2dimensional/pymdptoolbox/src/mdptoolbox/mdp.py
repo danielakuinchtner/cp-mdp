@@ -937,6 +937,7 @@ class PolicyIterationModified(PolicyIteration):
                 _printVerbosity(self.iter, variation)
 
             self.V = Vnext
+            #print(self.V)
             if variation < self.thresh:
                 break
             else:

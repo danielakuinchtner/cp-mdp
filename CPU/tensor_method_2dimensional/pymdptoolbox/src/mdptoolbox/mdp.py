@@ -57,7 +57,6 @@ Available classes
 
 import math as _math
 import time as _time
-
 import numpy as _np
 import scipy.sparse as _sp
 
@@ -1562,6 +1561,7 @@ class ValueIterationGS(ValueIteration):
             # threshold of variation for V for an epsilon-optimal policy
             self.thresh = epsilon
 
+    
     def run(self):
         # Run the value iteration Gauss-Seidel algorithm.
 
@@ -1585,13 +1585,15 @@ class ValueIterationGS(ValueIteration):
             #print(Vprev)
 
             for s1 in range(len(split_succ_xy[0])):
+                #for s2 in range(len(split_succ_xy[0][s1])):
 
                 Q = [float(self.R[a][s1] + self.discount * _np.dot(
                             split_probability[a][s1], self.V[split_succ_xy[a][s1]]))
                     for a in range(self.A)]
 
                 self.V[s1] = max(Q)
-                print("V:", self.V[s1])
+
+                #print("V:", self.V[s1])
 
             variation = _util.getSpan(self.V - Vprev)
             self.iterations_list.append(variation)
@@ -1617,7 +1619,7 @@ class ValueIterationGS(ValueIteration):
 
             self.V[s1] = Q.max()
 
-            print(self.V[s1])
+            #print(self.V[s1])
 
             self.policy.append(int(Q.argmax()))
 
