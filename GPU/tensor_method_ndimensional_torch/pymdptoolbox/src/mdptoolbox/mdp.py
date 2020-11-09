@@ -1558,7 +1558,7 @@ class ValueIterationGS(ValueIteration):
         self.policy = []
         for s1 in range(len(split_succ[0])):
             Q = _np.zeros(self.A)
-            for a in prange(self.A):
+            for a in range(self.A):
                 Q[a] = self.R[a][s1] + self.discount * torch.dot(
                     split_probability[a][s1], self.V[split_succ[a][s1]])
 

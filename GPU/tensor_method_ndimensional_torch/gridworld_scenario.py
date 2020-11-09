@@ -130,7 +130,7 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], reward_non_terminal_states=1,
 
 def succ_tuple(a, state_tuple, final_limits):
     successor = []
-    for dim in prange(len(state_tuple)):
+    for dim in range(len(state_tuple)):
 
         if a - math.ceil(a / 2) == dim:
             if a % 2 == 0:
