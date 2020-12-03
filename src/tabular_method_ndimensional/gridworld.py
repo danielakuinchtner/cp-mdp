@@ -12,10 +12,10 @@ import numpy as _np
 import tensorflow as tf
 
 
-shape = [10,10,10]
+shape = [3,4]
 #shape = [3, 10, 3, 10]
-number_of_obstacles = 5
-number_of_terminals = 5
+number_of_obstacles = 1
+number_of_terminals = 2
 rewards = [100, -100, 100, -100, 100, -100, 100, -100, 100, -100, 100, -100, 100]  # one reward for each terminal
 reward_non_terminal_states = -3
 p_intended = 0.8
@@ -86,11 +86,11 @@ terminals = [[0, 0, 3], [0, 1, 3], [1, 0, 3], [1, 1, 3]]
 
 obstacles = [(0, 0, 5), (0, 2, 0), (0, 1, 0), (0, 2, 9), (0, 1, 2)]
 terminals = [(0, 0, 3), (0, 0, 7), (0, 3, 3), (0, 5, 0), (0, 1, 0)]
-"""
+
 
 obstacles = [[0, 0, 5], [0, 2, 0], [0, 1, 0], [0, 2, 9], [0, 1, 2]]
 terminals = [[0, 0, 3], [0, 0, 7], [0, 3, 3], [0, 5, 0], [0, 1, 0]]
-
+"""
 
 # print("Obstacles:", obstacles)
 # print("Terminals:", terminals)
@@ -136,7 +136,7 @@ print("--- Computed successors and rewards in: %s seconds ---" % (time.time() - 
 #print(R)
 
 start_time_vi = time.time()
-vi = mdptoolbox.mdp.ValueIterationGS(P, R, discount=1, epsilon=0.001, max_iter=1000, skip_check=True)
+vi = mdptoolbox.mdp.ValueIterationGS(P, R, discount=0.9, epsilon=0.001, max_iter=1000, skip_check=True)
 
 vi.run()
 print("--- Solved with VI in: %s seconds ---" % (time.time() - start_time_vi))
@@ -148,5 +148,25 @@ print("Memory used:", (process.memory_info().rss), "bytes")
 print("Memory used:", (process.memory_info().rss)/1000000, "Mb")
 print("Memory used:", (process.memory_info().rss)/1000000000, "Gb")
 
-print("Policy:")
-print_policy(vi.policy, shape, obstacles=obstacles, terminals=terminals, letters_actions=letters_actions)
+
+start_time_pi = time.time()
+pi = mdptoolbox.mdp.PolicyIteration(P, R, discount=0.9, policy0=None, max_iter=1000, eval_type=0, skip_check=True)
+pi.run()
+print("\n--- Solved with PI in: %s seconds ---" % (time.time() - start_time_pi))
+
+start_time_mpi = time.time()
+mpi = mdptoolbox.mdp.PolicyIterationModified(P, R, discount=0.9, epsilon=0.001, max_iter=1000, skip_check=True)
+mpi.run()
+print("\n--- Solved with MPI in: %s seconds ---" % (time.time() - start_time_mpi))
+
+
+print("Policy VI:")
+print_policy(vi.policy, shape, obstacles=obstacles, terminals=terminals, actions=letters_actions)
+
+# display_policy(vi.policy, shape, obstacles=obstacles, terminals=terminals)
+print("\nPolicy PI:")
+#print(pi.policy)
+print_policy(pi.policy, shape, obstacles=obstacles, terminals=terminals, actions=letters_actions)
+
+print("\nPolicy MPI:")
+print_policy(mpi.policy, shape, obstacles=obstacles, terminals=terminals, actions=letters_actions)

@@ -64,9 +64,8 @@ def succ_tuple(a, state_tuple, final_limits):
     return successor
 
 
-def print_policy(policy, shape, obstacles=[], terminals=[], letters_actions=[]):
+def print_policy(policy, shape, obstacles=[], terminals=[], actions=[]):
     p_policy = _np.empty(shape, dtype=object)
-    actions = letters_actions
     for i in range(len(policy)):
         sub = _np.unravel_index(i, shape)
         if list(sub) in obstacles:
@@ -76,4 +75,5 @@ def print_policy(policy, shape, obstacles=[], terminals=[], letters_actions=[]):
         else:
             p_policy[sub] = actions[policy[i]]
     print(p_policy)
+
 
