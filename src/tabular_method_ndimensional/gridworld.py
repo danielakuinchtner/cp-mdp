@@ -12,7 +12,7 @@ import numpy as _np
 import tensorflow as tf
 
 
-shape = [3,4]
+shape = [50,40]
 #shape = [3, 10, 3, 10]
 number_of_obstacles = 1
 number_of_terminals = 2
@@ -91,7 +91,8 @@ terminals = [(0, 0, 3), (0, 0, 7), (0, 3, 3), (0, 5, 0), (0, 1, 0)]
 obstacles = [[0, 0, 5], [0, 2, 0], [0, 1, 0], [0, 2, 9], [0, 1, 2]]
 terminals = [[0, 0, 3], [0, 0, 7], [0, 3, 3], [0, 5, 0], [0, 1, 0]]
 """
-
+obstacles=[1,1]
+terminals=[[0,3],[1,3]]
 # print("Obstacles:", obstacles)
 # print("Terminals:", terminals)
 
@@ -122,7 +123,7 @@ for a1 in range(len(STPM[0])):
             elif a2 % 2 == 1:
                 STPM[a1, a2 - 1] = p_opposite_angle
 
-print("--- Precomputed actions, obstacles and terminals in: %s seconds ---" % (time.time() - start_time_precompute), "\n")
+#print("--- Precomputed actions, obstacles and terminals in: %s seconds ---" % (time.time() - start_time_precompute), "\n")
 
 #print(STPM)
 start_time_succ_vi = time.time()
@@ -135,24 +136,20 @@ print("--- Computed successors and rewards in: %s seconds ---" % (time.time() - 
 #print(P)
 #print(R)
 
+
 start_time_vi = time.time()
 vi = mdptoolbox.mdp.ValueIterationGS(P, R, discount=0.9, epsilon=0.001, max_iter=1000, skip_check=True)
 
 vi.run()
 print("--- Solved with VI in: %s seconds ---" % (time.time() - start_time_vi))
-print("--- Computed successors and rewards solved with VI in: %s seconds ---" % (time.time() - start_time_succ_vi))
-print("--- Solved all in: %s seconds ---" % (time.time() - start_time_all))
+#print("--- Computed successors and rewards solved with VI in: %s seconds ---" % (time.time() - start_time_succ_vi))
+#print("--- Solved VI and components in: %s seconds ---" % (time.time() - start_time_all))
 
 process = psutil.Process(os.getpid())
-print("Memory used:", (process.memory_info().rss), "bytes")
-print("Memory used:", (process.memory_info().rss)/1000000, "Mb")
-print("Memory used:", (process.memory_info().rss)/1000000000, "Gb")
+print("Memory used VI:", (process.memory_info().rss), "bytes")
+print("Memory used VI:", (process.memory_info().rss)/1000000, "Mb")
+print("Memory used VI:", (process.memory_info().rss)/1000000000, "Gb")
 
-
-start_time_pi = time.time()
-pi = mdptoolbox.mdp.PolicyIteration(P, R, discount=0.9, policy0=None, max_iter=1000, eval_type=0, skip_check=True)
-pi.run()
-print("\n--- Solved with PI in: %s seconds ---" % (time.time() - start_time_pi))
 
 start_time_mpi = time.time()
 mpi = mdptoolbox.mdp.PolicyIterationModified(P, R, discount=0.9, epsilon=0.001, max_iter=1000, skip_check=True)
@@ -160,13 +157,18 @@ mpi.run()
 print("\n--- Solved with MPI in: %s seconds ---" % (time.time() - start_time_mpi))
 
 
-print("Policy VI:")
-print_policy(vi.policy, shape, obstacles=obstacles, terminals=terminals, actions=letters_actions)
+start_time_pi = time.time()
+pi = mdptoolbox.mdp.PolicyIteration(P, R, discount=0.9, policy0=None, max_iter=1000, eval_type=0, skip_check=True)
+pi.run()
+print("\n--- Solved with PI in: %s seconds ---" % (time.time() - start_time_pi))
 
-# display_policy(vi.policy, shape, obstacles=obstacles, terminals=terminals)
-print("\nPolicy PI:")
-#print(pi.policy)
-print_policy(pi.policy, shape, obstacles=obstacles, terminals=terminals, actions=letters_actions)
+
+print("Policy VI:")
+#print_policy(vi.policy, shape, obstacles=obstacles, terminals=terminals, actions=letters_actions)
 
 print("\nPolicy MPI:")
-print_policy(mpi.policy, shape, obstacles=obstacles, terminals=terminals, actions=letters_actions)
+#print_policy(mpi.policy, shape, obstacles=obstacles, terminals=terminals, actions=letters_actions)
+
+print("\nPolicy PI:")
+#print(pi.policy)
+#print_policy(pi.policy, shape, obstacles=obstacles, terminals=terminals, actions=letters_actions)

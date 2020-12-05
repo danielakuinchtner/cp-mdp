@@ -171,8 +171,8 @@ class MDP(object):
         Q = _np.empty((self.A, self.S))
         for aa in range(self.A):
             Q[aa] = self.R[aa] + self.discount * self.P[aa].dot(V)
-        #print("QAA", Q[aa])
 
+        #print("Q", Q)
         #print(V.shape)
         # Get the policy and value, for now it is being returned but...
         # Which way is better?
@@ -345,6 +345,8 @@ class PolicyIteration(MDP):
             # immediate reward
             null = _np.zeros(self.S)
             self.policy, null = self._bellmanOperator(null)
+            #print(self.policy)
+
             del null
         else:
             # Use the policy that the user supplied
@@ -394,6 +396,7 @@ class PolicyIteration(MDP):
         # PRpolicy(S)   = reward matrix for policy
         #
         Ppolicy = _np.empty((self.S, self.S))
+
         Rpolicy = _np.zeros(self.S)
         for aa in range(self.A):  # avoid looping over S
             # the rows that use action a.
@@ -401,9 +404,10 @@ class PolicyIteration(MDP):
             # if no rows use action a, then no need to assign this
             if ind.size > 0:
                 try:
-                    Ppolicy[ind, :] = self.P[aa][ind, :]
+                    Ppolicy[ind, :] = self.P[aa][ind, :]  # big transition table
                 except ValueError:
                     Ppolicy[ind, :] = self.P[aa][ind, :].todense()
+                #print("Ppolicy[ind, :]", Ppolicy[ind, :])
                 # PR = self._computePR() # an apparently uneeded line, and
                 # perhaps harmful in this implementation c.f.
                 # mdp_computePpolicyPRpolicy.m
@@ -461,18 +465,27 @@ class PolicyIteration(MDP):
 
         policy_P, policy_R = self._computePpolicyPRpolicy()
 
+
+
         if self.verbose:
             _printVerbosity("Iteration", "V variation")
 
         itr = 0
         done = False
+
+
+
         while not done:
             itr += 1
 
             Vprev = policy_V
             policy_V = policy_R + self.discount * policy_P.dot(Vprev)
 
+            #print("***********",policy_V)
             variation = _np.absolute(policy_V - Vprev).max()
+            print("variationvariationnnn", variation)
+            print(((1 - self.discount) / self.discount) * epsilon)
+
             if self.verbose:
                 _printVerbosity(itr, variation)
 
@@ -588,18 +601,6 @@ class PolicyIterationModified(PolicyIteration):
     time : float
         used CPU time
 
-    Examples
-    --------
-    >>> import mdptoolbox, mdptoolbox.example
-    >>> P, R = mdptoolbox.example.forest()
-    >>> pim = mdptoolbox.mdp.PolicyIterationModified(P, R, 0.9)
-    >>> pim.run()
-    >>> pim.policy
-    (0, 0, 0)
-    >>> expected = (21.81408652334702, 25.054086523347017, 29.054086523347017)
-    >>> all(expected[k] - pim.V[k] < 1e-12 for k in range(len(expected)))
-    True
-
     """
 
     def __init__(self, transitions, reward, discount, epsilon=0.01,
@@ -641,6 +642,8 @@ class PolicyIterationModified(PolicyIteration):
             self.iter += 1
 
             self.policy, Vnext = self._bellmanOperator()
+
+            #print(self.policy, Vnext)
             # [Ppolicy, PRpolicy] = mdp_computePpolicyPRpolicy(P, PR, policy);
 
             variation = _util.getSpan(Vnext - self.V)
@@ -655,7 +658,7 @@ class PolicyIterationModified(PolicyIteration):
                 if self.verbose:
                     self.setSilent()
                     is_verbose = True
-
+                #print("vvvvvvvvvvvvv", self.V)
                 self._evalPolicyIterative(self.V, self.epsilon, self.max_iter)
 
                 if is_verbose:

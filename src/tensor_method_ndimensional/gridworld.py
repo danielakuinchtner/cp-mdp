@@ -13,10 +13,10 @@ from gridworld_scenario import *
 
 # install openblas lib to improve even more the runtime: conda install -c anaconda openblas
 
-shape = [10,10,10]
+shape = [3,4]
 #shape = [3, 10, 3, 10]
-number_of_obstacles = 5
-number_of_terminals = 5
+number_of_obstacles = 1
+number_of_terminals = 2
 rewards = [100, -100, 100, -100, 100, -100, 100, -100, 100, -100, 100, -100, 100, -100]
 reward_non_terminal_states = -3
 p_intended = 0.8  # probability of the desired action taking place
@@ -65,8 +65,8 @@ obstacles = obstacles.astype(int)
 terminals = terminals.astype(int)
 
 
-#obstacles = [5, 20, 10, 29, 12]
-#terminals = [3, 7, 33, 50, 10]
+obstacles = [5]
+terminals = [3, 7]
 
 # print("Obstacles:", obstacles)
 # print("Terminals:", terminals)
@@ -100,35 +100,33 @@ for a1 in range(len(STPM[0])):
 
 
 
-print("--- Precomputed actions, obstacles and terminals in: %s seconds ---" % (time.time() - start_time_precompute))
+#print("--- Precomputed actions, obstacles and terminals in: %s seconds ---" % (time.time() - start_time_precompute))
 
 start_time_succ_vi = time.time()
 start_time_succ = time.time()
-succ_xy, probability_xy, R = mdp_grid(shape=shape, terminals=terminals,
+succ_s, probability_s, R = mdp_grid(shape=shape, terminals=terminals,
                                                  reward_non_terminal_states=reward_non_terminal_states,
                                                  rewards=rewards, obstacles=obstacles, final_limits=final_limits,
                                                  STPM=STPM, states=states)
 print("--- Computed successors and rewards in: %s seconds ---" % (time.time() - start_time_succ))
 
-#print(succ_xy)
-#print(probability_xy)
 
 
-succ_xy = _np.asarray(succ_xy)
-probability_xy = _np.asarray(probability_xy)
+succ_s = _np.asarray(succ_s)
+probability_s = _np.asarray(probability_s)
 
-succ_xy = _np.split(succ_xy, len(STPM[0]))
-probability_xy = _np.split(probability_xy, len(STPM[0]))
+succ_s = _np.split(succ_s, len(STPM[0]))
+probability_s = _np.split(probability_s, len(STPM[0]))
 
 
 start_time_vi = time.time()
-vi = mdptoolbox.mdp.ValueIterationGS(shape, terminals, obstacles, succ_xy, probability_xy, R, states,
+vi = mdptoolbox.mdp.ValueIterationGS(shape, terminals, obstacles, succ_s, probability_s, R, states,
                                      discount=1, epsilon=0.001, max_iter=1000, skip_check=True)
 
 vi.run()
 
 print("--- Solved with VI in: %s seconds ---" % (time.time() - start_time_vi))
-print("--- Computed successors and rewards solved with VI in: %s seconds ---" % (time.time() - start_time_succ_vi))
+#print("--- Computed successors and rewards solved with VI in: %s seconds ---" % (time.time() - start_time_succ_vi))
 print("--- Solved all in: %s seconds ---" % (time.time() - start_time_all))
 
 
@@ -138,8 +136,30 @@ print("Memory used:", (process.memory_info().rss)/1000000, "Mb")
 print("Memory used:", (process.memory_info().rss)/1000000000, "Gb")
 
 print("Policy VI:")
-print_policy(vi.policy, shape, obstacles=obstacles, terminals=terminals, letters_actions=letters_actions)
+print_policy(vi.policy, shape, obstacles=obstacles, terminals=terminals, actions=letters_actions)
+
+start_time_mpi = time.time()
+mpi = mdptoolbox.mdp.PolicyIterationModified(shape, terminals, obstacles, succ_s, probability_s, R, states,
+                                             discount=0.9, epsilon=0.001, policy0=None, max_iter=1000, eval_type=0, skip_check=True)
+mpi.run()
+print("\n--- Solved with MPI in: %s seconds ---" % (time.time() - start_time_mpi))
+
+print("\nPolicy MPI:")
+print_policy(mpi.policy, shape, obstacles=obstacles, terminals=terminals, actions=letters_actions)
+
+
+
+start_time_pi = time.time()
+pi = mdptoolbox.mdp.PolicyIteration(shape, terminals, obstacles, succ_s, probability_s, R, states, discount=0.9,
+                                    epsilon=0.1,policy0=None, max_iter=1000, eval_type=0, skip_check=True)
+pi.run()
+print("\n--- Solved with PI in: %s seconds ---" % (time.time() - start_time_pi))
 
 
 
 
+
+# display_policy(vi.policy, shape, obstacles=obstacles, terminals=terminals)
+print("\nPolicy PI:")
+#print(pi.policy)
+print_policy(pi.policy, shape, obstacles=obstacles, terminals=terminals, actions=letters_actions)

@@ -24,7 +24,7 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], reward_non_terminal_states=1,
                 if STPM[a][aa] == 0:  # remove all zero probabilities
                     continue
 
-                if s in terminals or s in obstacles:
+                if s in terminals: #or s in obstacles:
                     probabilities.append(0)
                     successors.append(s)
 
@@ -79,9 +79,8 @@ def succ_tuple(a, state_tuple, final_limits):
     return successor
 
 
-def print_policy(policy, shape, obstacles=[], terminals=[], letters_actions=[]):
+def print_policy(policy, shape, obstacles=[], terminals=[], actions=[]):
     p_policy = _np.empty(shape, dtype=object)
-    actions = letters_actions
     print("terminals index", terminals)
     print("obstacles index", obstacles)
     obstacles_tuple = []
