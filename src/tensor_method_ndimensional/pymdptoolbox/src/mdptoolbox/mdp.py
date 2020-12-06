@@ -189,6 +189,7 @@ class MDP(object):
 
         Q = _np.asarray(Q)
         #print("QQQQ",Q)
+        #print("Q max", Q.argmax(axis=0), Q.max(axis=0))
         # Get the policy and value, for now it is being returned but...
         # Which way is better?
         # 1. Return, (policy, value)
@@ -405,6 +406,8 @@ class PolicyIteration(MDP):
             ind = (self.policy == aa).nonzero()[0]
             # if no rows use action a, then no need to assign this
             if ind.size > 0:
+                Ppolicy_s = self.succ_s[aa]
+                Ppolicy_p = self.probabilities_s[aa]
                 #try:
                     #Ppolicy[ind, :] = self.P[aa][ind, :]
                 #except ValueError:
@@ -417,13 +420,15 @@ class PolicyIteration(MDP):
         # it should be possible in the future. Also, if R is so big that its
         # a good idea to use a sparse matrix for it, then converting PRpolicy
         # from a dense to sparse matrix doesn't seem very memory efficient
+        #print(Rpolicy, Ppolicy_s, Ppolicy_p)
         if type(self.R) is _sp.csr_matrix:
             Rpolicy = _sp.csr_matrix(Rpolicy)
         # self.Ppolicy = Ppolicy
         # self.Rpolicy = Rpolicy
-        return Rpolicy
+        #print(Ppolicy_s, Ppolicy_p)
+        return Rpolicy, Ppolicy_s, Ppolicy_p
 
-    def _evalPolicyIterative(self, V0=0, epsilon=0.0001, max_iter=10000):
+    def _evalPolicyIterative(self, V0=0, epsilon=0.0001, max_iter=100):
         # Evaluate a policy using iteration.
         #
         # Arguments
@@ -466,19 +471,18 @@ class PolicyIteration(MDP):
                 policy_V = _np.array(V0).reshape(self.states)
 
         #policy_P, policy_R = self._computePpolicyPRpolicy()
-        policy_R = self._computePpolicyPRpolicy()
+        policy_R, succ_s, probabilities_s = self._computePpolicyPRpolicy()
 
         if self.verbose:
             _printVerbosity("Iteration", "V variation")
 
         itr = 0
         done = False
-        split_succ_s = []
-        split_probability = []
 
-        for aa in range(self.A):  # 4
-            split_succ_s.append(_np.split(self.succ_s[aa], self.states))
-            split_probability.append(_np.split(self.probabilities_s[aa], self.states))
+
+        split_succ_s = (_np.split(succ_s, self.states))
+        split_probability = (_np.split(probabilities_s, self.states))
+        #print(split_succ_s, split_probability)
 
 
         while not done:
@@ -488,35 +492,35 @@ class PolicyIteration(MDP):
             Vprev = _np.array(Vprev)
             #policy_V = policy_R + self.discount * policy_P.dot(Vprev)
 
-            #print(split_probability[0][1])
-            #print(split_succ_s[0][0], type(split_succ_s[0][0]))
-            #print(Vprev[split_succ_s[0][0]])
-
-            policy_V = [float(policy_R[s1] + self.discount *
-                        _np.dot(split_probability[0][s1], Vprev[split_succ_s[0][s1]]))
-                        for s1 in range(self.states)]
+            policy_V = [(policy_R[s1] + self.discount *
+                            _np.dot(split_probability[s1], Vprev[split_succ_s[s1]]))
+                            for s1 in range(self.states)]
 
             #print("-----", policy_V)
-            #self.V[s1] = max(Q)
+
             #policy_V = policy_R + self.discount * _np.dot(self.probabilities_s,Vprev[self.succ_s])
 
             variation = _np.absolute(policy_V - Vprev).max()
-            print("variationvariationnnn", variation)
-            print(((1 - self.discount) / self.discount) * epsilon)
+            #print("variationvariationnnn", variation)
+            #print(((1 - self.discount) / self.discount) * epsilon)
 
             if self.verbose:
                 _printVerbosity(itr, variation)
 
             # ensure |Vn - Vpolicy| < epsilon
+
             if variation < ((1 - self.discount) / self.discount) * epsilon:
+
                 done = True
                 if self.verbose:
                     print(_MSG_STOP_EPSILON_OPTIMAL_VALUE)
+                break
 
             elif itr == max_iter:
                 done = True
                 if self.verbose:
                     print(_MSG_STOP_MAX_ITER)
+                break
 
 
         self.V = policy_V
@@ -542,10 +546,12 @@ class PolicyIteration(MDP):
         # ----------
         # Vpolicy(S) = value function of the policy
         #
-        Ppolicy, Rpolicy = self._computePpolicyPRpolicy()
+        Rpolicy, succ_s, probability_s = self._computePpolicyPRpolicy()
         # V = PR + gPV  => (I-gP)V = PR  => V = inv(I-gP)* PR
-        self.V = _np.linalg.solve(
-            (_sp.eye(self.S, self.S) - self.discount * Ppolicy), Rpolicy)
+        self.V = [_np.linalg.solve(
+            (_sp.eye(self.states*3, self.A-1) - self.discount * probability_s[s]), Rpolicy)
+            for s in range(self.states)]
+        #print(self.V)
 
     def run(self):
         # Run the policy iteration algorithm.
@@ -657,6 +663,7 @@ class PolicyIterationModified(PolicyIteration):
         # Run the modified policy iteration algorithm.
 
         self._startRun()
+        variation2 = 0
 
         while True:
             self.iter += 1
@@ -664,15 +671,21 @@ class PolicyIterationModified(PolicyIteration):
             #print(self.iter)
 
             self.policy, Vnext = self._bellmanOperator()
-            #print(self.policy, Vnext)
+            print(self.policy, Vnext)
             # [Ppolicy, PRpolicy] = mdp_computePpolicyPRpolicy(P, PR, policy);
 
             variation = _util.getSpan(Vnext - self.V)
+            #print(Vnext)
+            #print(self.V)
+            #print("variationnnnnnnnMPI", variation)
+            #print("variationnnnnnnn2MPI", variation2)
             if self.verbose:
                 _printVerbosity(self.iter, variation)
 
             self.V = Vnext
             if variation < self.thresh:
+                break
+            elif variation == variation2:
                 break
             else:
                 is_verbose = False
@@ -681,7 +694,7 @@ class PolicyIterationModified(PolicyIteration):
                     is_verbose = True
                 #print("vvvvvvvvvvvvv",self.V)
                 self._evalPolicyIterative(self.V, self.epsilon, self.max_iter)
-
+                variation2 = variation
                 if is_verbose:
                     self.setVerbose()
 

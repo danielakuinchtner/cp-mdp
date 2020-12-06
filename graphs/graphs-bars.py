@@ -116,8 +116,8 @@ autolabel(rects2)
 
 fig.tight_layout()
 
-#plt.show()
-fig.savefig('runtime.pdf')
+plt.show()
+#fig.savefig('graphs/runtime.pdf')
 
 
 
@@ -219,9 +219,9 @@ autolabel(rects2)
 
 fig.tight_layout()
 
-#plt.show()
+plt.show()
 
-fig.savefig('memory.pdf')
+#fig.savefig('graphs/memory.pdf')
 
 
 
@@ -281,9 +281,9 @@ autolabel(rects1)
 
 fig.tight_layout()
 
-#plt.show()
+plt.show()
 
-fig.savefig('memory-cp.pdf')
+#fig.savefig('graphs/memory-cp.pdf')
 
 
 
@@ -343,4 +343,4 @@ fig.tight_layout()
 
 plt.show()
 
-fig.savefig('runtime-cp.pdf')
+#fig.savefig('graphs/runtime-cp.pdf')

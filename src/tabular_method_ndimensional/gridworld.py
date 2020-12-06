@@ -12,7 +12,7 @@ import numpy as _np
 import tensorflow as tf
 
 
-shape = [50,40]
+shape = [3,4]
 #shape = [3, 10, 3, 10]
 number_of_obstacles = 1
 number_of_terminals = 2
@@ -152,7 +152,7 @@ print("Memory used VI:", (process.memory_info().rss)/1000000000, "Gb")
 
 
 start_time_mpi = time.time()
-mpi = mdptoolbox.mdp.PolicyIterationModified(P, R, discount=0.9, epsilon=0.001, max_iter=1000, skip_check=True)
+mpi = mdptoolbox.mdp.PolicyIterationModified(P, R, discount=0.29, epsilon=0.001, max_iter=1000, skip_check=True)
 mpi.run()
 print("\n--- Solved with MPI in: %s seconds ---" % (time.time() - start_time_mpi))
 
@@ -164,11 +164,11 @@ print("\n--- Solved with PI in: %s seconds ---" % (time.time() - start_time_pi))
 
 
 print("Policy VI:")
-#print_policy(vi.policy, shape, obstacles=obstacles, terminals=terminals, actions=letters_actions)
+print_policy(vi.policy, shape, obstacles=obstacles, terminals=terminals, actions=letters_actions)
 
 print("\nPolicy MPI:")
-#print_policy(mpi.policy, shape, obstacles=obstacles, terminals=terminals, actions=letters_actions)
+print_policy(mpi.policy, shape, obstacles=obstacles, terminals=terminals, actions=letters_actions)
 
 print("\nPolicy PI:")
 #print(pi.policy)
-#print_policy(pi.policy, shape, obstacles=obstacles, terminals=terminals, actions=letters_actions)
+print_policy(pi.policy, shape, obstacles=obstacles, terminals=terminals, actions=letters_actions)

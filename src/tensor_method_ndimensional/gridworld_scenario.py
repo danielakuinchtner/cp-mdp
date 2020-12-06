@@ -24,7 +24,7 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], reward_non_terminal_states=1,
                 if STPM[a][aa] == 0:  # remove all zero probabilities
                     continue
 
-                if s in terminals: #or s in obstacles:
+                if s in terminals or s in obstacles:
                     probabilities.append(0)
                     successors.append(s)
 

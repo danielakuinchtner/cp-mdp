@@ -121,7 +121,7 @@ probability_s = _np.split(probability_s, len(STPM[0]))
 
 start_time_vi = time.time()
 vi = mdptoolbox.mdp.ValueIterationGS(shape, terminals, obstacles, succ_s, probability_s, R, states,
-                                     discount=1, epsilon=0.001, max_iter=1000, skip_check=True)
+                                     discount=0.9, epsilon=0.001, max_iter=1000, skip_check=True)
 
 vi.run()
 
@@ -149,17 +149,16 @@ print_policy(mpi.policy, shape, obstacles=obstacles, terminals=terminals, action
 
 
 
-start_time_pi = time.time()
-pi = mdptoolbox.mdp.PolicyIteration(shape, terminals, obstacles, succ_s, probability_s, R, states, discount=0.9,
-                                    epsilon=0.1,policy0=None, max_iter=1000, eval_type=0, skip_check=True)
-pi.run()
-print("\n--- Solved with PI in: %s seconds ---" % (time.time() - start_time_pi))
+#start_time_pi = time.time()
+#pi = mdptoolbox.mdp.PolicyIteration(shape, terminals, obstacles, succ_s, probability_s, R, states, discount=0.2, epsilon=0.001,policy0=None, max_iter=1000, eval_type=0, skip_check=True)
+#pi.run()
+#print("\n--- Solved with PI in: %s seconds ---" % (time.time() - start_time_pi))
 
 
 
 
 
 # display_policy(vi.policy, shape, obstacles=obstacles, terminals=terminals)
-print("\nPolicy PI:")
+#print("\nPolicy PI:")
 #print(pi.policy)
-print_policy(pi.policy, shape, obstacles=obstacles, terminals=terminals, actions=letters_actions)
+#print_policy(pi.policy, shape, obstacles=obstacles, terminals=terminals, actions=letters_actions)

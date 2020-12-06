@@ -172,11 +172,12 @@ class MDP(object):
         for aa in range(self.A):
             Q[aa] = self.R[aa] + self.discount * self.P[aa].dot(V)
 
-        #print("Q", Q)
+        #print("QQQQ", Q)
         #print(V.shape)
         # Get the policy and value, for now it is being returned but...
         # Which way is better?
         # 1. Return, (policy, value)
+        #print("Q max", Q.argmax(axis=0), Q.max(axis=0))
         return (Q.argmax(axis=0), Q.max(axis=0))
         # 2. update self.policy and self.V directly
         # self.V = Q.max(axis=1)
@@ -420,6 +421,7 @@ class PolicyIteration(MDP):
             Rpolicy = _sp.csr_matrix(Rpolicy)
         # self.Ppolicy = Ppolicy
         # self.Rpolicy = Rpolicy
+        #print(Rpolicy)
         return (Ppolicy, Rpolicy)
 
     def _evalPolicyIterative(self, V0=0, epsilon=0.0001, max_iter=10000):
@@ -477,14 +479,15 @@ class PolicyIteration(MDP):
 
         while not done:
             itr += 1
+            #print(policy_P)
 
             Vprev = policy_V
             policy_V = policy_R + self.discount * policy_P.dot(Vprev)
 
-            #print("***********",policy_V)
+            #print("-----", policy_V)
             variation = _np.absolute(policy_V - Vprev).max()
-            print("variationvariationnnn", variation)
-            print(((1 - self.discount) / self.discount) * epsilon)
+           # print("variationvariationnnn", variation)
+            #print(((1 - self.discount) / self.discount) * epsilon)
 
             if self.verbose:
                 _printVerbosity(itr, variation)
@@ -523,8 +526,11 @@ class PolicyIteration(MDP):
         #
         Ppolicy, Rpolicy = self._computePpolicyPRpolicy()
         # V = PR + gPV  => (I-gP)V = PR  => V = inv(I-gP)* PR
+        #print("sp", (_sp.eye(self.S*3, self.A-1) ))
+        #print("P",Ppolicy)
         self.V = _np.linalg.solve(
             (_sp.eye(self.S, self.S) - self.discount * Ppolicy), Rpolicy)
+        #print(self.V)
 
     def run(self):
         # Run the policy iteration algorithm.
@@ -642,11 +648,13 @@ class PolicyIterationModified(PolicyIteration):
             self.iter += 1
 
             self.policy, Vnext = self._bellmanOperator()
-
-            #print(self.policy, Vnext)
+            print(self.policy, Vnext)
             # [Ppolicy, PRpolicy] = mdp_computePpolicyPRpolicy(P, PR, policy);
 
             variation = _util.getSpan(Vnext - self.V)
+            #print(Vnext)
+            #print(self.V)
+            #print("variationnnnnnnnMPI", variation)
             if self.verbose:
                 _printVerbosity(self.iter, variation)
 
