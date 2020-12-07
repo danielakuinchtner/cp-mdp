@@ -19,7 +19,7 @@ number_of_terminals = 2
 rewards = [100, -100, 100, -100, 100, -100, 100, -100, 100, -100, 100, -100, 100]  # one reward for each terminal
 reward_non_terminal_states = -3
 p_intended = 0.8
-
+discount = 0.9
 
 print("Executing a", shape, "grid, with", number_of_terminals, "terminals and", number_of_obstacles, "obstacles")
 
@@ -138,7 +138,7 @@ print("--- Computed successors and rewards in: %s seconds ---" % (time.time() - 
 
 
 start_time_vi = time.time()
-vi = mdptoolbox.mdp.ValueIterationGS(P, R, discount=0.9, epsilon=0.001, max_iter=1000, skip_check=True)
+vi = mdptoolbox.mdp.ValueIterationGS(P, R, discount=discount, epsilon=0.001, max_iter=1000, skip_check=True)
 
 vi.run()
 print("--- Solved with VI in: %s seconds ---" % (time.time() - start_time_vi))
@@ -152,13 +152,13 @@ print("Memory used VI:", (process.memory_info().rss)/1000000000, "Gb")
 
 
 start_time_mpi = time.time()
-mpi = mdptoolbox.mdp.PolicyIterationModified(P, R, discount=0.29, epsilon=0.001, max_iter=1000, skip_check=True)
+mpi = mdptoolbox.mdp.PolicyIterationModified(P, R, discount=discount, epsilon=0.001, max_iter=1000, skip_check=True)
 mpi.run()
 print("\n--- Solved with MPI in: %s seconds ---" % (time.time() - start_time_mpi))
 
 
 start_time_pi = time.time()
-pi = mdptoolbox.mdp.PolicyIteration(P, R, discount=0.9, policy0=None, max_iter=1000, eval_type=0, skip_check=True)
+pi = mdptoolbox.mdp.PolicyIteration(P, R, discount=discount, policy0=None, max_iter=1000, eval_type=0, skip_check=True)
 pi.run()
 print("\n--- Solved with PI in: %s seconds ---" % (time.time() - start_time_pi))
 

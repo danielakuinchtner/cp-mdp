@@ -81,8 +81,8 @@ def succ_tuple(a, state_tuple, final_limits):
 
 def print_policy(policy, shape, obstacles=[], terminals=[], actions=[]):
     p_policy = _np.empty(shape, dtype=object)
-    print("terminals index", terminals)
-    print("obstacles index", obstacles)
+    #print("terminals index", terminals)
+    #print("obstacles index", obstacles)
     obstacles_tuple = []
     terminals_tuple = []
 
@@ -92,8 +92,8 @@ def print_policy(policy, shape, obstacles=[], terminals=[], actions=[]):
     for t in range(len(terminals)):
         terminals_tuple.append(_np.unravel_index(terminals[t], shape))  # ind to sub
 
-    print("terminals tuple", terminals_tuple)
-    print("obstacles tuple", obstacles_tuple)
+    #print("terminals tuple", terminals_tuple)
+    #print("obstacles tuple", obstacles_tuple)
 
     for i in range(len(policy)):
         sub = _np.unravel_index(i, shape)  # ind to sub

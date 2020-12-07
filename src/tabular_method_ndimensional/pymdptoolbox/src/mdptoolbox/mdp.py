@@ -530,7 +530,7 @@ class PolicyIteration(MDP):
         #print("P",Ppolicy)
         self.V = _np.linalg.solve(
             (_sp.eye(self.S, self.S) - self.discount * Ppolicy), Rpolicy)
-        #print(self.V)
+        #print("V", self.V)
 
     def run(self):
         # Run the policy iteration algorithm.
@@ -541,6 +541,7 @@ class PolicyIteration(MDP):
             # these _evalPolicy* functions will update the classes value
             # attribute
             if self.eval_type == "matrix":
+                #self._evalPolicyIterative()
                 self._evalPolicyMatrix()
             elif self.eval_type == "iterative":
                 self._evalPolicyIterative()

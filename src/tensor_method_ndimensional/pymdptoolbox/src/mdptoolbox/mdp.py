@@ -264,7 +264,7 @@ class MDP(object):
 
     def _endRun(self):
         # store value and policy as tuples
-        self.V = tuple(self.V.tolist())
+        #self.V = tuple(self.V.tolist())
 
         try:
             self.policy = tuple(self.policy.tolist())
@@ -547,11 +547,12 @@ class PolicyIteration(MDP):
         # Vpolicy(S) = value function of the policy
         #
         Rpolicy, succ_s, probability_s = self._computePpolicyPRpolicy()
+        split_succ_s = (_np.split(succ_s, self.states))
+        split_probability = (_np.split(probability_s, self.states))
         # V = PR + gPV  => (I-gP)V = PR  => V = inv(I-gP)* PR
-        self.V = [_np.linalg.solve(
-            (_sp.eye(self.states*3, self.A-1) - self.discount * probability_s[s]), Rpolicy)
-            for s in range(self.states)]
-        #print(self.V)
+        self.V = _np.linalg.solve(
+            (_sp.eye(self.S, self.S) - self.discount * Ppolicy), Rpolicy)
+        print("Self.V", self.V)
 
     def run(self):
         # Run the policy iteration algorithm.
@@ -562,7 +563,8 @@ class PolicyIteration(MDP):
             # these _evalPolicy* functions will update the classes value
             # attribute
             if self.eval_type == "matrix":
-                self._evalPolicyMatrix()
+                self._evalPolicyIterative()
+                #self._evalPolicyMatrix()
             elif self.eval_type == "iterative":
                 self._evalPolicyIterative()
             # This should update the classes policy attribute but leave the
@@ -587,6 +589,7 @@ class PolicyIteration(MDP):
                 break
             else:
                 self.policy = policy_next
+
 
         self._endRun()
 
@@ -629,8 +632,8 @@ class PolicyIterationModified(PolicyIteration):
         used CPU time
     """
 
-    def __init__(self, shape, terminals, obstacles, succ_s, probability_s, R, states, discount, epsilon=0.01, policy0=None,
-                 max_iter=10, eval_type=0, skip_check=False):
+    def __init__(self, shape, terminals, obstacles, succ_s, probability_s, R, states, discount, epsilon=0.001, policy0=None,
+                 max_iter=1000, eval_type=0, skip_check=False):
         # Initialise a (modified) policy iteration MDP.
 
         # Maybe its better not to subclass from PolicyIteration, because the
@@ -671,7 +674,7 @@ class PolicyIterationModified(PolicyIteration):
             #print(self.iter)
 
             self.policy, Vnext = self._bellmanOperator()
-            print(self.policy, Vnext)
+            #print(self.policy, Vnext)
             # [Ppolicy, PRpolicy] = mdp_computePpolicyPRpolicy(P, PR, policy);
 
             variation = _util.getSpan(Vnext - self.V)
@@ -830,7 +833,7 @@ class ValueIterationGS(ValueIteration):
             # computation of threshold of variation for V for an epsilon-
             # optimal policy
             self.thresh = epsilon * (1 - self.discount) / self.discount
-            print(self.thresh)
+            #print(self.thresh)
         else:  # discount == 1
             # threshold of variation for V for an epsilon-optimal policy
             self.thresh = epsilon
