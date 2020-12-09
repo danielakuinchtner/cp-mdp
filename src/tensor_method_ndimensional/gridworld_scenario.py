@@ -55,6 +55,55 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], reward_non_terminal_states=1,
     return successors, probabilities, R
 
 
+def mdp_grid_pi(shape=[], obstacles=[], terminals=[], reward_non_terminal_states=1, rewards=[], final_limits=[],
+             STPM=[], states=[]):
+    r = reward_non_terminal_states
+    num_states = states
+    terminals = terminals
+    obstacles = obstacles
+    final_limits = final_limits  # 2x3
+    STPM = STPM
+
+    successors = []
+    probabilities = []
+
+    for a in range(len(STPM)):
+        for s in range(num_states):
+            for aa in range(len(STPM[a])):
+                if STPM[a][aa] == 0:  # remove all zero probabilities
+                    continue
+
+                if s in terminals or s in obstacles:
+                    probabilities.append(0)
+                    successors.append(s)
+
+                else:
+                    state_tuple = _np.unravel_index(s, shape)  # ind to sub
+                    state_tuple = list(state_tuple)
+
+                    successor_state_of_s = succ_tuple(aa, state_tuple, final_limits)
+
+                    state_to = _np.ravel_multi_index(successor_state_of_s, shape)  # sub to ind
+                    state_to = state_to.item()
+
+                    if state_to not in obstacles:
+                        successors.append(state_to)
+                        probabilities.append(STPM[a][aa])
+
+                    else:
+                        successors.append(s)
+                        probabilities.append(STPM[a][aa])
+
+    R = _np.full([num_states], r)
+
+    for i in range(len(terminals)):
+        R[terminals[i]] = rewards[i]
+    #print("Rewards:", R)
+
+
+    return successors, probabilities, R
+
+
 def succ_tuple(a, state_tuple, final_limits):
 
     successor = []

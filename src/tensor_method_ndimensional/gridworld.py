@@ -13,14 +13,14 @@ from gridworld_scenario import *
 
 # install openblas lib to improve even more the runtime: conda install -c anaconda openblas
 
-shape = [10,10]
+shape = [3,4]
 #shape = [3, 10, 3, 10]
-number_of_obstacles = 3
-number_of_terminals = 3
+number_of_obstacles = 1
+number_of_terminals = 2
 rewards = [100, -100, 100, -100, 100, -100, 100, -100, 100, -100, 100, -100, 100, -100]
 reward_non_terminal_states = -3
 p_intended = 0.8  # probability of the desired action taking place
-discount = 0.9
+discount = 0.2
 
 print("Executing a", shape, "grid, with", number_of_terminals, "terminals and", number_of_obstacles, "obstacles")
 
@@ -66,8 +66,8 @@ obstacles = obstacles.astype(int)
 terminals = terminals.astype(int)
 
 
-#obstacles = [5]
-#terminals = [3, 7]
+obstacles = [5]
+terminals = [3, 7]
 
 # print("Obstacles:", obstacles)
 # print("Terminals:", terminals)
@@ -118,17 +118,26 @@ probability_s = _np.asarray(probability_s)
 
 succ_s = _np.split(succ_s, len(STPM[0]))
 probability_s = _np.split(probability_s, len(STPM[0]))
-
-
+#print(succ_s)
+"""
 start_time_vi = time.time()
-vi = mdptoolbox.mdp.ValueIterationGS(shape, terminals, obstacles, succ_s, probability_s, R, states,
+vi = mdptoolbox.mdp.ValueIteration(shape, terminals, obstacles, succ_s, probability_s, R, states,
                                      discount=discount, epsilon=0.001, max_iter=1000, skip_check=True)
 
 vi.run()
 
 print("--- Solved with VI in: %s seconds ---" % (time.time() - start_time_vi))
+"""
+
+start_time_vi = time.time()
+vigs = mdptoolbox.mdp.ValueIterationGS(shape, terminals, obstacles, succ_s, probability_s, R, states,
+                                     discount=discount, epsilon=0.001, max_iter=1000, skip_check=True)
+
+vigs.run()
+
+print("--- Solved with VIGS in: %s seconds ---" % (time.time() - start_time_vi))
 #print("--- Computed successors and rewards solved with VI in: %s seconds ---" % (time.time() - start_time_succ_vi))
-print("--- Solved all in: %s seconds ---" % (time.time() - start_time_all))
+#print("--- Solved all in: %s seconds ---" % (time.time() - start_time_all))
 
 
 process = psutil.Process(os.getpid())
@@ -136,28 +145,47 @@ print("Memory used:", (process.memory_info().rss), "bytes")
 print("Memory used:", (process.memory_info().rss)/1000000, "Mb")
 print("Memory used:", (process.memory_info().rss)/1000000000, "Gb")
 
+succ_s_pi, probability_s_pi, R = mdp_grid_pi(shape=shape, terminals=terminals,
+                                                 reward_non_terminal_states=reward_non_terminal_states,
+                                                 rewards=rewards, obstacles=obstacles, final_limits=final_limits,
+                                                 STPM=STPM, states=states)
+print("--- Computed successors and rewards in: %s seconds ---" % (time.time() - start_time_succ))
+
+succ_s_pi = _np.asarray(succ_s_pi)
+probability_s_pi = _np.asarray(probability_s_pi)
+
+succ_s_pi = _np.split(succ_s_pi, len(STPM[0]))
+probability_s_pi = _np.split(probability_s_pi, len(STPM[0]))
+
+#print(succ_s_pi)
 print("Policy VI:")
-print_policy(vi.policy, shape, obstacles=obstacles, terminals=terminals, actions=letters_actions)
+print_policy(vigs.policy, shape, obstacles=obstacles, terminals=terminals, actions=letters_actions)
+
+
+
+"""
+start_time_pi = time.time()
+pi = mdptoolbox.mdp.PolicyIteration(shape, terminals, obstacles, succ_s_pi, probability_s_pi, R, states, discount=discount, epsilon=0.001,policy0=None, max_iter=1000, eval_type=0, skip_check=True)
+pi.run()
+print("--- Solved with PI in: %s seconds ---" % (time.time() - start_time_pi))
+
+# display_policy(vi.policy, shape, obstacles=obstacles, terminals=terminals)
+print("Policy PI:")
+#print(pi.policy)
+print_policy(pi.policy, shape, obstacles=obstacles, terminals=terminals, actions=letters_actions)
+
+"""
 
 start_time_mpi = time.time()
-mpi = mdptoolbox.mdp.PolicyIterationModified(shape, terminals, obstacles, succ_s, probability_s, R, states,
-                                             discount=discount, epsilon=0.001, policy0=None, max_iter=1000, eval_type=0, skip_check=True)
+mpi = mdptoolbox.mdp.PolicyIterationModified(shape, terminals, obstacles, succ_s_pi, probability_s_pi, R, states,
+                                             discount=discount, epsilon=0.001, policy0=None, max_iter=1000,
+                                             eval_type=0, skip_check=True)
 mpi.run()
 print("--- Solved with MPI in: %s seconds ---" % (time.time() - start_time_mpi))
 
 print("Policy MPI:")
 print_policy(mpi.policy, shape, obstacles=obstacles, terminals=terminals, actions=letters_actions)
 
+print("Policy VI:")
+print_policy(vigs.policy, shape, obstacles=obstacles, terminals=terminals, actions=letters_actions)
 
-
-start_time_pi = time.time()
-pi = mdptoolbox.mdp.PolicyIteration(shape, terminals, obstacles, succ_s, probability_s, R, states, discount=discount, epsilon=0.001,policy0=None, max_iter=1000, eval_type=0, skip_check=True)
-pi.run()
-print("--- Solved with PI in: %s seconds ---" % (time.time() - start_time_pi))
-
-
-
-# display_policy(vi.policy, shape, obstacles=obstacles, terminals=terminals)
-print("Policy PI:")
-#print(pi.policy)
-print_policy(pi.policy, shape, obstacles=obstacles, terminals=terminals, actions=letters_actions)

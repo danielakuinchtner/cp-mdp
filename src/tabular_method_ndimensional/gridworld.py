@@ -91,7 +91,7 @@ terminals = [(0, 0, 3), (0, 0, 7), (0, 3, 3), (0, 5, 0), (0, 1, 0)]
 obstacles = [[0, 0, 5], [0, 2, 0], [0, 1, 0], [0, 2, 9], [0, 1, 2]]
 terminals = [[0, 0, 3], [0, 0, 7], [0, 3, 3], [0, 5, 0], [0, 1, 0]]
 """
-obstacles=[1,1]
+obstacles=[[1,1]]
 terminals=[[0,3],[1,3]]
 # print("Obstacles:", obstacles)
 # print("Terminals:", terminals)
@@ -136,7 +136,6 @@ print("--- Computed successors and rewards in: %s seconds ---" % (time.time() - 
 #print(P)
 #print(R)
 
-
 start_time_vi = time.time()
 vi = mdptoolbox.mdp.ValueIterationGS(P, R, discount=discount, epsilon=0.001, max_iter=1000, skip_check=True)
 
@@ -145,6 +144,16 @@ print("--- Solved with VI in: %s seconds ---" % (time.time() - start_time_vi))
 #print("--- Computed successors and rewards solved with VI in: %s seconds ---" % (time.time() - start_time_succ_vi))
 #print("--- Solved VI and components in: %s seconds ---" % (time.time() - start_time_all))
 
+
+"""
+start_time_vi = time.time()
+vigs = mdptoolbox.mdp.ValueIterationGS(P, R, discount=discount, epsilon=0.001, max_iter=1000, skip_check=True)
+
+vigs.run()
+print("--- Solved with VIGS in: %s seconds ---" % (time.time() - start_time_vi))
+#print("--- Computed successors and rewards solved with VI in: %s seconds ---" % (time.time() - start_time_succ_vi))
+#print("--- Solved VI and components in: %s seconds ---" % (time.time() - start_time_all))
+"""
 process = psutil.Process(os.getpid())
 print("Memory used VI:", (process.memory_info().rss), "bytes")
 print("Memory used VI:", (process.memory_info().rss)/1000000, "Mb")
@@ -156,15 +165,15 @@ mpi = mdptoolbox.mdp.PolicyIterationModified(P, R, discount=discount, epsilon=0.
 mpi.run()
 print("\n--- Solved with MPI in: %s seconds ---" % (time.time() - start_time_mpi))
 
-
+"""
 start_time_pi = time.time()
 pi = mdptoolbox.mdp.PolicyIteration(P, R, discount=discount, policy0=None, max_iter=1000, eval_type=0, skip_check=True)
 pi.run()
 print("\n--- Solved with PI in: %s seconds ---" % (time.time() - start_time_pi))
-
-
+"""
 print("Policy VI:")
 print_policy(vi.policy, shape, obstacles=obstacles, terminals=terminals, actions=letters_actions)
+
 
 print("\nPolicy MPI:")
 print_policy(mpi.policy, shape, obstacles=obstacles, terminals=terminals, actions=letters_actions)

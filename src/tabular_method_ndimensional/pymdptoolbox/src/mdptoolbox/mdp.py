@@ -172,7 +172,7 @@ class MDP(object):
         for aa in range(self.A):
             Q[aa] = self.R[aa] + self.discount * self.P[aa].dot(V)
 
-        #print("QQQQ", Q)
+        print("QQQQ", Q)
         #print(V.shape)
         # Get the policy and value, for now it is being returned but...
         # Which way is better?
@@ -402,10 +402,15 @@ class PolicyIteration(MDP):
         for aa in range(self.A):  # avoid looping over S
             # the rows that use action a.
             ind = (self.policy == aa).nonzero()[0]
+            print("self.policy == aa", self.policy, aa)
+            print("ind", ind)
+
             # if no rows use action a, then no need to assign this
             if ind.size > 0:
                 try:
                     Ppolicy[ind, :] = self.P[aa][ind, :]  # big transition table
+                    print("Ppolicy[ind, :]",Ppolicy[ind, :])
+                    print("self.P[aa][ind, :]",self.P[aa][ind, :])
                 except ValueError:
                     Ppolicy[ind, :] = self.P[aa][ind, :].todense()
                 #print("Ppolicy[ind, :]", Ppolicy[ind, :])
@@ -413,15 +418,17 @@ class PolicyIteration(MDP):
                 # perhaps harmful in this implementation c.f.
                 # mdp_computePpolicyPRpolicy.m
                 Rpolicy[ind] = self.R[aa][ind]
+            #print(Ppolicy)
         # self.R cannot be sparse with the code in its current condition, but
         # it should be possible in the future. Also, if R is so big that its
         # a good idea to use a sparse matrix for it, then converting PRpolicy
         # from a dense to sparse matrix doesn't seem very memory efficient
         if type(self.R) is _sp.csr_matrix:
             Rpolicy = _sp.csr_matrix(Rpolicy)
-        # self.Ppolicy = Ppolicy
+        #self.Ppolicy = Ppolicy
         # self.Rpolicy = Rpolicy
-        #print(Rpolicy)
+        #print("R",Rpolicy)
+        #print(Ppolicy)
         return (Ppolicy, Rpolicy)
 
     def _evalPolicyIterative(self, V0=0, epsilon=0.0001, max_iter=10000):
@@ -644,12 +651,12 @@ class PolicyIterationModified(PolicyIteration):
         # Run the modified policy iteration algorithm.
 
         self._startRun()
-
+        variation2 = 0
         while True:
             self.iter += 1
 
             self.policy, Vnext = self._bellmanOperator()
-            print(self.policy, Vnext)
+            #print(self.policy, Vnext)
             # [Ppolicy, PRpolicy] = mdp_computePpolicyPRpolicy(P, PR, policy);
 
             variation = _util.getSpan(Vnext - self.V)
@@ -662,6 +669,8 @@ class PolicyIterationModified(PolicyIteration):
             self.V = Vnext
             if variation < self.thresh:
                 break
+            elif variation == variation2:
+                break
             else:
                 is_verbose = False
                 if self.verbose:
@@ -669,7 +678,7 @@ class PolicyIterationModified(PolicyIteration):
                     is_verbose = True
                 #print("vvvvvvvvvvvvv", self.V)
                 self._evalPolicyIterative(self.V, self.epsilon, self.max_iter)
-
+                variation2 = variation
                 if is_verbose:
                     self.setVerbose()
 

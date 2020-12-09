@@ -128,6 +128,11 @@ class MDP(object):
         #self.P = self._computeTransition(succ_s)
         self.states = states
         self.R = self._computeReward(R, succ_s)
+        self.split_succ_s = []
+        self.split_probability = []
+        for aa in range(self.A):  # 4
+            self.split_succ_s.append(_np.split(self.succ_s[aa], self.states))
+            self.split_probability.append(_np.split(self.probabilities_s[aa], self.states))
 
 
         # the verbosity is by default turned off
@@ -164,11 +169,7 @@ class MDP(object):
         # P and V can be any object that supports indexing, so it is important
         # that you know they define a valid MDP before calling the
         # _bellmanOperator method. Otherwise the results will be meaningless.
-        split_succ_s=[]
-        split_probability=[]
-        for aa in range(self.A):  # 4
-            split_succ_s.append(_np.split(self.succ_s[aa], self.states))
-            split_probability.append(_np.split(self.probabilities_s[aa], self.states))
+
         Q = _np.empty((self.A, self.states))
         #for aa in range(self.A):
             #Q[aa] = self.R[aa]
@@ -183,16 +184,23 @@ class MDP(object):
         #     for s1 in range(len(split_succ_s[0]))]
          #
 
-        Q = [[float(self.R[a][s1] + self.discount * _np.dot(split_probability[a][s1], V[split_succ_s[a][s1]]))
-                   for s1 in range(len(split_succ_s[0]))]
-                     for a in range(self.A)]
+        #print(self.split_succ_s)
+       # print(self.split_probability)
+        print("3")
+        for a in range(self.A):
+            Q[a] = [(self.R[a][s1] + self.discount * _np.dot(self.split_probability[a][s1], V[self.split_succ_s[a][s1]]))
+                   for s1 in range(self.states)]
+
 
         Q = _np.asarray(Q)
-        #print("QQQQ",Q)
+        print("QQQQ",Q)
         #print("Q max", Q.argmax(axis=0), Q.max(axis=0))
         # Get the policy and value, for now it is being returned but...
         # Which way is better?
         # 1. Return, (policy, value)
+        #self.policy.append(int(Q.argmax()))
+
+        #print("---------------------", Q.argmax(axis=0))
         return Q.argmax(axis=0), Q.max(axis=0)
         # 2. update self.policy and self.V directly
         # self.V = Q.max(axis=1)
@@ -399,11 +407,16 @@ class PolicyIteration(MDP):
         # Ppolicy(SxS)  = transition matrix for policy
         # PRpolicy(S)   = reward matrix for policy
         #
-        Ppolicy = _np.empty((self.S, self.S))
+        Ppolicy_s = _np.zeros((self.A, self.states*(self.A-1)))
+        
+        Ppolicy_p = _np.zeros((self.A, self.states*(self.A-1)))
+        
         Rpolicy = _np.zeros(self.states)
         for aa in range(self.A):  # avoid looping over S
             # the rows that use action a.
             ind = (self.policy == aa).nonzero()[0]
+            print("self.policy == aa", self.policy, aa)
+            print("ind", ind)
             # if no rows use action a, then no need to assign this
             if ind.size > 0:
                 Ppolicy_s = self.succ_s[aa]
@@ -416,16 +429,21 @@ class PolicyIteration(MDP):
                 # perhaps harmful in this implementation c.f.
                 # mdp_computePpolicyPRpolicy.m
                 Rpolicy[ind] = self.R[aa][ind]
+               # print("P inside a", Ppolicy_s, Ppolicy_p)
+
         # self.R cannot be sparse with the code in its current condition, but
         # it should be possible in the future. Also, if R is so big that its
         # a good idea to use a sparse matrix for it, then converting PRpolicy
         # from a dense to sparse matrix doesn't seem very memory efficient
         #print(Rpolicy, Ppolicy_s, Ppolicy_p)
-        if type(self.R) is _sp.csr_matrix:
-            Rpolicy = _sp.csr_matrix(Rpolicy)
+        #if type(self.R) is _sp.csr_matrix:
+        #    Rpolicy = _sp.csr_matrix(Rpolicy)
         # self.Ppolicy = Ppolicy
         # self.Rpolicy = Rpolicy
         #print(Ppolicy_s, Ppolicy_p)
+        print("7")
+
+        #print("Ppolicy_p", Ppolicy_s, Ppolicy_p )
         return Rpolicy, Ppolicy_s, Ppolicy_p
 
     def _evalPolicyIterative(self, V0=0, epsilon=0.0001, max_iter=100):
@@ -471,7 +489,11 @@ class PolicyIteration(MDP):
                 policy_V = _np.array(V0).reshape(self.states)
 
         #policy_P, policy_R = self._computePpolicyPRpolicy()
+        print("6")
+
         policy_R, succ_s, probabilities_s = self._computePpolicyPRpolicy()
+        #print("succ_s", succ_s)
+        #print("probabilities_s", probabilities_s)
 
         if self.verbose:
             _printVerbosity("Iteration", "V variation")
@@ -479,7 +501,7 @@ class PolicyIteration(MDP):
         itr = 0
         done = False
 
-
+        #for a in range(self.A):
         split_succ_s = (_np.split(succ_s, self.states))
         split_probability = (_np.split(probabilities_s, self.states))
         #print(split_succ_s, split_probability)
@@ -488,13 +510,22 @@ class PolicyIteration(MDP):
         while not done:
             itr += 1
 
-            Vprev = policy_V.copy()
+            Vprev = policy_V
             Vprev = _np.array(Vprev)
             #policy_V = policy_R + self.discount * policy_P.dot(Vprev)
+            #print(self.split_probability[0][0])
+            #print(self.split_succ_s[1])
+            """
+            for a in range(self.A):
+                policy_V = [(self.R[a][s1] + self.discount *
+                                _np.dot(self.split_probability[a][s1], Vprev[self.split_succ_s[a][s1]]))
+                                for s1 in range(self.states)]
+                print("****", policy_V)
+            """
 
             policy_V = [(policy_R[s1] + self.discount *
-                            _np.dot(split_probability[s1], Vprev[split_succ_s[s1]]))
-                            for s1 in range(self.states)]
+                _np.dot(split_probability[s1], Vprev[split_succ_s[s1]]))
+                for s1 in range(self.states)]
 
             #print("-----", policy_V)
 
@@ -524,6 +555,7 @@ class PolicyIteration(MDP):
 
 
         self.V = policy_V
+        print("8")
         #print(self.V)
 
     def _evalPolicyMatrix(self):
@@ -643,7 +675,7 @@ class PolicyIterationModified(PolicyIteration):
         # function. Perhaps there is a better way to do it?
         PolicyIteration.__init__(self, shape, terminals, obstacles, succ_s, probability_s, R, states, discount, epsilon,
                                  policy0=policy0, max_iter=max_iter, eval_type=eval_type, skip_check=skip_check)
-
+        print("1")
         # PolicyIteration doesn't pass epsilon to MDP.__init__() so we will
         # check it here
         self.epsilon = float(epsilon)
@@ -672,8 +704,9 @@ class PolicyIterationModified(PolicyIteration):
             self.iter += 1
 
             #print(self.iter)
-
+            print("2")
             self.policy, Vnext = self._bellmanOperator()
+            print("4")
             #print(self.policy, Vnext)
             # [Ppolicy, PRpolicy] = mdp_computePpolicyPRpolicy(P, PR, policy);
 
@@ -686,6 +719,7 @@ class PolicyIterationModified(PolicyIteration):
                 _printVerbosity(self.iter, variation)
 
             self.V = Vnext
+            #print("V",self.V)
             if variation < self.thresh:
                 break
             elif variation == variation2:
@@ -696,7 +730,9 @@ class PolicyIterationModified(PolicyIteration):
                     self.setSilent()
                     is_verbose = True
                 #print("vvvvvvvvvvvvv",self.V)
+                print("5")
                 self._evalPolicyIterative(self.V, self.epsilon, self.max_iter)
+                print("9")
                 variation2 = variation
                 if is_verbose:
                     self.setVerbose()
@@ -738,25 +774,21 @@ class ValueIteration(MDP):
 
         k = 0
         h = _np.zeros(self.states)
-
-        #for ss in range(self.S):
-            # print(self.S)  # 27
-            #PP = _np.zeros((self.A, self.S))
-            # print(dimensions)
-            #for aa in range(self.A):
-                # print(self.P[aa])
-                #try:
-                #PP[aa] = self.P[aa]
-                #except ValueError:
-                    #PP[aa] = self.P[aa].todense().A1
-
-                # PP[aa] = self.P[aa][:, 2].todense().A1
-                # PP[aa] = self.P[aa].todense().A1
-
-
+        """
+        for ss in range(self.S):
+            Ps = _np.zeros((self.A, self.S))
+            Pp = _np.zeros((self.A, self.S))
+            for aa in range(self.A):
+                Ps[aa] = self.succ_s[aa]
+                Pp[aa] = self.probabilities_s[aa]
+                try:
+                    PP[aa] = self.P[aa][:, ss]
+                    # print("PP[aa]", PP[aa])
+                except ValueError:
+                    PP[aa] = self.P[aa][:, ss].todense().A1
             # minimum of the entire array.
-            #h[ss] = PP.min()
-
+            h[ss] = PP.min()
+        """
         k = 1 - h.sum()
         Vprev = self.V
 

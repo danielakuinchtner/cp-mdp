@@ -344,3 +344,192 @@ fig.tight_layout()
 plt.show()
 
 #fig.savefig('graphs/runtime-cp.pdf')
+
+
+import matplotlib.pyplot as plt
+import numpy as _np
+
+states = ['512 (9D)', '625 (2D)', '800 (7D)', '1000 (3D)', '1024 (5D)',
+          '2048 (7D)', '3125 (5D)', '3888 (9D)', '4000 (3D)', '4900 (2D)',
+          '5184 (7D)', '5832 (9D)', '7000 (5D)', '8000 (3D)', '8748 (9D)',
+          '9216 (7D)', '9216 (9D)', '10000 (2D)', '10000 (5D)', '10368 (7D)',
+          '12500 (3D)', '12500 (5D)', '14400 (2D)', '18750 (3D)', '19600 (2D)',
+
+          # '19200 (5D)','22500 (2D)','22500 (4D)','24000 (3D)', '27000 (6D)',
+          # '60000 (3D)','67500 (4D)','86436 (6D)','90000 (2D)', '100000 (5D)',
+          # '125000 (3D)','160000 (4D)','200000 (5D)','250000 (2D)',  '262144 (6D)',
+          #  '512000 (3D)','531441 (6D)','540000 (4D)', '600000 (5D)','640000 (2D)',
+          # '1000000 (2D)', '1000000 (3D)','1000000 (6D)','1200000 (4D)','1200000 (5D)'
+          ]
+runtime_tensor = [5.45, 0.48, 5.02, 1.24, 2.74,
+                  13.26, 11.28, 44.63, 7.67, 5.84,
+                  34.74, 66.21, 26.09, 15.23, 99.17,
+                  62.89, 106.02, 16.11, 37.61, 71.75,
+                  26.93, 46.68, 31.56, 40.93, 42.75, ]
+
+# 76.36, 48.26,65.55,51.69,		145.70,
+# 149.88,226.06,502.35,215.35,	436.89,
+# 327.92,	531.71	,855.01	,586.95,	1409.57,
+# 1933.44,	3340.10,1933.90,		2750.91,1573.36,
+# 2422.61,	3808.04	,5895.82,5091.37,	5863.61]
+
+memory_tensor = [133.89, 131.54, 133.98, 132.72, 132.24,
+                 141.17, 139.22, 169.24, 133.79, 133.99,
+                 161.14, 189.78, 150.68, 138.29, 218.82,
+                 180.65, 226.70, 141.66, 160.07, 194.09,
+                 142.94, 168.42, 145.11, 151.02, 151.33, ]
+
+# 184.46, 154.85,171.29,157.41,254.64,
+# 211.53,260.27,516.58,246.07,447.32,
+# 302.22,475.77,758.86,458.64,1220.27,
+# 975.83,2458.37,1400.19,	2198.21,978.44,
+# 1455.18,1818.77,5167.42,3091.44,3857.17]
+
+memory_tabular = [163.33, 160.66, 197.11, 174.11, 209.92,
+                  595.76, 907.58, 2304.49, 894.29, 902.71,
+                  3138.97, 5029.51, 4050.28, 3202.27, 11157.96,
+                  9648.82, 12368.83, 3336.00, 8135.09, 12178.07,
+                  7636.52, 12639.80, 6780.85, 10941.84, 12453.95]
+
+runtime_tabular = [4.48, 0.28, 4.15, 0.98, 2.56,
+                   23.35, 15.88, 80.75, 9.88, 13.12,
+                   58.79, 123.22, 44.55, 34.82, 299.27,
+                   169.30, 307.20, 51.35, 96.79, 190.59,
+                   66.93, 128.32, 123.40, 109.49, 253.75]
+
+x = _np.arange(len(states))
+width = 0.35  # the width of the bars
+
+fig, ax = plt.subplots()
+fig.set_size_inches(10, 10)
+rects1 = ax.bar(x - width / 2, runtime_tensor, width, label='CP-MDP runtime', color=['cornflowerblue'],
+                edgecolor=['blue'])
+rects2 = ax.bar(x + width / 2, runtime_tabular, width, label='Tabular runtime', color=['salmon'], edgecolor=['red'])
+
+# rects3 = ax.bar(x - width/4, memory_tensor, width, label='CP-MDP memory', color=['cornflowerblue'], edgecolor=['blue'], hatch='//')
+# rects4 = ax.bar(x + width/4, memory_tabular, width, label='Tabular memory', color=['salmon'],  edgecolor=['red'],  hatch='//')
+
+ax.set_ylabel('runtime (seconds)')
+ax.set_xlabel('number of states')
+plt.xticks(rotation=45)
+ax.set_title('2, 3, 5, 7 and 9-D grids')
+ax.set_xticks(x)
+ax.set_xticklabels(states)
+ax.legend()
+
+
+def autolabel(rects):
+    """Attach a text label above each bar in *rects*, displaying its height."""
+    for rect in rects:
+        height = rect.get_height()
+        ax.annotate('{}'.format(height),
+                    xy=(rect.get_x() + rect.get_width() / 4, height),
+                    xytext=(0, 3),  # 3 points vertical offset
+                    textcoords="offset points",
+                    ha='left', va='bottom', rotation=90)
+
+
+autolabel(rects1)
+autolabel(rects2)
+plt.ylim(top=200)
+plt.ylim(bottom=0)
+
+fig.tight_layout()
+
+plt.show()
+
+fig.savefig('runtime-cp-tabular-two-color.pdf')
+
+import matplotlib.pyplot as plt
+import numpy as _np
+
+states = ['512 (9D)', '625 (2D)', '800 (7D)', '1000 (3D)', '1024 (5D)',
+          '2048 (7D)', '3125 (5D)', '3888 (9D)', '4000 (3D)', '4900 (2D)',
+          '5184 (7D)', '5832 (9D)', '7000 (5D)', '8000 (3D)', '8748 (9D)',
+          '9216 (7D)', '9216 (9D)', '10000 (2D)', '10000 (5D)', '10368 (7D)',
+          '12500 (3D)', '12500 (5D)', '14400 (2D)', '18750 (3D)', '19600 (2D)',
+
+          # '19200 (5D)','22500 (2D)','22500 (4D)','24000 (3D)', '27000 (6D)',
+          # '60000 (3D)','67500 (4D)','86436 (6D)','90000 (2D)', '100000 (5D)',
+          # '125000 (3D)','160000 (4D)','200000 (5D)','250000 (2D)',  '262144 (6D)',
+          #  '512000 (3D)','531441 (6D)','540000 (4D)', '600000 (5D)','640000 (2D)',
+          # '1000000 (2D)', '1000000 (3D)','1000000 (6D)','1200000 (4D)','1200000 (5D)'
+          ]
+runtime_tensor = [5.45, 0.48, 5.02, 1.24, 2.74,
+                  13.26, 11.28, 44.63, 7.67, 5.84,
+                  34.74, 66.21, 26.09, 15.23, 99.17,
+                  62.89, 106.02, 16.11, 37.61, 71.75,
+                  26.93, 46.68, 31.56, 40.93, 42.75, ]
+
+# 76.36, 48.26,65.55,51.69,		145.70,
+# 149.88,226.06,502.35,215.35,	436.89,
+# 327.92,	531.71	,855.01	,586.95,	1409.57,
+# 1933.44,	3340.10,1933.90,		2750.91,1573.36,
+# 2422.61,	3808.04	,5895.82,5091.37,	5863.61]
+
+memory_tensor = [133.89, 131.54, 133.98, 132.72, 132.24,
+                 141.17, 139.22, 169.24, 133.79, 133.99,
+                 161.14, 189.78, 150.68, 138.29, 218.82,
+                 180.65, 226.70, 141.66, 160.07, 194.09,
+                 142.94, 168.42, 145.11, 151.02, 151.33, ]
+
+# 184.46, 154.85,171.29,157.41,254.64,
+# 211.53,260.27,516.58,246.07,447.32,
+# 302.22,475.77,758.86,458.64,1220.27,
+# 975.83,2458.37,1400.19,	2198.21,978.44,
+# 1455.18,1818.77,5167.42,3091.44,3857.17]
+
+memory_tabular = [163.33, 160.66, 197.11, 174.11, 209.92,
+                  595.76, 907.58, 2304.49, 894.29, 902.71,
+                  3138.97, 5029.51, 4050.28, 3202.27, 11157.96,
+                  9648.82, 12368.83, 3336.00, 8135.09, 12178.07,
+                  7636.52, 12639.80, 6780.85, 10941.84, 12453.95]
+
+runtime_tabular = [4.48, 0.28, 4.15, 0.98, 2.56,
+                   23.35, 15.88, 80.75, 9.88, 13.12,
+                   58.79, 123.22, 44.55, 34.82, 299.27,
+                   169.30, 307.20, 51.35, 96.79, 190.59,
+                   66.93, 128.32, 123.40, 109.49, 253.75]
+
+x = _np.arange(len(states))
+width = 0.35  # the width of the bars
+
+fig, ax = plt.subplots()
+fig.set_size_inches(10, 5)
+rects1 = ax.bar(x - width / 2, memory_tensor, width, label='CP-MDP memory', color=['cornflowerblue'],
+                edgecolor=['blue'])
+rects2 = ax.bar(x + width / 2, memory_tabular, width, label='Tabular memory', color=['salmon'], edgecolor=['red'])
+
+# rects3 = ax.bar(x - width/4, memory_tensor, width, label='CP-MDP memory', color=['cornflowerblue'], edgecolor=['blue'], hatch='//')
+# rects4 = ax.bar(x + width/4, memory_tabular, width, label='Tabular memory', color=['salmon'],  edgecolor=['red'],  hatch='//')
+
+ax.set_ylabel('runtime (seconds)')
+ax.set_xlabel('number of states')
+plt.xticks(rotation=45)
+ax.set_title('2, 3, 5, 7 and 9-D grids')
+ax.set_xticks(x)
+ax.set_xticklabels(states)
+ax.legend()
+
+
+def autolabel(rects):
+    """Attach a text label above each bar in *rects*, displaying its height."""
+    for rect in rects:
+        height = rect.get_height()
+        ax.annotate('{}'.format(height),
+                    xy=(rect.get_x() + rect.get_width() / 4, height),
+                    xytext=(0, 3),  # 3 points vertical offset
+                    textcoords="offset points",
+                    ha='center', va='bottom', rotation=90)
+
+
+autolabel(rects1)
+autolabel(rects2)
+plt.ylim(top=5000)
+plt.ylim(bottom=0)
+
+fig.tight_layout()
+
+plt.show()
+
+fig.savefig('memory-cp-tabular-two-colors.pdf')
