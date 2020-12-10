@@ -665,21 +665,7 @@ class ValueIteration(MDP):
 
         k = 0
         h = _np.zeros(self.states)
-        """
-        for ss in range(self.S):
-            Ps = _np.zeros((self.A, self.S))
-            Pp = _np.zeros((self.A, self.S))
-            for aa in range(self.A):
-                Ps[aa] = self.succ_s[aa]
-                Pp[aa] = self.probabilities_s[aa]
-                try:
-                    PP[aa] = self.P[aa][:, ss]
-                    # print("PP[aa]", PP[aa])
-                except ValueError:
-                    PP[aa] = self.P[aa][:, ss].todense().A1
-            # minimum of the entire array.
-            h[ss] = PP.min()
-        """
+
         k = 1 - h.sum()
         Vprev = self.V
 
@@ -689,7 +675,6 @@ class ValueIteration(MDP):
         span = _util.getSpan(value - Vprev)
         max_iter = (_math.log((epsilon * (1 - self.discount) / self.discount) /
                               span) / _math.log(self.discount * k))
-        # self.V = Vprev
 
         self.max_iter = int(_math.ceil(max_iter))
 
@@ -770,20 +755,15 @@ class ValueIterationGS(ValueIteration):
         split_succ_s = []
         split_probability = []
 
-        for aa in range(self.A):  # 4
-            split_succ_s.append(_np.split(self.succ_s[aa], self.states))
-            split_probability.append(_np.split(self.probabilities_s[aa], self.states))
-
-
         while True:
             self.iter += 1
 
             Vprev = self.V.copy()
 
-            for s1 in range(len(split_succ_s[0])):
+            for s1 in range(len(self.split_succ_s[0])):
 
                 Q = [float(self.R[a][s1] + self.discount * _np.dot(
-                            split_probability[a][s1], self.V[split_succ_s[a][s1]]))
+                            self.split_probability[a][s1], self.V[self.split_succ_s[a][s1]]))
                     for a in range(self.A)]
 
                 self.V[s1] = max(Q)
@@ -804,11 +784,11 @@ class ValueIterationGS(ValueIteration):
                 break
 
         self.policy = []
-        for s1 in range(len(split_succ_s[0])):
+        for s1 in range(len(self.split_succ_s[0])):
             Q = _np.zeros(self.A)
             for a in range(self.A):
                 Q[a] = self.R[a][s1] + self.discount * _np.dot(
-                    split_probability[a][s1], self.V[split_succ_s[a][s1]])
+                    self.split_probability[a][s1], self.V[self.split_succ_s[a][s1]])
 
             self.V[s1] = Q.max()
 
