@@ -96,9 +96,6 @@ class MDP(object):
             assert 0.0 < self.discount <= 1.0, (
                 "Discount rate must be in ]0; 1]"
             )
-            #if self.discount == 1:
-                #print("WARNING: check conditions of convergence. With no "
-                      #"discount, convergence can not be assumed.")
 
         # if the max_iter is None then the algorithm is assumed to not use it
         # in its computations
@@ -125,7 +122,6 @@ class MDP(object):
         self.succ_s = succ_s
         self.obstacles = obstacles
         self.terminals = terminals
-        #self.P = self._computeTransition(succ_s)
         self.states = states
         self.R = self._computeReward(R, succ_s)
         self.split_succ_s = []
@@ -171,45 +167,17 @@ class MDP(object):
         # _bellmanOperator method. Otherwise the results will be meaningless.
 
         Q = _np.empty((self.A, self.states))
-        #for aa in range(self.A):
-            #Q[aa] = self.R[aa]
-            #Q[aa] = self.R[aa] + self.discount * self.P[aa].dot(V)
-
-        #for a in range(self.A):
-            #for s1 in range(len(split_succ_s[0])):
-
         V = _np.asarray(V)
 
-        #Q = [[float(self.R[a][s1] + self.discount * _np.dot(split_probability[a][s1], V[split_succ_s[a][s1]]))
-        #     for s1 in range(len(split_succ_s[0]))]
-         #
-
-        #print(self.split_succ_s)
-       # print(self.split_probability)
-        print("3")
         for a in range(self.A):
             Q[a] = [(self.R[a][s1] + self.discount * _np.dot(self.split_probability[a][s1], V[self.split_succ_s[a][s1]]))
                    for s1 in range(self.states)]
 
 
         Q = _np.asarray(Q)
-        print("QQQQ",Q)
-        #print("Q max", Q.argmax(axis=0), Q.max(axis=0))
-        # Get the policy and value, for now it is being returned but...
-        # Which way is better?
-        # 1. Return, (policy, value)
-        #self.policy.append(int(Q.argmax()))
 
-        #print("---------------------", Q.argmax(axis=0))
         return Q.argmax(axis=0), Q.max(axis=0)
-        # 2. update self.policy and self.V directly
-        # self.V = Q.max(axis=1)
-        # self.policy = Q.argmax(axis=1)
 
-    #def _computeTransition(self, transition):
-     #   t =  tuple(transition[a] for a in range(self.A))
-     #   print(t)
-     #  return t
 
     def _computeReward(self, reward, transition):
         # Compute the reward for the system in one state chosing an action.
@@ -408,9 +376,7 @@ class PolicyIteration(MDP):
         # PRpolicy(S)   = reward matrix for policy
         #
         Ppolicy_s = _np.zeros((self.states*(self.A-1)))
-        print(Ppolicy_s)
         Ppolicy_p = _np.zeros((self.states*(self.A-1)))
-
 
         split_succ_s = []
         split_probability = []
@@ -418,53 +384,26 @@ class PolicyIteration(MDP):
 
         split_Ppolicy_p = (_np.split(Ppolicy_p, self.states))
         split_Ppolicy_s = (_np.split(Ppolicy_s, self.states))
-        print(split_Ppolicy_p)
 
-        for aa in range(self.A):
-            split_succ_s.append(_np.split(self.succ_s[aa], self.states))
-            split_probability.append(_np.split(self.probabilities_s[aa], self.states))
-
+        split_Ppolicy_s = _np.asarray(split_Ppolicy_s)
+        split_Ppolicy_p = _np.asarray(split_Ppolicy_p)
+        self.split_succ_s = _np.asarray(self.split_succ_s)
+        self.split_probability = _np.asarray(self.split_probability)
 
         for aa in range(self.A):  # avoid looping over S
             # the rows that use action a.
 
             ind = (self.policy == aa).nonzero()[0]
-            print("self.policy == aa", self.policy, aa)
-            print("ind", ind)
-            #print(split_Ppolicy_s[0])
-            #print(split_probability[0][ind])
-            split_Ppolicy_s = _np.asarray(split_Ppolicy_s)
-            split_Ppolicy_p = _np.asarray(split_Ppolicy_p)
-            split_succ_s = _np.asarray(split_succ_s)
-            split_probability = _np.asarray(split_probability)
 
             # if no rows use action a, then no need to assign this
             if ind.size > 0:
-                #print(split_succ_s[aa][ind])
-                #print(split_probability[aa][ind])
-                split_Ppolicy_s[ind] = split_succ_s[aa][ind]
-                split_Ppolicy_p[ind] = split_probability[aa][ind]
-                #try:
-                    #Ppolicy[ind, :] = self.P[aa][ind, :]
-                #except ValueError:
-                    #Ppolicy[ind, :] = self.P[aa][ind, :].todense()
-                # PR = self._computePR() # an apparently uneeded line, and
-                # perhaps harmful in this implementation c.f.
-                # mdp_computePpolicyPRpolicy.m
+                split_Ppolicy_s[ind] = self.split_succ_s[aa][ind]
+                split_Ppolicy_p[ind] = self.split_probability[aa][ind]
                 Rpolicy[ind] = self.R[aa][ind]
 
-        # self.R cannot be sparse with the code in its current condition, but
-        # it should be possible in the future. Also, if R is so big that its
-        # a good idea to use a sparse matrix for it, then converting PRpolicy
-        # from a dense to sparse matrix doesn't seem very memory efficient
-        #print(Rpolicy, Ppolicy_s, Ppolicy_p)
-        #if type(self.R) is _sp.csr_matrix:
-        #    Rpolicy = _sp.csr_matrix(Rpolicy)
-        # self.Ppolicy = Ppolicy
-        # self.Rpolicy = Rpolicy
-        print("7")
-        print("split_Ppolicy_s e p", split_Ppolicy_s, split_Ppolicy_p)
-        #print("Ppolicy_p", Ppolicy_s, Ppolicy_p )
+        if type(self.R) is _sp.csr_matrix:
+            Rpolicy = _sp.csr_matrix(Rpolicy)
+
         return Rpolicy, split_Ppolicy_s, split_Ppolicy_p
 
     def _evalPolicyIterative(self, V0=0, epsilon=0.0001, max_iter=100):
@@ -509,12 +448,7 @@ class PolicyIteration(MDP):
             else:
                 policy_V = _np.array(V0).reshape(self.states)
 
-        #policy_P, policy_R = self._computePpolicyPRpolicy()
-        print("6")
-
         policy_R, succ_s, probabilities_s = self._computePpolicyPRpolicy()
-        #print("succ_s", succ_s)
-        #print("probabilities_s", probabilities_s)
 
         if self.verbose:
             _printVerbosity("Iteration", "V variation")
@@ -522,46 +456,23 @@ class PolicyIteration(MDP):
         itr = 0
         done = False
 
-        #for a in range(self.A):
-        #split_succ_s = (_np.split(succ_s, self.states))
-        #split_probability = (_np.split(probabilities_s, self.states))
-        #print(split_succ_s, split_probability)
-
-
         while not done:
             itr += 1
 
             Vprev = policy_V
             Vprev = _np.array(Vprev)
-            #policy_V = policy_R + self.discount * policy_P.dot(Vprev)
-            #print(self.split_probability[0][0])
-            #print(self.split_succ_s[1])
-            """
-            for a in range(self.A):
-                policy_V = [(self.R[a][s1] + self.discount *
-                                _np.dot(self.split_probability[a][s1], Vprev[self.split_succ_s[a][s1]]))
-                                for s1 in range(self.states)]
-                print("****", policy_V)
-            """
             succ_s = _np.asarray(succ_s, dtype=_np.int32)
 
             policy_V = [(policy_R[s1] + self.discount *
                 _np.dot(probabilities_s[s1], Vprev[succ_s[s1]]))
                 for s1 in range(self.states)]
 
-            #print("-----", policy_V)
-
-            #policy_V = policy_R + self.discount * _np.dot(self.probabilities_s,Vprev[self.succ_s])
-
             variation = _np.absolute(policy_V - Vprev).max()
-            #print("variationvariationnnn", variation)
-            #print(((1 - self.discount) / self.discount) * epsilon)
 
             if self.verbose:
                 _printVerbosity(itr, variation)
 
             # ensure |Vn - Vpolicy| < epsilon
-
             if variation < ((1 - self.discount) / self.discount) * epsilon:
 
                 done = True
@@ -577,36 +488,7 @@ class PolicyIteration(MDP):
 
 
         self.V = policy_V
-        print("8")
-        #print(self.V)
 
-    def _evalPolicyMatrix(self):
-        # Evaluate the value function of the policy using linear equations.
-        #
-        # Arguments
-        # ---------
-        # Let S = number of states, A = number of actions
-        # P(SxSxA) = transition matrix
-        #      P could be an array with 3 dimensions or a cell array (1xA),
-        #      each cell containing a matrix (SxS) possibly sparse
-        # R(SxSxA) or (SxA) = reward matrix
-        #      R could be an array with 3 dimensions (SxSxA) or
-        #      a cell array (1xA), each cell containing a sparse matrix (SxS)
-        #      or a 2D array(SxA) possibly sparse
-        # discount = discount rate in ]0; 1[
-        # policy(S) = a policy
-        #
-        # Evaluation
-        # ----------
-        # Vpolicy(S) = value function of the policy
-        #
-        Rpolicy, succ_s, probability_s = self._computePpolicyPRpolicy()
-        split_succ_s = (_np.split(succ_s, self.states))
-        split_probability = (_np.split(probability_s, self.states))
-        # V = PR + gPV  => (I-gP)V = PR  => V = inv(I-gP)* PR
-        self.V = _np.linalg.solve(
-            (_sp.eye(self.S, self.S) - self.discount * Ppolicy), Rpolicy)
-        print("Self.V", self.V)
 
     def run(self):
         # Run the policy iteration algorithm.
@@ -616,11 +498,9 @@ class PolicyIteration(MDP):
             self.iter += 1
             # these _evalPolicy* functions will update the classes value
             # attribute
-            if self.eval_type == "matrix":
-                self._evalPolicyIterative()
-                #self._evalPolicyMatrix()
-            elif self.eval_type == "iterative":
-                self._evalPolicyIterative()
+
+            self._evalPolicyIterative()
+
             # This should update the classes policy attribute but leave the
             # value alone
             policy_next, null = self._bellmanOperator()
@@ -697,7 +577,7 @@ class PolicyIterationModified(PolicyIteration):
         # function. Perhaps there is a better way to do it?
         PolicyIteration.__init__(self, shape, terminals, obstacles, succ_s, probability_s, R, states, discount, epsilon,
                                  policy0=policy0, max_iter=max_iter, eval_type=eval_type, skip_check=skip_check)
-        print("1")
+
         # PolicyIteration doesn't pass epsilon to MDP.__init__() so we will
         # check it here
         self.epsilon = float(epsilon)
@@ -725,23 +605,14 @@ class PolicyIterationModified(PolicyIteration):
         while True:
             self.iter += 1
 
-            #print(self.iter)
-            print("2")
+
             self.policy, Vnext = self._bellmanOperator()
-            print("4")
-            #print(self.policy, Vnext)
-            # [Ppolicy, PRpolicy] = mdp_computePpolicyPRpolicy(P, PR, policy);
 
             variation = _util.getSpan(Vnext - self.V)
-            #print(Vnext)
-            #print(self.V)
-            #print("variationnnnnnnnMPI", variation)
-            #print("variationnnnnnnn2MPI", variation2)
             if self.verbose:
                 _printVerbosity(self.iter, variation)
 
             self.V = Vnext
-            #print("V",self.V)
             if variation < self.thresh:
                 break
             elif variation == variation2:
@@ -751,10 +622,8 @@ class PolicyIterationModified(PolicyIteration):
                 if self.verbose:
                     self.setSilent()
                     is_verbose = True
-                #print("vvvvvvvvvvvvv",self.V)
-                print("5")
                 self._evalPolicyIterative(self.V, self.epsilon, self.max_iter)
-                print("9")
+
                 variation2 = variation
                 if is_verbose:
                     self.setVerbose()
