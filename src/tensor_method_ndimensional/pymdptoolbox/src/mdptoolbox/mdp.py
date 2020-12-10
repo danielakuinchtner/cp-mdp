@@ -407,20 +407,43 @@ class PolicyIteration(MDP):
         # Ppolicy(SxS)  = transition matrix for policy
         # PRpolicy(S)   = reward matrix for policy
         #
-        Ppolicy_s = _np.zeros((self.A, self.states*(self.A-1)))
-        
-        Ppolicy_p = _np.zeros((self.A, self.states*(self.A-1)))
-        
+        Ppolicy_s = _np.zeros((self.states*(self.A-1)))
+        print(Ppolicy_s)
+        Ppolicy_p = _np.zeros((self.states*(self.A-1)))
+
+
+        split_succ_s = []
+        split_probability = []
         Rpolicy = _np.zeros(self.states)
+
+        split_Ppolicy_p = (_np.split(Ppolicy_p, self.states))
+        split_Ppolicy_s = (_np.split(Ppolicy_s, self.states))
+        print(split_Ppolicy_p)
+
+        for aa in range(self.A):
+            split_succ_s.append(_np.split(self.succ_s[aa], self.states))
+            split_probability.append(_np.split(self.probabilities_s[aa], self.states))
+
+
         for aa in range(self.A):  # avoid looping over S
             # the rows that use action a.
+
             ind = (self.policy == aa).nonzero()[0]
             print("self.policy == aa", self.policy, aa)
             print("ind", ind)
+            #print(split_Ppolicy_s[0])
+            #print(split_probability[0][ind])
+            split_Ppolicy_s = _np.asarray(split_Ppolicy_s)
+            split_Ppolicy_p = _np.asarray(split_Ppolicy_p)
+            split_succ_s = _np.asarray(split_succ_s)
+            split_probability = _np.asarray(split_probability)
+
             # if no rows use action a, then no need to assign this
             if ind.size > 0:
-                Ppolicy_s = self.succ_s[aa]
-                Ppolicy_p = self.probabilities_s[aa]
+                #print(split_succ_s[aa][ind])
+                #print(split_probability[aa][ind])
+                split_Ppolicy_s[ind] = split_succ_s[aa][ind]
+                split_Ppolicy_p[ind] = split_probability[aa][ind]
                 #try:
                     #Ppolicy[ind, :] = self.P[aa][ind, :]
                 #except ValueError:
@@ -429,7 +452,6 @@ class PolicyIteration(MDP):
                 # perhaps harmful in this implementation c.f.
                 # mdp_computePpolicyPRpolicy.m
                 Rpolicy[ind] = self.R[aa][ind]
-               # print("P inside a", Ppolicy_s, Ppolicy_p)
 
         # self.R cannot be sparse with the code in its current condition, but
         # it should be possible in the future. Also, if R is so big that its
@@ -440,11 +462,10 @@ class PolicyIteration(MDP):
         #    Rpolicy = _sp.csr_matrix(Rpolicy)
         # self.Ppolicy = Ppolicy
         # self.Rpolicy = Rpolicy
-        #print(Ppolicy_s, Ppolicy_p)
         print("7")
-
+        print("split_Ppolicy_s e p", split_Ppolicy_s, split_Ppolicy_p)
         #print("Ppolicy_p", Ppolicy_s, Ppolicy_p )
-        return Rpolicy, Ppolicy_s, Ppolicy_p
+        return Rpolicy, split_Ppolicy_s, split_Ppolicy_p
 
     def _evalPolicyIterative(self, V0=0, epsilon=0.0001, max_iter=100):
         # Evaluate a policy using iteration.
@@ -502,8 +523,8 @@ class PolicyIteration(MDP):
         done = False
 
         #for a in range(self.A):
-        split_succ_s = (_np.split(succ_s, self.states))
-        split_probability = (_np.split(probabilities_s, self.states))
+        #split_succ_s = (_np.split(succ_s, self.states))
+        #split_probability = (_np.split(probabilities_s, self.states))
         #print(split_succ_s, split_probability)
 
 
@@ -522,9 +543,10 @@ class PolicyIteration(MDP):
                                 for s1 in range(self.states)]
                 print("****", policy_V)
             """
+            succ_s = _np.asarray(succ_s, dtype=_np.int32)
 
             policy_V = [(policy_R[s1] + self.discount *
-                _np.dot(split_probability[s1], Vprev[split_succ_s[s1]]))
+                _np.dot(probabilities_s[s1], Vprev[succ_s[s1]]))
                 for s1 in range(self.states)]
 
             #print("-----", policy_V)

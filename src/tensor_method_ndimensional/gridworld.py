@@ -20,7 +20,7 @@ number_of_terminals = 2
 rewards = [100, -100, 100, -100, 100, -100, 100, -100, 100, -100, 100, -100, 100, -100]
 reward_non_terminal_states = -3
 p_intended = 0.8  # probability of the desired action taking place
-discount = 0.2
+discount = 0.9
 
 print("Executing a", shape, "grid, with", number_of_terminals, "terminals and", number_of_obstacles, "obstacles")
 
@@ -130,62 +130,40 @@ print("--- Solved with VI in: %s seconds ---" % (time.time() - start_time_vi))
 """
 
 start_time_vi = time.time()
-vigs = mdptoolbox.mdp.ValueIterationGS(shape, terminals, obstacles, succ_s, probability_s, R, states,
-                                     discount=discount, epsilon=0.001, max_iter=1000, skip_check=True)
-
+vigs = mdptoolbox.mdp.ValueIterationGS(shape, terminals, obstacles, succ_s, probability_s, R, states, discount=discount, epsilon=0.001, max_iter=1000, skip_check=True)
 vigs.run()
-
-print("--- Solved with VIGS in: %s seconds ---" % (time.time() - start_time_vi))
-#print("--- Computed successors and rewards solved with VI in: %s seconds ---" % (time.time() - start_time_succ_vi))
-#print("--- Solved all in: %s seconds ---" % (time.time() - start_time_all))
-
-
+print("--- Solved with VI in: %s seconds ---" % (time.time() - start_time_vi))
 process = psutil.Process(os.getpid())
-print("Memory used:", (process.memory_info().rss), "bytes")
-print("Memory used:", (process.memory_info().rss)/1000000, "Mb")
-print("Memory used:", (process.memory_info().rss)/1000000000, "Gb")
+print("Memory used VI:", (process.memory_info().rss)/1000000, "Mb")
 
-succ_s_pi, probability_s_pi, R = mdp_grid_pi(shape=shape, terminals=terminals,
-                                                 reward_non_terminal_states=reward_non_terminal_states,
-                                                 rewards=rewards, obstacles=obstacles, final_limits=final_limits,
-                                                 STPM=STPM, states=states)
-print("--- Computed successors and rewards in: %s seconds ---" % (time.time() - start_time_succ))
-
-succ_s_pi = _np.asarray(succ_s_pi)
-probability_s_pi = _np.asarray(probability_s_pi)
-
-succ_s_pi = _np.split(succ_s_pi, len(STPM[0]))
-probability_s_pi = _np.split(probability_s_pi, len(STPM[0]))
-
-#print(succ_s_pi)
-print("Policy VI:")
-print_policy(vigs.policy, shape, obstacles=obstacles, terminals=terminals, actions=letters_actions)
-
-
-
-"""
 start_time_pi = time.time()
-pi = mdptoolbox.mdp.PolicyIteration(shape, terminals, obstacles, succ_s_pi, probability_s_pi, R, states, discount=discount, epsilon=0.001,policy0=None, max_iter=1000, eval_type=0, skip_check=True)
+pi = mdptoolbox.mdp.PolicyIteration(shape, terminals, obstacles, succ_s, probability_s, R, states, discount=discount, epsilon=0.001,policy0=None, max_iter=1000, eval_type=0, skip_check=True)
 pi.run()
 print("--- Solved with PI in: %s seconds ---" % (time.time() - start_time_pi))
+process = psutil.Process(os.getpid())
+print("Memory used PI:", (process.memory_info().rss)/1000000, "Mb")
 
-# display_policy(vi.policy, shape, obstacles=obstacles, terminals=terminals)
-print("Policy PI:")
-#print(pi.policy)
-print_policy(pi.policy, shape, obstacles=obstacles, terminals=terminals, actions=letters_actions)
 
 """
-
 start_time_mpi = time.time()
 mpi = mdptoolbox.mdp.PolicyIterationModified(shape, terminals, obstacles, succ_s_pi, probability_s_pi, R, states,
                                              discount=discount, epsilon=0.001, policy0=None, max_iter=1000,
                                              eval_type=0, skip_check=True)
 mpi.run()
 print("--- Solved with MPI in: %s seconds ---" % (time.time() - start_time_mpi))
+process = psutil.Process(os.getpid())
+print("Memory used MPI:", (process.memory_info().rss)/1000000, "Mb")
 
 print("Policy MPI:")
 print_policy(mpi.policy, shape, obstacles=obstacles, terminals=terminals, actions=letters_actions)
+"""
+
 
 print("Policy VI:")
 print_policy(vigs.policy, shape, obstacles=obstacles, terminals=terminals, actions=letters_actions)
+
+print("Policy PI:")
+#print(pi.policy)
+print_policy(pi.policy, shape, obstacles=obstacles, terminals=terminals, actions=letters_actions)
+
 

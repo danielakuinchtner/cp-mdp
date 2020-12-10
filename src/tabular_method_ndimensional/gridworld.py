@@ -136,47 +136,36 @@ print("--- Computed successors and rewards in: %s seconds ---" % (time.time() - 
 #print(P)
 #print(R)
 
-start_time_vi = time.time()
-vi = mdptoolbox.mdp.ValueIterationGS(P, R, discount=discount, epsilon=0.001, max_iter=1000, skip_check=True)
 
-vi.run()
-print("--- Solved with VI in: %s seconds ---" % (time.time() - start_time_vi))
-#print("--- Computed successors and rewards solved with VI in: %s seconds ---" % (time.time() - start_time_succ_vi))
-#print("--- Solved VI and components in: %s seconds ---" % (time.time() - start_time_all))
-
-
-"""
 start_time_vi = time.time()
 vigs = mdptoolbox.mdp.ValueIterationGS(P, R, discount=discount, epsilon=0.001, max_iter=1000, skip_check=True)
-
 vigs.run()
-print("--- Solved with VIGS in: %s seconds ---" % (time.time() - start_time_vi))
-#print("--- Computed successors and rewards solved with VI in: %s seconds ---" % (time.time() - start_time_succ_vi))
-#print("--- Solved VI and components in: %s seconds ---" % (time.time() - start_time_all))
-"""
+print("--- Solved with VI in: %s seconds ---" % (time.time() - start_time_vi))
 process = psutil.Process(os.getpid())
-print("Memory used VI:", (process.memory_info().rss), "bytes")
 print("Memory used VI:", (process.memory_info().rss)/1000000, "Mb")
-print("Memory used VI:", (process.memory_info().rss)/1000000000, "Gb")
 
 
-start_time_mpi = time.time()
-mpi = mdptoolbox.mdp.PolicyIterationModified(P, R, discount=discount, epsilon=0.001, max_iter=1000, skip_check=True)
-mpi.run()
-print("\n--- Solved with MPI in: %s seconds ---" % (time.time() - start_time_mpi))
-
-"""
 start_time_pi = time.time()
 pi = mdptoolbox.mdp.PolicyIteration(P, R, discount=discount, policy0=None, max_iter=1000, eval_type=0, skip_check=True)
 pi.run()
-print("\n--- Solved with PI in: %s seconds ---" % (time.time() - start_time_pi))
-"""
-print("Policy VI:")
-print_policy(vi.policy, shape, obstacles=obstacles, terminals=terminals, actions=letters_actions)
+print("--- Solved with PI in: %s seconds ---" % (time.time() - start_time_pi))
+process = psutil.Process(os.getpid())
+print("Memory used PI:", (process.memory_info().rss)/1000000, "Mb")
 
+"""
+start_time_mpi = time.time()
+mpi = mdptoolbox.mdp.PolicyIterationModified(P, R, discount=discount, epsilon=0.001, max_iter=1000, skip_check=True)
+mpi.run()
+print("--- Solved with MPI in: %s seconds ---" % (time.time() - start_time_mpi))
+process = psutil.Process(os.getpid())
+print("Memory used MPI:", (process.memory_info().rss)/1000000, "Mb")
 
 print("\nPolicy MPI:")
 print_policy(mpi.policy, shape, obstacles=obstacles, terminals=terminals, actions=letters_actions)
+"""
+
+print("Policy VI:")
+print_policy(vigs.policy, shape, obstacles=obstacles, terminals=terminals, actions=letters_actions)
 
 print("\nPolicy PI:")
 #print(pi.policy)

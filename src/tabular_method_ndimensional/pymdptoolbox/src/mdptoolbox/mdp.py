@@ -172,6 +172,7 @@ class MDP(object):
         for aa in range(self.A):
             Q[aa] = self.R[aa] + self.discount * self.P[aa].dot(V)
 
+
         print("QQQQ", Q)
         #print(V.shape)
         # Get the policy and value, for now it is being returned but...
@@ -409,8 +410,8 @@ class PolicyIteration(MDP):
             if ind.size > 0:
                 try:
                     Ppolicy[ind, :] = self.P[aa][ind, :]  # big transition table
-                    print("Ppolicy[ind, :]",Ppolicy[ind, :])
-                    print("self.P[aa][ind, :]",self.P[aa][ind, :])
+                    #print("Ppolicy[ind, :]",Ppolicy[ind, :])
+                    #print("self.P[aa][ind, :]",self.P[aa][ind, :])
                 except ValueError:
                     Ppolicy[ind, :] = self.P[aa][ind, :].todense()
                 #print("Ppolicy[ind, :]", Ppolicy[ind, :])
@@ -418,6 +419,7 @@ class PolicyIteration(MDP):
                 # perhaps harmful in this implementation c.f.
                 # mdp_computePpolicyPRpolicy.m
                 Rpolicy[ind] = self.R[aa][ind]
+                #print(Rpolicy[ind])
             #print(Ppolicy)
         # self.R cannot be sparse with the code in its current condition, but
         # it should be possible in the future. Also, if R is so big that its
@@ -428,7 +430,7 @@ class PolicyIteration(MDP):
         #self.Ppolicy = Ppolicy
         # self.Rpolicy = Rpolicy
         #print("R",Rpolicy)
-        #print(Ppolicy)
+        print(Ppolicy)
         return (Ppolicy, Rpolicy)
 
     def _evalPolicyIterative(self, V0=0, epsilon=0.0001, max_iter=10000):
@@ -491,7 +493,7 @@ class PolicyIteration(MDP):
             Vprev = policy_V
             policy_V = policy_R + self.discount * policy_P.dot(Vprev)
 
-            #print("-----", policy_V)
+            print("-----", policy_V)
             variation = _np.absolute(policy_V - Vprev).max()
            # print("variationvariationnnn", variation)
             #print(((1 - self.discount) / self.discount) * epsilon)
@@ -548,8 +550,8 @@ class PolicyIteration(MDP):
             # these _evalPolicy* functions will update the classes value
             # attribute
             if self.eval_type == "matrix":
-                #self._evalPolicyIterative()
-                self._evalPolicyMatrix()
+                self._evalPolicyIterative()
+                #self._evalPolicyMatrix()
             elif self.eval_type == "iterative":
                 self._evalPolicyIterative()
             # This should update the classes policy attribute but leave the

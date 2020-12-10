@@ -74,8 +74,10 @@ def mdp_grid_pi(shape=[], obstacles=[], terminals=[], reward_non_terminal_states
                     continue
 
                 if s in terminals or s in obstacles:
-                    probabilities.append(0)
+                    #probabilities.append(0)
                     successors.append(s)
+                    probabilities.append(STPM[a][aa])
+
 
                 else:
                     state_tuple = _np.unravel_index(s, shape)  # ind to sub
