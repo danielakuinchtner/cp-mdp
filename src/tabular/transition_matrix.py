@@ -1,7 +1,5 @@
 import numpy as _np
-import scipy.sparse as _sp
 import math
-
 
 
 def mdp_grid(shape=[], obstacles=[], terminals=[], r=1, rewards=[], final_limits=[], states=[], actions=[], STPM=[]):
@@ -30,7 +28,6 @@ def mdp_grid(shape=[], obstacles=[], terminals=[], r=1, rewards=[], final_limits
                 else:
                     P[A, s, s] = P[A, s, s] + STPM[A][aa]
 
-                
     R = _np.ones([S])
     R = _np.multiply(R, r)
     for i in range(len(terminals)):

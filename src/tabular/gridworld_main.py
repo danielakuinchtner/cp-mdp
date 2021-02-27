@@ -1,25 +1,20 @@
-
 import sys
+sys.path.insert(0, 'pymdptoolbox/src')
+import time
+from transition_matrix import *
 import os
 import psutil
-sys.path.insert(1, 'pymdptoolbox/src')
-import mdptoolbox
-import time
-import numpy as _np
 import string
 import random
-from gridworld_scenario import *
+import numpy as _np
+from pymdptoolbox.mdp import *
 
-
-# install openblas lib to improve even more the runtime: conda install -c anaconda openblas
-
-shape = [3,4]
-#shape = [3, 10, 3, 10]
+shape = [3, 4]
 number_of_obstacles = 1
 number_of_terminals = 2
-rewards = [100, -100, 100, -100, 100, -100, 100, -100, 100, -100, 100, -100, 100, -100]
+rewards_terminal_states = [100, -100]
 reward_non_terminal_states = -3
-p_intended = 0.8  # probability of the desired action taking place
+p_intended = 0.8
 discount = 0.9
 
 print("Executing a", shape, "grid, with", number_of_terminals, "terminals and", number_of_obstacles, "obstacles")
@@ -29,9 +24,10 @@ start_time_all = time.time()
 states = 1
 for dim in shape:
     states *= dim
+print("Number of states: ", states)
 
 dimensions = len(shape)
-# print('Number of dimensions: ', dimensions)
+print('Number of dimensions: ', dimensions)
 
 actions = _np.ones(len(shape) * 2)
 letters_actions = []
@@ -41,7 +37,7 @@ for num_actions in range(len(actions)):
         letters_actions.append(acts[num_actions])
     else:
         letters_actions.append(random.choice(string.ascii_letters))
-#print("Actions: ", letters_actions)
+print("Actions: ", letters_actions)
 
 final_limits = []
 for num_dim in range(len(shape)):
@@ -54,10 +50,12 @@ def randomConfig():
     terminals = _np.array([])
 
     for n_obst in range(number_of_obstacles):
-        obstacles = _np.append(obstacles, random.randint(0, states))
+        for dim in range(len(shape)):
+            obstacles = _np.append(obstacles, random.randint(0, final_limits[dim]))
 
     for n_term in range(number_of_terminals):
-        terminals = _np.append(terminals, random.randint(0, states))
+        for dim in range(len(shape)):
+            terminals = _np.append(terminals, random.randint(0, final_limits[dim]))
     return obstacles, terminals
 
 
@@ -65,12 +63,35 @@ obstacles, terminals = randomConfig()
 obstacles = obstacles.astype(int)
 terminals = terminals.astype(int)
 
+obs = _np.split(obstacles, number_of_obstacles)
+term = _np.split(terminals, number_of_terminals)
 
-obstacles = [5]
-terminals = [3, 7]
+obstacles = []
+for o in range(len(obs)):
+    obstacles.append(obs[o].tolist())
 
-# print("Obstacles:", obstacles)
-# print("Terminals:", terminals)
+terminals = []
+for o in range(len(term)):
+    terminals.append(term[o].tolist())
+
+# obstacles = [[1,1]]
+# terminals = [[0,3], [1,3]]
+
+print("Obstacles:", obstacles)
+print("Terminals:", terminals)
+
+rewards = []
+for num_term in range(number_of_terminals):
+    for num_rew in range(len(rewards_terminal_states)):
+        rewards.append(rewards_terminal_states[num_rew])
+del rewards[number_of_terminals:]
+print("Rewards for terminal states: ", rewards)
+
+R = _np.full([states], reward_non_terminal_states)
+
+for i in range(len(terminals)):
+    R[terminals[i]] = rewards[i]
+print("Rewards: ", R)
 
 p_right_angles = (1 - p_intended) / (len(actions) - 2)  # 0.1 # stochasticity
 p_opposite_angle = 0.0  # zero probability
@@ -99,71 +120,39 @@ for a1 in range(len(STPM[0])):
             elif a2 % 2 == 1:
                 STPM[a1, a2 - 1] = p_opposite_angle
 
+# print(STPM)
 
-
-#print("--- Precomputed actions, obstacles and terminals in: %s seconds ---" % (time.time() - start_time_precompute))
+# print("--- Precomputed actions, obstacles and terminals in: %s seconds ---" % (time.time() - start_time_precompute), "\n")
 
 start_time_succ_vi = time.time()
 start_time_succ = time.time()
-succ_s, probability_s, R = mdp_grid(shape=shape, terminals=terminals,
-                                                 reward_non_terminal_states=reward_non_terminal_states,
-                                                 rewards=rewards, obstacles=obstacles, final_limits=final_limits,
-                                                 STPM=STPM, states=states)
+P, R = mdp_grid(shape=shape, terminals=terminals, r=-3,
+                rewards=rewards, obstacles=obstacles, final_limits=final_limits, states=states, actions=actions, STPM=STPM)
+
 print("--- Computed successors and rewards in: %s seconds ---" % (time.time() - start_time_succ))
 
+# print(P)
+# print(R)
 
-
-succ_s = _np.asarray(succ_s)
-probability_s = _np.asarray(probability_s)
-
-succ_s = _np.split(succ_s, len(STPM[0]))
-probability_s = _np.split(probability_s, len(STPM[0]))
-#print(succ_s)
-"""
-start_time_vi = time.time()
-vi = mdptoolbox.mdp.ValueIteration(shape, terminals, obstacles, succ_s, probability_s, R, states,
-                                     discount=discount, epsilon=0.001, max_iter=1000, skip_check=True)
-
-vi.run()
-
-print("--- Solved with VI in: %s seconds ---" % (time.time() - start_time_vi))
-"""
 
 start_time_vi = time.time()
-vigs = mdptoolbox.mdp.ValueIterationGS(shape, terminals, obstacles, succ_s, probability_s, R, states, discount=discount, epsilon=0.001, max_iter=1000, skip_check=True)
+vigs = ValueIterationGS(P, R, discount=discount, epsilon=0.001, max_iter=1000, skip_check=True)
 vigs.run()
 print("--- Solved with VI in: %s seconds ---" % (time.time() - start_time_vi))
 process = psutil.Process(os.getpid())
 print("Memory used VI:", (process.memory_info().rss)/1000000, "Mb")
 
+
 start_time_pi = time.time()
-pi = mdptoolbox.mdp.PolicyIteration(shape, terminals, obstacles, succ_s, probability_s, R, states, discount=discount, epsilon=0.001,policy0=None, max_iter=1000, eval_type=0, skip_check=True)
+pi = PolicyIteration(P, R, discount=discount, policy0=None, max_iter=1000, eval_type=0, skip_check=True)
 pi.run()
 print("--- Solved with PI in: %s seconds ---" % (time.time() - start_time_pi))
 process = psutil.Process(os.getpid())
 print("Memory used PI:", (process.memory_info().rss)/1000000, "Mb")
 
 
-"""
-start_time_mpi = time.time()
-mpi = mdptoolbox.mdp.PolicyIterationModified(shape, terminals, obstacles, succ_s_pi, probability_s_pi, R, states,
-                                             discount=discount, epsilon=0.001, policy0=None, max_iter=1000,
-                                             eval_type=0, skip_check=True)
-mpi.run()
-print("--- Solved with MPI in: %s seconds ---" % (time.time() - start_time_mpi))
-process = psutil.Process(os.getpid())
-print("Memory used MPI:", (process.memory_info().rss)/1000000, "Mb")
-
-print("Policy MPI:")
-print_policy(mpi.policy, shape, obstacles=obstacles, terminals=terminals, actions=letters_actions)
-"""
-
-
 print("Policy VI:")
 print_policy(vigs.policy, shape, obstacles=obstacles, terminals=terminals, actions=letters_actions)
 
-print("Policy PI:")
-#print(pi.policy)
+print("\nPolicy PI:")
 print_policy(pi.policy, shape, obstacles=obstacles, terminals=terminals, actions=letters_actions)
-
-

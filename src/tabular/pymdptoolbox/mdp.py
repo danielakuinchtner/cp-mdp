@@ -53,7 +53,9 @@ import math as _math
 import time as _time
 import numpy as _np
 import scipy.sparse as _sp
-import mdptoolbox.util as _util
+import sys
+sys.path.insert(1, 'pymdptoolbox')
+from util import *
 
 _MSG_STOP_MAX_ITER = "Iterating stopped due to maximum number of iterations " \
     "condition."
@@ -119,7 +121,7 @@ class MDP(object):
             # We run a check on P and R to make sure they are describing an
             # MDP. If an exception isn't raised then they are assumed to be
             # correct.
-            _util.check(transitions, reward)
+            check(transitions, reward)
 
         self.S, self.A = _computeDimensions(transitions)
         self.P = self._computeTransition(transitions)
@@ -172,14 +174,13 @@ class MDP(object):
         for aa in range(self.A):
             Q[aa] = self.R[aa] + self.discount * self.P[aa].dot(V)
 
-
-        print("QQQQ", Q)
-        #print(V.shape)
         # Get the policy and value, for now it is being returned but...
         # Which way is better?
         # 1. Return, (policy, value)
         #print("Q max", Q.argmax(axis=0), Q.max(axis=0))
+
         return (Q.argmax(axis=0), Q.max(axis=0))
+
         # 2. update self.policy and self.V directly
         # self.V = Q.max(axis=1)
         # self.policy = Q.argmax(axis=1)
@@ -317,21 +318,6 @@ class PolicyIteration(MDP):
     In verbose mode, at each iteration, displays the number
     of differents actions between policy n-1 and n
 
-    Examples
-    --------
-    >>> import mdptoolbox, mdptoolbox.example
-    >>> P, R = mdptoolbox.example.rand(10, 3)
-    >>> pi = mdptoolbox.mdp.PolicyIteration(P, R, 0.9)
-    >>> pi.run()
-
-    >>> P, R = mdptoolbox.example.forest()
-    >>> pi = mdptoolbox.mdp.PolicyIteration(P, R, 0.9)
-    >>> pi.run()
-    >>> expected = (26.244000000000014, 29.484000000000016, 33.484000000000016)
-    >>> all(expected[k] - pi.V[k] < 1e-12 for k in range(len(expected)))
-    True
-    >>> policy
-    (0, 0, 0)
     """
 
     def __init__(self, transitions, reward, discount, policy0=None,
@@ -403,8 +389,6 @@ class PolicyIteration(MDP):
         for aa in range(self.A):  # avoid looping over S
             # the rows that use action a.
             ind = (self.policy == aa).nonzero()[0]
-            print("self.policy == aa", self.policy, aa)
-            print("ind", ind)
 
             # if no rows use action a, then no need to assign this
             if ind.size > 0:
@@ -476,27 +460,18 @@ class PolicyIteration(MDP):
 
         policy_P, policy_R = self._computePpolicyPRpolicy()
 
-
-
         if self.verbose:
             _printVerbosity("Iteration", "V variation")
 
         itr = 0
         done = False
 
-
-
         while not done:
             itr += 1
-            #print(policy_P)
-
             Vprev = policy_V
             policy_V = policy_R + self.discount * policy_P.dot(Vprev)
 
-            print("-----", policy_V)
             variation = _np.absolute(policy_V - Vprev).max()
-           # print("variationvariationnnn", variation)
-            #print(((1 - self.discount) / self.discount) * epsilon)
 
             if self.verbose:
                 _printVerbosity(itr, variation)
@@ -535,11 +510,8 @@ class PolicyIteration(MDP):
         #
         Ppolicy, Rpolicy = self._computePpolicyPRpolicy()
         # V = PR + gPV  => (I-gP)V = PR  => V = inv(I-gP)* PR
-        #print("sp", (_sp.eye(self.S*3, self.A-1) ))
-        #print("P",Ppolicy)
         self.V = _np.linalg.solve(
             (_sp.eye(self.S, self.S) - self.discount * Ppolicy), Rpolicy)
-        #print("V", self.V)
 
     def run(self):
         # Run the policy iteration algorithm.
@@ -578,115 +550,6 @@ class PolicyIteration(MDP):
                 self.policy = policy_next
 
         self._endRun()
-
-
-class PolicyIterationModified(PolicyIteration):
-
-    """A discounted MDP  solved using a modifified policy iteration algorithm.
-
-    Arguments
-    ---------
-    transitions : array
-        Transition probability matrices. See the documentation for the ``MDP``
-        class for details.
-    reward : array
-        Reward matrices or vectors. See the documentation for the ``MDP`` class
-        for details.
-    discount : float
-        Discount factor. See the documentation for the ``MDP`` class for
-        details.
-    epsilon : float, optional
-        Stopping criterion. See the documentation for the ``MDP`` class for
-        details. Default: 0.01.
-    max_iter : int, optional
-        Maximum number of iterations. See the documentation for the ``MDP``
-        class for details. Default is 10.
-    skip_check : bool
-        By default we run a check on the ``transitions`` and ``rewards``
-        arguments to make sure they describe a valid MDP. You can set this
-        argument to True in order to skip this check.
-
-    Data Attributes
-    ---------------
-    V : tuple
-        value function
-    policy : tuple
-        optimal policy
-    iter : int
-        number of done iterations
-    time : float
-        used CPU time
-
-    """
-
-    def __init__(self, transitions, reward, discount, epsilon=0.01,
-                 max_iter=10, skip_check=False):
-        # Initialise a (modified) policy iteration MDP.
-
-        # Maybe its better not to subclass from PolicyIteration, because the
-        # initialisation of the two are quite different. eg there is policy0
-        # being calculated here which doesn't need to be. The only thing that
-        # is needed from the PolicyIteration class is the _evalPolicyIterative
-        # function. Perhaps there is a better way to do it?
-        PolicyIteration.__init__(self, transitions, reward, discount, None,
-                                 max_iter, 1, skip_check=skip_check)
-
-        # PolicyIteration doesn't pass epsilon to MDP.__init__() so we will
-        # check it here
-        self.epsilon = float(epsilon)
-        assert epsilon > 0, "'epsilon' must be greater than 0."
-
-        # computation of threshold of variation for V for an epsilon-optimal
-        # policy
-        if self.discount != 1:
-            self.thresh = self.epsilon * (1 - self.discount) / self.discount
-        else:
-            self.thresh = self.epsilon
-
-        if self.discount == 1:
-            self.V = _np.zeros(self.S)
-        else:
-            Rmin = min(R.min() for R in self.R)
-            self.V = 1 / (1 - self.discount) * Rmin * _np.ones((self.S,))
-
-    def run(self):
-        # Run the modified policy iteration algorithm.
-
-        self._startRun()
-        variation2 = 0
-        while True:
-            self.iter += 1
-
-            self.policy, Vnext = self._bellmanOperator()
-            #print(self.policy, Vnext)
-            # [Ppolicy, PRpolicy] = mdp_computePpolicyPRpolicy(P, PR, policy);
-
-            variation = _util.getSpan(Vnext - self.V)
-            #print(Vnext)
-            #print(self.V)
-            #print("variationnnnnnnnMPI", variation)
-            if self.verbose:
-                _printVerbosity(self.iter, variation)
-
-            self.V = Vnext
-            if variation < self.thresh:
-                break
-            elif variation == variation2:
-                break
-            else:
-                is_verbose = False
-                if self.verbose:
-                    self.setSilent()
-                    is_verbose = True
-                #print("vvvvvvvvvvvvv", self.V)
-                self._evalPolicyIterative(self.V, self.epsilon, self.max_iter)
-                variation2 = variation
-                if is_verbose:
-                    self.setVerbose()
-
-        self._endRun()
-
-
 
 
 class ValueIteration(MDP):
@@ -757,7 +620,7 @@ class ValueIteration(MDP):
         Vprev = self.V
         null, value = self._bellmanOperator()
         # p 201, Proposition 6.6.5
-        span = _util.getSpan(value - Vprev)
+        span = getSpan(value - Vprev)
         max_iter = (_math.log((epsilon * (1 - self.discount) / self.discount) /
                     span) / _math.log(self.discount * k))
         # self.V = Vprev
@@ -779,7 +642,7 @@ class ValueIteration(MDP):
             # The values, based on Q. For the function "max()": the option
             # "axis" means the axis along which to operate. In this case it
             # finds the maximum of the the rows. (Operates along the columns?)
-            variation = _util.getSpan(self.V - Vprev)
+            variation = getSpan(self.V - Vprev)
             self.iterations_list.append(variation)
             self.v_list.append(self.V.copy())
             if self.verbose:
@@ -798,7 +661,6 @@ class ValueIteration(MDP):
 
 
 class ValueIterationGS(ValueIteration):
-
 
     def __init__(self, transitions, reward, discount, epsilon=0.01,
                  max_iter=10, initial_value=0, skip_check=False):
@@ -851,7 +713,7 @@ class ValueIterationGS(ValueIteration):
 
                 self.V[s] = max(Q)
 
-            variation = _util.getSpan(self.V - Vprev)
+            variation = getSpan(self.V - Vprev)
             self.iterations_list.append(variation)
             self.v_list.append(self.V.copy())
             if self.verbose:
@@ -874,10 +736,7 @@ class ValueIterationGS(ValueIteration):
                 Q[a] = (self.R[a][s] +
                         self.discount * self.P[a][s, :].dot(self.V))
 
-
             self.V[s] = Q.max()
-
-            #print(self.V[s])
 
             self.policy.append(int(Q.argmax()))
 

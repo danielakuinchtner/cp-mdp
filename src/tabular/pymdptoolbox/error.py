@@ -1,10 +1,7 @@
-# -*- coding: utf-8 -*-
 """Markov Decision Process (MDP) Toolbox: ``error`` module
 =======================================================
-
 The ``error`` module provides exception classes that can be raised by
 the toolbox.
-
 Available classes
 -----------------
 Error
@@ -17,7 +14,6 @@ SquareError
     Exception for transition matrices that are not square
 StochasticError
     Exception for transition matrices that are not stochastic
-
 """
 
 # Copyright (c) 2015 Steven A. W. Cordwell

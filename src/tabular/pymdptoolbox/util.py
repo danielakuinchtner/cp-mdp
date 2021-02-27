@@ -1,14 +1,11 @@
 # -*- coding: utf-8 -*-
 """Markov Decision Process (MDP) Toolbox: ``util`` module
 ======================================================
-
 The ``util`` module provides functions to check that an MDP is validly
 described. There are also functions for working with MDPs while they are being
 solved.
-
 Available functions
 -------------------
-
 :func:`~mdptoolbox.util.check`
     Check that an MDP is properly defined
 :func:`~mdptoolbox.util.checkSquareStochastic`
@@ -21,7 +18,6 @@ Available functions
     Check if a matrix is square
 :func:`~mdptoolbox.util.isStochastic`
     Check if a matrix is row stochastic
-
 """
 
 # Copyright (c) 2011-2015 Steven A. W. Cordwell
@@ -55,7 +51,7 @@ Available functions
 
 import numpy as _np
 
-import mdptoolbox.error as _error
+import error as _error
 
 _MDPERR = {
 "mat_nonneg" :
@@ -93,7 +89,6 @@ _MDPERR = {
 
 def _checkDimensionsListLike(arrays):
     """Check that each array in a list of arrays has the same size.
-
     """
     dim1 = len(arrays)
     dim2, dim3 = arrays[0].shape
@@ -106,7 +101,6 @@ def _checkDimensionsListLike(arrays):
 
 def _checkRewardsListLike(reward, n_actions, n_states):
     """Check that a list-like reward input is valid.
-
     """
     try:
         lenR = len(reward)
@@ -124,12 +118,10 @@ def _checkRewardsListLike(reward, n_actions, n_states):
 
 def isSquare(matrix):
     """Check that ``matrix`` is square.
-
     Returns
     =======
     is_square : bool
         ``True`` if ``matrix`` is square, ``False`` otherwise.
-
     """
     try:
         try:
@@ -145,12 +137,10 @@ def isSquare(matrix):
 
 def isStochastic(matrix):
     """Check that ``matrix`` is row stochastic.
-
     Returns
     =======
     is_stochastic : bool
         ``True`` if ``matrix`` is row stochastic, ``False`` otherwise.
-
     """
     try:
         absdiff = (_np.abs(matrix.sum(axis=1) - _np.ones(matrix.shape[0])))
@@ -162,12 +152,10 @@ def isStochastic(matrix):
 
 def isNonNegative(matrix):
     """Check that ``matrix`` is row non-negative.
-
     Returns
     =======
     is_stochastic : bool
         ``True`` if ``matrix`` is non-negative, ``False`` otherwise.
-
     """
     try:
         if (matrix >= 0).all():
@@ -185,25 +173,19 @@ def isNonNegative(matrix):
 
 def checkSquareStochastic(matrix):
     """Check if ``matrix`` is a square and row-stochastic.
-
     To pass the check the following conditions must be met:
-
     * The matrix should be square, so the number of columns equals the
       number of rows.
     * The matrix should be row-stochastic so the rows should sum to one.
     * Each value in the matrix must be positive.
-
     If the check does not pass then a mdptoolbox.util.Invalid
-
     Arguments
     ---------
     ``matrix`` : numpy.ndarray, scipy.sparse.*_matrix
         A two dimensional array (matrix).
-
     Notes
     -----
     Returns None if no error has been detected, else it raises an error.
-
     """
     if not isSquare(matrix):
         raise _error.SquareError
@@ -215,9 +197,7 @@ def checkSquareStochastic(matrix):
 
 def check(P, R):
     """Check if ``P`` and ``R`` define a valid Markov Decision Process (MDP).
-
     Let ``S`` = number of states, ``A`` = number of actions.
-
     Arguments
     ---------
     P : array
@@ -231,24 +211,13 @@ def check(P, R):
         shape of (A, ), where each element contains matrix with a shape of
         (S, S) which can possibly be sparse. It can also be an array with
         a shape of (S, A) which can possibly be sparse.
-
     Notes
     -----
     Raises an error if ``P`` and ``R`` do not define a MDP.
 
-    Examples
-    --------
-    >>> import mdptoolbox, mdptoolbox.example
-    >>> P_valid, R_valid = mdptoolbox.example.rand(100, 5)
-    >>> mdptoolbox.util.check(P_valid, R_valid) # Nothing should happen
-    >>>
-    >>> import numpy as np
-    >>> P_invalid = np.random.rand(5, 100, 100)
-    >>> mdptoolbox.util.check(P_invalid, R_valid) # Raises an exception
     Traceback (most recent call last):
     ...
     StochasticError:...
-
     """
     # Checking P
     try:
@@ -304,8 +273,6 @@ def check(P, R):
 
 def getSpan(array):
     """Return the span of `array`
-
     span(array) = max array(s) - min array(s)
-
     """
     return array.max() - array.min()
