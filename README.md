@@ -11,6 +11,8 @@ This implementation relies on modifying the [pymdptoolbox](https://github.com/sa
 The compact value iteration (CP-MDP-VI), and the compact policy iteration (CP-MDP-PI), are based on the CANDECOMP/PARAFAC tensor decomposition definition (which gives the name "CP-MDP" for our solver) to build the transition models as tensor components in a compact representation.
 
 This code solves the GridWorld problem for *n*-dimensional sizes.
+
+We analyse runtime, memory and computational cost of our method against tabular methods. We detail the results in the paper [**CP-MDP: A CANDECOMP-PARAFAC Decomposition Approach to Solve a Markov Decision Process Multidimensional Problem**](https://arxiv.org/abs/2103.00331) on arXiv.
   
 
 
